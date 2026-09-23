@@ -8,7 +8,7 @@ It is being built for live coding performance and research on embodied
 interaction, including acoustic instruments (e.g. cello) driving the synth
 through an envelope follower.
 
-> **Status: Stage 0 — project setup.** Only a test synth (`sctest`) exists so far.
+> **Status: Stage 1 — single voice.** Stage 0 (setup, Tidal + Strudel connection) is done; only a test synth (`sctest`) exists so far.
 > See [`CLAUDE.md`](CLAUDE.md) for the full design and the stage plan.
 
 ## Requirements

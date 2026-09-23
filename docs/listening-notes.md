@@ -3,6 +3,11 @@
 Dated feedback from listening tests. Newest first.
 Format: date, stage, what was played (exact Tidal/Strudel line), what was heard, action.
 
+## 2026-09-23 — Stage 0, Strudel
+- strudel.cc + `npx @strudel/osc` (v1.3.2): `n("0 3 7 10").s("sctest").tstbright(sine.slow(4)).osc()`
+- Heard: works (user confirmed). createParams path works; no fallback needed.
+- Stage 0 done: Tidal and Strudel reach SuperDirt with custom params; gate strategy confirmed.
+
 ## 2026-09-23 — Stage 0, Tidal
 - `d1 $ n "0 3 7 10" # s "sctest"` (+ `# tstbright (slow 4 sine)`) from VS Code.
 - Heard: works (user confirmed).

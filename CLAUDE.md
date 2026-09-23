@@ -436,4 +436,4 @@ line at the bottom of this file when moving on.
 
 ## Current stage
 
-**Stage 0 — Project setup and risk checks**
+**Stage 1 — Single voice** (Stage 0 done 2026-09-23)
