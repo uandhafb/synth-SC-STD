@@ -1,23 +1,21 @@
 {
-  "name": "R2-D2-style bleeps (whistle)",
+  "name": "R2-D2-style talking",
   "sound": "scstd",
   "stage": 3,
-  "description": "Pure sine tone that jumps and glides randomly (S&H with lag) with a fast trill from VCO 1 as an LFO. Second draft: softer than the ring-mod first draft.",
+  "description": "Short sine beeps at random pitches with random gaps (syllables); each beep bends upward by a random amount via VCO 1 as a fast LFO into VCO 2's FM. Randomness lives in the Tidal pattern (see 'tidal').",
   "params": {
     "o1lf": 1,
-    "o1lfrate": 16,
     "o1lvl": 0,
     "o2wave": 3,
     "o2lvl": 1,
     "vcalvl": 1,
-    "o2fm": 0.035,
-    "m_sh_pitch": 14,
-    "shrate": 8,
-    "shlag": 0.55,
-    "vcfcut": 5000,
+    "aratk": 0.003,
+    "arrel": 0.03,
+    "erel": 0.03,
+    "vcfcut": 6000,
     "vcfenv": 0,
     "vcfdrive": 0,
     "drift": 0
   },
-  "tidal": "d1 $ n \"<12 19 15 24>\" # s \"scstd\" # o1lf 1 # o1lfrate 16 # o1lvl 0 # o2wave 3 # o2lvl 1 # vcalvl 1 # o2fm 0.035 # m_sh_pitch 14 # shrate 8 # shlag 0.55 # vcfcut 5000 # vcfenv 0 # vcfdrive 0 # drift 0 # legato 0.9"
+  "tidal": "d1 $ degradeBy 0.35 $ n (segment 16 $ (0.37 <~ irand 24) + 12) # s \"scstd\" # o1lf 1 # o1lvl 0 # o2wave 3 # o2lvl 1 # vcalvl 1 # aratk 0.003 # arrel 0.03 # erel 0.03 # vcfcut 6000 # vcfenv 0 # vcfdrive 0 # drift 0 # o1lfrate (range 4 30 $ 0.13 <~ rand) # o2fm (range 0 0.2 $ 0.71 <~ rand) # legato (range 0.4 0.9 $ 0.53 <~ rand)"
 }

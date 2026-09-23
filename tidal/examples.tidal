@@ -158,12 +158,22 @@ d1 $ n "0" # s "scstd" # o1lvl 0 # o2wave 1 # o2pw 0.3 # m_sh_pitch 12 # shrate 
 
 -- 40. R2-D2-style, second draft: pure sine tones (no harsh ring mod) that jump and glide
 --     randomly, with a fast trill from VCO 1 as an LFO. Two versions, compare them:
--- 40A "whistle" (PRESET presets/r2d2_bleeps.json): smoother, more like whistling.
+-- 40A "whistle": smoother, more like whistling.
 d1 $ n "<12 19 15 24>" # s "scstd" # o1lf 1 # o1lfrate 16 # o1lvl 0 # o2wave 3 # o2lvl 1 # vcalvl 1 # o2fm 0.035 # m_sh_pitch 14 # shrate 8 # shlag 0.55 # vcfcut 5000 # vcfenv 0 # vcfdrive 0 # drift 0 # legato 0.9
 -- 40B "chirp": faster, jumpier, a bit brighter.
 d1 $ n "<12 19 15 24>" # s "scstd" # o1lf 1 # o1lfrate 22 # o1lvl 0 # o2wave 2.6 # o2lvl 1 # vcalvl 1 # o2fm 0.05 # m_sh_pitch 20 # shrate 14 # shlag 0.25 # vcfcut 4000 # vcfres 0.3 # vcfenv 0 # vcfdrive 0 # drift 0 # legato 0.9
 -- 40C first draft (for comparison; ring mod of VCO 1's saw = harsh).
 d1 $ n "<0 7 3 12>" # s "scstd" # o1oct 0.5 # o1lvl 0 # o2wave 3 # o2lvl 0.5 # rmlvl 0.6 # m_sh_pitch 24 # shrate 11 # shlag 0.35 # o2fm 0.03 # vcfcut 9000 # vcfenv 0 # legato 0.9
+-- 40D "talking" (third draft): many short beeps at random pitches with random gaps
+--     (like syllables). Each beep bends upward by a random amount (VCO 1 as a fast LFO ramps
+--     VCO 2's pitch), so every beep sounds a bit different: "bwip", "bweeoo", "tt-tt".
+--     (PRESET presets/r2d2_bleeps.json.) The "0.37 <~" shifts keep the random values independent:
+--     rand, irand and degradeBy share one random stream, so unshifted they would be correlated.
+d1 $ degradeBy 0.35 $ n (segment 16 $ (0.37 <~ irand 24) + 12) # s "scstd" # o1lf 1 # o1lvl 0 # o2wave 3 # o2lvl 1 # vcalvl 1 # aratk 0.003 # arrel 0.03 # erel 0.03 # vcfcut 6000 # vcfenv 0 # vcfdrive 0 # drift 0 # o1lfrate (range 4 30 $ 0.13 <~ rand) # o2fm (range 0 0.2 $ 0.71 <~ rand) # legato (range 0.4 0.9 $ 0.53 <~ rand)
+-- 40E "beeps": short, clean beeps with no bends, in fast bursts, like a computer answering.
+d1 $ degradeBy 0.4 $ n (segment 12 $ (0.37 <~ irand 24) + 12) # s "scstd" # o1lvl 0 # o2wave 2.5 # o2lvl 1 # vcalvl 1 # aratk 0.002 # arrel 0.02 # erel 0.02 # vcfcut 5000 # vcfenv 0 # vcfdrive 0 # drift 0 # legato 0.5
+-- 40F both mixed: every cycle, randomly either talking (bends) or plain beeps.
+d1 $ degradeBy 0.35 $ n (segment 16 $ (0.37 <~ irand 24) + 12) # s "scstd" # o1lf 1 # o1lvl 0 # o2wave 3 # o2lvl 1 # vcalvl 1 # aratk 0.003 # arrel 0.03 # erel 0.03 # vcfcut 6000 # vcfenv 0 # vcfdrive 0 # drift 0 # o1lfrate (range 4 30 $ 0.13 <~ rand) # o2fm (segment 1 $ wchooseBy (0.71 <~ rand) [(0, 1), (0.15, 1)]) # legato (range 0.4 0.9 $ 0.53 <~ rand)
 
 -- 41. Lag processor: the PWM pad from 22, first with clicks (lagtime 0), then smooth (0.3).
 d1 $ n "<[0,4,7] [-3,0,4]>" # s "scstd" # legato 1 # o1lf 1 # o1lfrate 0.8 # o1lvl 0 # o2wave 1 # o2pwm 0.8 # vcfcut 1800 # vcfenv 0.1 # aratk 0.4 # arrel 1.2 # lagtime "<0 0.3>"

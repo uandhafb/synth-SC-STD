@@ -36,5 +36,6 @@ n("0 3 7 10").s("scstd").osc()
 // #39 — Computer sequence (presets/computer_sequence.json)
 // n("0").s("scstd").o1lvl(0).o2wave(1).o2pw(0.3).m_sh_pitch(12).shrate(8).vcfcut(2500).vcfres(0.5).vcfenv(0).arrel(0.1).erel(0.1).legato(1).osc()
 
-// #40A — R2-D2-style bleeps, whistle (presets/r2d2_bleeps.json)
-// n("<12 19 15 24>").s("scstd").o1lf(1).o1lfrate(16).o1lvl(0).o2wave(3).o2lvl(1).vcalvl(1).o2fm(0.035).m_sh_pitch(14).shrate(8).shlag(0.55).vcfcut(5000).vcfenv(0).vcfdrive(0).drift(0).legato(0.9).osc()
+// #40D — R2-D2-style talking (presets/r2d2_bleeps.json). Strudel's rand/irand also share a seed,
+// so the random sources are shifted in time (.late) to keep them independent. Untested in Strudel.
+// n(irand(24).late(0.37).add(12).segment(16)).degradeBy(0.35).s("scstd").o1lf(1).o1lvl(0).o2wave(3).o2lvl(1).vcalvl(1).aratk(0.003).arrel(0.03).erel(0.03).vcfcut(6000).vcfenv(0).vcfdrive(0).drift(0).o1lfrate(rand.range(4, 30).late(0.13)).o2fm(rand.range(0, 0.2).late(0.71)).legato(rand.range(0.4, 0.9).late(0.53)).osc()

@@ -3,6 +3,15 @@
 Dated feedback from listening tests. Newest first.
 Format: date, stage, what was played (exact Tidal/Strudel line), what was heard, action.
 
+## 2026-09-23 — Stage 3, R2-D2 third draft
+- User likes 40A/B/C but "neither similar: more talking and beeps".
+- New approach: many short sine beeps (Tidal: segment 16 + degradeBy 0.35, random pitch C5-C7),
+  each bent upward by a random amount (VCO 1 LFO saw -> VCO 2 FM, random rate/depth per beep).
+  40D talking (now the preset), 40E plain beeps, 40F mixed.
+- Found: Tidal's rand, irand and degradeBy share one random stream, so surviving beeps were all
+  high with big bends. Shifted sources in time (0.37 <~ irand etc.): pitch range 12-34, mean 21.9,
+  cross-correlations ~0 (checked with queryArc over 8 cycles).
+
 ## 2026-09-23 — Stage 3, first listening
 - #36-38 unclear to the user: comments rewritten (36 = glides, 37 = S&H on filter, 38 = S&H on VCO 3).
 - #40 R2-D2 first draft: "cool but too harsh, not R2-D2". Cause: ring mod uses VCO 1's saw.
