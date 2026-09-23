@@ -1,7 +1,5 @@
-# Project: [SYNTH NAME]
+# Project: synth-SC-STD
 
-> Replace [SYNTH NAME] everywhere with the project's own name.
-> Do not name it after ARP or use ARP branding (see Design Constraints).
 
 ## 1. Overview
 
@@ -432,7 +430,7 @@ line at the bottom of this file when moving on.
 - Stage 0: Tidal and Strudel both reach SuperDirt with custom params; gate behaviour known.
 - Each later stage: its "done when" list, plus the user's listening approval.
 - End to end: boot `sc/startup.scd`, run `node relay/index.js`, open `ui/index.html`,
-  play `d1 $ n "c e g" # s "[synthname]" # vcfcut 800` from Tidal and the same from
+  play `d1 $ n "c e g" # s "scstd" # vcfcut 800` from Tidal and the same from
   Strudel; move panel sliders live; load a preset; route S&H → VCF and hear the
   stepped filter pattern; remove it and hear the normalled sound return.
 
