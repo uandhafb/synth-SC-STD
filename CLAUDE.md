@@ -437,4 +437,4 @@ line at the bottom of this file when moving on.
 
 ## Current stage
 
-**Stage 2 — Oscillator modulation** (Stage 0 and Stage 1 done 2026-09-23)
+**Stage 3 — Noise, ring mod, sample & hold, lag** (Stages 0–2 done 2026-09-23)

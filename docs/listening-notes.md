@@ -3,6 +3,15 @@
 Dated feedback from listening tests. Newest first.
 Format: date, stage, what was played (exact Tidal/Strudel line), what was heard, action.
 
+## 2026-09-23 — Stage 2 done
+- #20 (VCO 1 in LF mode, not muted): "annoying but maybe interesting" -> keep faithful (no auto-mute).
+- #22 PWM pad: user hears clicks and likes them. Measured: they occur exactly one LFO period
+  (1.25 s at 0.8 Hz) after each chord start = VCO 1's saw LFO resetting, so the pulse width snaps.
+  Absent with PWM off. Faithful (VCO 1 has only saw/square). Decision A: keep; smooth PWM will
+  come from the Stage 3 lag processor on VCO 1 (the original's way), no extra LFO shape.
+- #25 sync lead and #27 FM bell: OK (user).
+- Stage 2 approved.
+
 ## 2026-09-23 — Stage 2, offline measurements (before listening)
 Rendered with `sc/tests/stage2_render.scd`, measured with `analysis/stage2_check.py`.
 - Hard sync: SyncSaw is not band-limited (non-harmonic energy C3/C5/C7: -29.5/-18.5/-12.4 dB).
