@@ -7,5 +7,5 @@
 
 n("0 3 7 10").s("sctest").tstbright(sine.slow(4)).osc()
 
-// Fallback if createParams is not available:
+// Fallback without declaring params (.set merges the object into every event):
 // n("0 3 7 10").s("sctest").set({ tstbright: 0.9 }).osc()

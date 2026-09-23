@@ -2,8 +2,7 @@
 // (strudel.cc or a local REPL). Keep in sync with docs/params.md, tidal/params.hs
 // and the UI (CLAUDE.md, decision 8).
 //
-// UNVERIFIED (Stage 0 smoke test): `createParams` is Strudel's helper for defining
-// new controls. If it is not available in your Strudel version, use the fallback in
-// strudel/examples.js (`.set({...})`), which needs no declaration.
+// createParams (from @strudel/core, checked in v1.2.6) returns an object of control
+// functions and also adds each name as a pattern method, so `.tstbright(0.8)` works.
 
-const [tstbright, tstrel] = createParams('tstbright', 'tstrel');
+const { tstbright, tstrel } = createParams('tstbright', 'tstrel');
