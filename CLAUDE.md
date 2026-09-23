@@ -159,7 +159,7 @@ recordings in Stage 6. Keep parameter names short and Tidal-friendly.
 |---|---|---|---|
 | `o1wave` | 0–1 | 0 | Crossfade saw → square |
 | `o1lvl` | 0–1 | 0.7 | Level into the mixer |
-| `o1oct` | -3–3 | 0 | Octave offset |
+| `o1oct` | -3–3 | 0 | Coarse tune in octaves (continuous, like the original's coarse knob) |
 | `o1fine` | -1–1 | 0 | Fine tune (semitones) |
 | `o1lf` | 0/1 | 0 | Low-frequency mode (acts as LFO) |
 | `o1lfrate` | 0.01–30 Hz | 2 | Rate when in LF mode |
@@ -169,7 +169,7 @@ recordings in Stage 6. Keep parameter names short and Tidal-friendly.
 |---|---|---|---|
 | `o2wave` | 0–3 | 0 | Morph saw → pulse → triangle → sine |
 | `o2lvl` | 0–1 | 0.7 | Level into the mixer |
-| `o2oct` | -3–3 | 0 | Octave offset |
+| `o2oct` | -3–3 | 0 | Coarse tune in octaves (continuous) |
 | `o2fine` | -1–1 | 0.05 | Fine tune (semitones) |
 | `o2pw` | 0.05–0.95 | 0.5 | Pulse width |
 | `o2pwm` | 0–1 | 0 | PWM depth (source normalled, see 6.14) |
@@ -181,9 +181,10 @@ recordings in Stage 6. Keep parameter names short and Tidal-friendly.
 |---|---|---|---|
 | `o3wave` | 0–1 | 0 | Crossfade saw → pulse |
 | `o3lvl` | 0–1 | 0 | Level into the mixer |
-| `o3oct` | -3–3 | -1 | Octave offset |
+| `o3oct` | -3–3 | -1 | Coarse tune in octaves (continuous) |
 | `o3fine` | -1–1 | -0.05 | Fine tune (semitones) |
 | `o3pw` | 0.05–0.95 | 0.5 | Pulse width |
+| `o3pwm` | 0–1 | 0 | PWM depth (source: VCO 1) |
 | `o3fm` | 0–1 | 0 | FM depth from VCO 2 |
 
 ### 6.4 Oscillator analog character (shared)

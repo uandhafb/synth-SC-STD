@@ -70,3 +70,46 @@ d1 $ n "[0,3,7,10]" # s "scstd" # vcfcut 1200 # vcfres 0.5 # legato 1 # vcfmodel
 d1 $ n "[0,3,7,10]" # s "scstd" # vcfcut 1200 # vcfres 0.5 # legato 1 # vcfmodel 1
 
 hush
+
+-- =============================================================================================
+-- Stage 2 — oscillator modulation. VCO 1 is the modulation source.
+-- =============================================================================================
+
+-- 19. VCO 1 as LFO -> vibrato on VCO 2. o1lvl 0 mutes VCO 1 itself. Listen for: a gentle,
+--     even pitch wobble (5 times per second).
+d1 $ n "0 7" # s "scstd" # legato 1 # o1lf 1 # o1lfrate 5 # o1lvl 0 # o2fm 0.01
+
+-- 20. LF mode NOT muted: you hear VCO 1 itself as a slow ticking/buzz under the sound
+--     (faithful to the original). Compare with 19.
+d1 $ n "0" # s "scstd" # legato 1 # o1lf 1 # o1lfrate 3 # vcfcut 4000
+
+-- 21. PWM: slow pulse-width sweep on one pulse wave. Listen for: a hollow sound that "breathes".
+d1 $ n "-12" # s "scstd" # legato 1 # o1lf 1 # o1lfrate 0.5 # o1lvl 0 # o2wave 1 # o2pwm 0.9 # vcfcut 3000 # vcfenv 0
+
+-- 22. PRESET: PWM pad (presets/pwm_pad.json). Wide, moving chords.
+d1 $ n "<[0,4,7] [-3,0,4] [-7,-3,0] [-5,-1,2]>" # s "scstd" # o1lf 1 # o1lfrate 0.8 # o1lvl 0 # o2wave 1 # o2pwm 0.8 # o3lvl 0.6 # o3wave 1 # o3pwm 0.6 # o3oct 0 # o3fine (-0.08) # vcfcut 1800 # vcfres 0.2 # vcfenv 0.1 # aratk 0.4 # arrel 1.2 # erel 1.2 # legato 1
+
+-- 23. Hard sync, step by step: o2oct moves VCO 2's tuning while it stays locked to VCO 1.
+--     The pitch you hear stays the same; the tone changes (tearing, vocal). 0 = no change.
+d1 $ n "0*4" # s "scstd" # o1lvl 0 # o2sync 1 # o2oct "<0 0.5 1 1.5>" # vcfcut 5000 # vcfenv 0
+
+-- 24. Sync on/off: same notes, sync off (first cycle) vs on (second).
+d1 $ n "0 3 7 12" # s "scstd" # o1lvl 0 # o2oct 1.3 # o2sync "<0 1>" # vcfcut 4000 # vcfenv 0
+
+-- 25. PRESET: Sync lead (presets/sync_lead.json). The sweep is the classic sync sound.
+d1 $ n "0 3 7 10 12 10 7 3" # s "scstd" # o1lvl 0.2 # o2oct 1.3 # o2sync 1 # vcfcut 2500 # vcfres 0.3 # vcfenv 0.3 # vcfkey 0.7 # edec 0.4 # esus 0.5 # o2oct (range 0.6 2 $ slow 2 sine)
+
+-- 26. FM depth: 0 -> 0.05 -> 0.2 -> 0.6. Listen for: pure -> growl -> metallic -> noisy/clangy.
+d1 $ n "-12*2" # s "scstd" # o1lvl 0 # o2wave 3 # vcfcut 8000 # vcfenv 0 # o2fm "<0 0.05 0.2 0.6>"
+
+-- 27. PRESET: FM bell (presets/fm_bell.json). Clangy bell with a long ring.
+d1 $ n "0 ~ 7 ~ 12 ~ 4 ~" # s "scstd" # o1oct 0.485 # o1lvl 0 # o2wave 3 # o2fm 0.12 # vcfcut 12000 # vcfenv 0 # aratk 0.001 # arrel 2.5 # erel 2.5 # legato 0.1
+
+-- 28. VCO 2 -> VCO 3 FM: VCO 3 gets rough and metallic as o3fm rises.
+d1 $ n "-12*2" # s "scstd" # o1lvl 0 # o2lvl 0.2 # o3lvl 0.8 # o3oct 0.7 # vcfcut 6000 # vcfenv 0 # o3fm "<0 0.1 0.3>"
+
+-- 29. Keyboard tracking: a rising scale with a low cutoff. vcfkey 0 (first cycle): high notes get
+--     duller and quieter. vcfkey 1 (second): every note equally bright.
+d1 $ n "0 5 12 17 24 29 36" # s "scstd" # vcfcut 400 # vcfenv 0 # vcfkey "<0 1>"
+
+hush

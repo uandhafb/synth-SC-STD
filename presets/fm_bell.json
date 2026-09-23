@@ -1,0 +1,18 @@
+{
+  "name": "FM bell",
+  "sound": "scstd",
+  "stage": 2,
+  "description": "VCO 1 at a non-octave ratio frequency-modulates a sine on VCO 2. Clangy, metallic bell with a long decay.",
+  "params": {
+    "o1oct": 0.485,
+    "o1lvl": 0,
+    "o2wave": 3,
+    "o2fm": 0.12,
+    "vcfcut": 12000,
+    "vcfenv": 0,
+    "aratk": 0.001,
+    "arrel": 2.5,
+    "erel": 2.5
+  },
+  "tidal": "d1 $ n \"0 ~ 7 ~ 12 ~ 4 ~\" # s \"scstd\" # o1oct 0.485 # o1lvl 0 # o2wave 3 # o2fm 0.12 # vcfcut 12000 # vcfenv 0 # aratk 0.001 # arrel 2.5 # erel 2.5 # legato 0.1"
+}

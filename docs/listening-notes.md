@@ -3,6 +3,19 @@
 Dated feedback from listening tests. Newest first.
 Format: date, stage, what was played (exact Tidal/Strudel line), what was heard, action.
 
+## 2026-09-23 — Stage 2, offline measurements (before listening)
+Rendered with `sc/tests/stage2_render.scd`, measured with `analysis/stage2_check.py`.
+- Hard sync: SyncSaw is not band-limited (non-harmonic energy C3/C5/C7: -29.5/-18.5/-12.4 dB).
+  Replaced by polyBLEP-corrected synced waves; slave phase = frac(masterPhase * ratio), because
+  Phasor reads its resetPos only once per block (found by tracing samples). In the voice (open
+  filter, no drive): saw -81/-64/-56 dB, pulse -65, tri -64, sine -70 dB at C5.
+- oXoct made continuous (coarse tune), needed for sync/FM ratios; whole numbers unchanged.
+- No NaN; worst case (everything on, res 1.1, drive 1) peaks at -8.8 dBFS.
+- Key tracking: C6 with cutoff 500 Hz: -42 dBFS (vcfkey 0) vs -22 dBFS (vcfkey 1).
+- FM bell decays smoothly (-23 -> -54 dB over 2 s). Sync with VCO 1 in LF mode is stable
+  but float precision makes it noisy; sync is meant for audio-rate VCO 1 (documented).
+- Pending: user listening (tidal/examples.tidal 19-29, three presets).
+
 ## 2026-09-23 — Stage 1 done
 - Filter A/B (#17A/B, #18A/B): user hears a clear difference and likes both.
 - Decision: keep both as a permanent param `vcfmodel` (0 = MoogLadder default, 1 = MoogFF).

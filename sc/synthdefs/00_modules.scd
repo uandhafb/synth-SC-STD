@@ -13,17 +13,18 @@
 ~scstdSpecs = (
 	// VCO 1 (6.1)
 	o1wave: [0, 1, 0], o1lvl: [0, 1, 0.7], o1oct: [-3, 3, 0], o1fine: [-1, 1, 0],
+	o1lf: [0, 1, 0], o1lfrate: [0.01, 30, 2],
 	// VCO 2 (6.2)
 	o2wave: [0, 3, 0], o2lvl: [0, 1, 0.7], o2oct: [-3, 3, 0], o2fine: [-1, 1, 0.05],
-	o2pw: [0.05, 0.95, 0.5],
+	o2pw: [0.05, 0.95, 0.5], o2pwm: [0, 1, 0], o2sync: [0, 1, 0], o2fm: [0, 1, 0],
 	// VCO 3 (6.3)
 	o3wave: [0, 1, 0], o3lvl: [0, 1, 0], o3oct: [-3, 3, -1], o3fine: [-1, 1, -0.05],
-	o3pw: [0.05, 0.95, 0.5],
+	o3pw: [0.05, 0.95, 0.5], o3pwm: [0, 1, 0], o3fm: [0, 1, 0],
 	// Analog character (6.4)
 	drift: [0, 1, 0.15], vspread: [0, 1, 0.1],
 	// VCF (6.7)
 	vcfcut: [20, 18000, 2000], vcfres: [0, 1.1, 0.2], vcfenv: [-1, 1, 0.4],
-	vcfdrive: [0, 1, 0.3],
+	vcfkey: [0, 1, 0.5], vcfdrive: [0, 1, 0.3],
 	vcfmodel: [0, 1, 0],   // filter character: 0 = MoogLadder (default, self-oscillates), 1 = MoogFF
 	// VCA (6.8)
 	vcalvl: [0, 1, 0.8], vcaenv: [0, 1, 1],
@@ -58,30 +59,88 @@
 	// Spread: fixed random detune per event (Rand is chosen once when the synth starts),
 	// so repeated notes are never exactly identical. spread=1 gives at most +-10 cents.
 	var spreadSemi = Rand(-1.0, 1.0) * spread * 0.1;
-	freq * (2 ** oct.round) * (fine + driftSemi + spreadSemi + pitchMod).midiratio
+	// oct is continuous, like the original's coarse tuning knob: whole numbers = octaves,
+	// fractions tune in between (e.g. 1.5 = an octave and a tritone up). Needed for hard sync
+	// and FM, where the interesting sounds come from non-octave ratios.
+	freq * (2 ** oct) * (fine + driftSemi + spreadSemi + pitchMod).midiratio
 };
 
 // ---------------------------------------------------------------------------------------------
 // VCO 1: saw -> square crossfade.
 // Saw and Pulse are band-limited in SuperCollider, so high notes do not alias.
+// Returns [audio, mod]: `audio` goes to the mixer (square scaled by 0.6 so its loudness roughly
+// matches the saw; square RMS is ~1.7x saw RMS), `mod` is the same wave at full +-1 scale, used as
+// the modulation source for PWM, FM and sync (on the original, VCO 1 is the classic mod source).
 ~scstdMods[\vco1] = { |f, wave|
 	var saw = Saw.ar(f);
-	// Square scaled by 0.6 so its loudness roughly matches the saw (square RMS is ~1.7x saw RMS).
-	var sqr = Pulse.ar(f, 0.5) * 0.6;
-	(saw * (1 - wave)) + (sqr * wave)
+	var sqr = Pulse.ar(f, 0.5);
+	[(saw * (1 - wave)) + (sqr * 0.6 * wave), (saw * (1 - wave)) + (sqr * wave)]
 };
 
 // VCO 2: morph saw -> pulse -> triangle -> sine (o2wave 0..3).
 // SelectX crossfades between neighbouring waves with equal power, so the morph has no level dips.
 // LFTri is not band-limited, but triangle harmonics fall off at 1/n^2, so aliasing stays low.
-~scstdMods[\vco2] = { |f, wave, pw, pwMod = 0|
-	var width = (pw + pwMod).clip(0.05, 0.95);   // PWM summing point (Stage 2 connects sources)
-	SelectX.ar(wave, [
+//
+// Hard sync (sync = 1): VCO 2 restarts its cycle whenever VCO 1 (at syncFreq) starts a new one.
+// See ~scstdMods[\syncWaves] below for how the synced waves are made alias-reduced.
+// Only the selected path is heard; the other is computed but silent.
+~scstdMods[\vco2] = { |f, wave, pw, pwMod = 0, sync = 0, syncFreq = 100|
+	var width = (pw + pwMod).clip(0.05, 0.95);   // PWM summing point
+	var free = SelectX.ar(wave, [
 		Saw.ar(f),
 		Pulse.ar(f, width) * 0.6,
 		LFTri.ar(f) * 0.9,
 		SinOsc.ar(f) * 0.9
-	])
+	]);
+	var sw = ~scstdMods[\syncWaves].(f, syncFreq, width);
+	var synced = SelectX.ar(wave, [sw[0], sw[1] * 0.6, sw[2] * 0.9, sw[3] * 0.9]);
+	Select.ar(sync.round, [free, synced])
+};
+
+// polyBLEP correction for one value discontinuity per sample.
+// x: naive signal; jump: size of the downward jump (before - after, may be negative);
+// d: time since the jump as a fraction of a sample (0..1). The sample before the jump is
+// corrected too, so the output is delayed by one sample. This removes most of the aliasing a
+// hard jump causes (polyBLEP: Valimaki & Huovilainen, 2007).
+~scstdMods[\blep] = { |x, jump, d|
+	Delay1.ar(x + (jump * 0.5 * (1 - d).squared)) - (jump * 0.5 * d.squared)
+};
+
+// Hard-synced saw, pulse, triangle and sine with polyBLEP-corrected jumps.
+// Why not SyncSaw: it is not band-limited; measured non-harmonic energy at C3/C5/C7 was
+// -29.5/-18.5/-12.4 dB. This version measured -66/-34/-27 dB (docs/listening-notes.md).
+// How: the slave resets exactly when the master wraps, so the slave phase is simply
+// frac(masterPhase * f / syncFreq). That is exact per sample (Phasor's own resetPos input is only
+// read once per block, which loses the sub-sample timing). At each reset the slave jumps from
+// phase frac(ratio) back to 0; the size of that jump is known, so it can be corrected.
+// Note: with VCO 1 in LF mode the ratio gets huge and float precision adds noise to the synced
+// wave; sync is meant for audio-rate VCO 1.
+// Returns [saw, pulse, tri, sine], each -1..1.
+~scstdMods[\syncWaves] = { |f, syncFreq, width|
+	var blep = ~scstdMods[\blep];
+	var sr = SampleRate.ir;
+	var dtm = syncFreq / sr, dts = f / sr, ratio = f / syncFreq;
+	var pm = Phasor.ar(0, dtm, 0, 1);              // master (VCO 1) phase 0..1
+	var wm = pm < Delay1.ar(pm);                   // 1 on the sample where the master wrapped
+	var dm = (pm / dtm).clip(0, 1);                // time since that wrap, in samples
+	var h = ratio.frac;                            // slave phase at the reset instant
+	var ps = (pm * ratio).frac;                    // slave phase 0..1
+	var ws = (ps < Delay1.ar(ps)) * (1 - wm);      // natural slave wrap (not a reset)
+	var ds = (ps / dts).clip(0, 1);
+	// Saw: jump 2 at natural wraps, 2h at resets.
+	var saw = blep.((ps * 2) - 1, (wm * 2 * h) + (ws * 2), (wm * dm) + (ws * ds));
+	// Pulse = difference of two saws offset by (1 - width); the second saw restarts at `off`.
+	var off = 1 - width;
+	var pb = (ps + off).frac;
+	var wb = (pb < Delay1.ar(pb)) * (1 - wm);
+	var dbb = (pb / dts).clip(0, 1);
+	var sawB = blep.((pb * 2) - 1, (wm * 2 * ((h + off).frac - off)) + (wb * 2), (wm * dm) + (wb * dbb));
+	var pulse = (sawB - saw) - (1 - (2 * width));
+	// Triangle and sine are continuous except at the reset.
+	var triOf = { |ph| 1 - (4 * (ph - 0.5).abs) };
+	var tri = blep.(triOf.(ps), wm * (triOf.(h) + 1), wm * dm);
+	var sine = blep.((ps * 2pi).sin, wm * (h * 2pi).sin, wm * dm);
+	[saw, pulse, tri, sine]
 };
 
 // VCO 3: saw -> pulse crossfade.
@@ -183,22 +242,42 @@
 	var adsr = m[\adsr].(gate, p.(\eatk), p.(\edec), p.(\esus), p.(\erel), p.(\ecurve));
 	var ar = m[\ar].(gate, p.(\aratk), p.(\arrel));
 
-	// Modulation summing points (Architecture decision 6). Only the normalled sources exist in
-	// Stage 1, so these are zero; Stage 2-4 add sources here.
+	// Modulation summing points (Architecture decision 6). Stage 2 connects VCO 1 (and VCO 2 -> 3)
+	// below; Stage 3-4 add more sources (S&H, noise, envelopes, patch matrix) here.
 	var pitchMod = 0, pwMod = 0, cutMod = 0, ampMod = 0;
 
 	var drift = p.(\drift), spread = p.(\vspread);
-	var f1 = m[\pitch].(freq, p.(\o1oct), p.(\o1fine), drift, spread, pitchMod);
-	var f2 = m[\pitch].(freq, p.(\o2oct), p.(\o2fine), drift, spread, pitchMod);
-	var f3 = m[\pitch].(freq, p.(\o3oct), p.(\o3fine), drift, spread, pitchMod);
 
-	var v1 = m[\vco1].(f1, p.(\o1wave));
-	var v2 = m[\vco2].(f2, p.(\o2wave), p.(\o2pw), pwMod);
-	var v3 = m[\vco3].(f3, p.(\o3wave), p.(\o3pw), pwMod);
+	// VCO 1 first: it is the modulation source for the others.
+	// LF mode: VCO 1 stops following the keyboard and runs at o1lfrate (0.01-30 Hz), like the
+	// original's low-frequency switch. It still feeds the mixer (as on the original), so set
+	// o1lvl 0 to use it purely as an LFO.
+	var lf = p.(\o1lf).round;
+	var f1kb = m[\pitch].(freq, p.(\o1oct), p.(\o1fine), drift, spread, pitchMod);
+	var f1 = (f1kb * (1 - lf)) + (p.(\o1lfrate) * lf);
+	var vco1 = m[\vco1].(f1, p.(\o1wave));
+	var v1 = vco1[0], mod1 = vco1[1];
+
+	// FM is exponential (the mod signal moves pitch in semitones, like a CV into the original's
+	// FM inputs): depth 1 = +-36 semitones (+-3 octaves). Audio-rate exponential FM gives the
+	// clangy, inharmonic bell/metal tones typical of analog FM, not DX7-style linear FM.
+	var f2 = m[\pitch].(freq, p.(\o2oct), p.(\o2fine), drift, spread,
+		pitchMod + (mod1 * p.(\o2fm) * 36));
+	// PWM: VCO 1 swings the pulse width by up to +-0.45 around o2pw (clipped to 0.05..0.95).
+	var v2 = m[\vco2].(f2, p.(\o2wave), p.(\o2pw), pwMod + (mod1 * p.(\o2pwm) * 0.45),
+		p.(\o2sync), f1);
+
+	var f3 = m[\pitch].(freq, p.(\o3oct), p.(\o3fine), drift, spread,
+		pitchMod + (v2 * p.(\o3fm) * 36));
+	var v3 = m[\vco3].(f3, p.(\o3wave), p.(\o3pw), pwMod + (mod1 * p.(\o3pwm) * 0.45));
 
 	var mix = m[\mixer].([v1, v2, v3], [p.(\o1lvl), p.(\o2lvl), p.(\o3lvl)]);
+
+	// Keyboard tracking: the cutoff follows the played note, in octaves relative to middle C.
+	// vcfkey 1 = the cutoff moves 1:1 with pitch (same brightness everywhere); 0 = fixed cutoff.
+	var keyTrack = p.(\vcfkey) * (freq / 261.6256).log2;
 	var filt = m[\vcf].(mix, p.(\vcfcut), p.(\vcfres), p.(\vcfenv), adsr, p.(\vcfdrive),
-		p.(\vcfmodel), cutMod);
+		p.(\vcfmodel), cutMod + keyTrack);
 	var sig = m[\vca].(filt, p.(\vcalvl), p.(\vcaenv), ar, ampMod);
 
 	// Declick + lifetime: 2 ms fade in, 10 ms fade out at the very end of the event,

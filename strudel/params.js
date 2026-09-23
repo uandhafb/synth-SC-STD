@@ -7,15 +7,15 @@
 
 createParams(
   // VCO 1
-  'o1wave', 'o1lvl', 'o1oct', 'o1fine',
+  'o1wave', 'o1lvl', 'o1oct', 'o1fine', 'o1lf', 'o1lfrate',
   // VCO 2
-  'o2wave', 'o2lvl', 'o2oct', 'o2fine', 'o2pw',
+  'o2wave', 'o2lvl', 'o2oct', 'o2fine', 'o2pw', 'o2pwm', 'o2sync', 'o2fm',
   // VCO 3
-  'o3wave', 'o3lvl', 'o3oct', 'o3fine', 'o3pw',
+  'o3wave', 'o3lvl', 'o3oct', 'o3fine', 'o3pw', 'o3pwm', 'o3fm',
   // Analog character
   'drift', 'vspread',
   // VCF
-  'vcfcut', 'vcfres', 'vcfenv', 'vcfdrive', 'vcfmodel', // vcfmodel: 0 = MoogLadder, 1 = MoogFF
+  'vcfcut', 'vcfres', 'vcfenv', 'vcfkey', 'vcfdrive', 'vcfmodel', // vcfmodel: 0 = MoogLadder, 1 = MoogFF
   // VCA
   'vcalvl', 'vcaenv',
   // ADSR

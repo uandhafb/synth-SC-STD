@@ -1,0 +1,25 @@
+{
+  "name": "PWM pad",
+  "sound": "scstd",
+  "stage": 2,
+  "description": "Two pulse waves with slow pulse-width modulation from VCO 1 as an LFO. Wide, moving, chorus-like pad.",
+  "params": {
+    "o1lf": 1,
+    "o1lfrate": 0.8,
+    "o1lvl": 0,
+    "o2wave": 1,
+    "o2pwm": 0.8,
+    "o3lvl": 0.6,
+    "o3wave": 1,
+    "o3pwm": 0.6,
+    "o3oct": 0,
+    "o3fine": -0.08,
+    "vcfcut": 1800,
+    "vcfres": 0.2,
+    "vcfenv": 0.1,
+    "aratk": 0.4,
+    "arrel": 1.2,
+    "erel": 1.2
+  },
+  "tidal": "d1 $ n \"<[0,4,7] [-3,0,4] [-7,-3,0] [-5,-1,2]>\" # s \"scstd\" # o1lf 1 # o1lfrate 0.8 # o1lvl 0 # o2wave 1 # o2pwm 0.8 # o3lvl 0.6 # o3wave 1 # o3pwm 0.6 # o3oct 0 # o3fine (-0.08) # vcfcut 1800 # vcfres 0.2 # vcfenv 0.1 # aratk 0.4 # arrel 1.2 # erel 1.2 # legato 1"
+}

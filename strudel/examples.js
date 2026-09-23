@@ -16,3 +16,14 @@ n("0 3 7 10").s("scstd").osc()
 // #17 — two filter characters, alternating every cycle: MoogLadder (0) and MoogFF (1).
 // n("-24 -12 -24 -17").s("scstd").vcfcut(300).vcfres(0.85).vcfenv(0.6).edec(0.3).vcfmodel("<0 1>").osc()
 
+
+// ---- Stage 2 — oscillator modulation ----
+
+// #22 — PWM pad (presets/pwm_pad.json)
+// n("<[0,4,7] [-3,0,4] [-7,-3,0] [-5,-1,2]>").s("scstd").o1lf(1).o1lfrate(0.8).o1lvl(0).o2wave(1).o2pwm(0.8).o3lvl(0.6).o3wave(1).o3pwm(0.6).o3oct(0).o3fine(-0.08).vcfcut(1800).vcfres(0.2).vcfenv(0.1).aratk(0.4).arrel(1.2).erel(1.2).legato(1).osc()
+
+// #25 — Sync lead (presets/sync_lead.json)
+// n("0 3 7 10 12 10 7 3").s("scstd").o1lvl(0.2).o2sync(1).vcfcut(2500).vcfres(0.3).vcfenv(0.3).vcfkey(0.7).edec(0.4).esus(0.5).o2oct(sine.range(0.6, 2).slow(2)).osc()
+
+// #27 — FM bell (presets/fm_bell.json)
+// n("0 ~ 7 ~ 12 ~ 4 ~").s("scstd").o1oct(0.485).o1lvl(0).o2wave(3).o2fm(0.12).vcfcut(12000).vcfenv(0).aratk(0.001).arrel(2.5).erel(2.5).legato(0.1).osc()
