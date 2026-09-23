@@ -8,7 +8,8 @@ It is being built for live coding performance and research on embodied
 interaction, including acoustic instruments (e.g. cello) driving the synth
 through an envelope follower.
 
-> **Status: Stage 1 — single voice.** Stage 0 (setup, Tidal + Strudel connection) is done; only a test synth (`sctest`) exists so far.
+> **Status: Stage 2 — oscillator modulation (next).** Stage 1 is done: the voice `scstd` has three VCOs,
+> a ladder filter (two characters), VCA and ADSR/AR envelopes.
 > See [`CLAUDE.md`](CLAUDE.md) for the full design and the stage plan.
 
 ## Requirements
@@ -53,7 +54,7 @@ If you boot Tidal another way, add this line to your own `BootTidal.hs` (after t
 ```
 Then evaluate:
 ```haskell
-d1 $ n "0 3 7 10" # s "sctest" # tstbright (slow 4 sine)
+d1 $ n "0 3 7 10" # s "scstd" # vcfcut (range 200 3000 $ slow 4 sine) # vcfres 0.6
 ```
 More in [`tidal/examples.tidal`](tidal/examples.tidal).
 
@@ -63,7 +64,7 @@ npx @strudel/osc     # bridge from the browser to SuperDirt
 ```
 Open [strudel.cc](https://strudel.cc), paste [`strudel/params.js`](strudel/params.js), then:
 ```js
-n("0 3 7 10").s("sctest").tstbright(sine.slow(4)).osc()
+n("0 3 7 10").s("scstd").vcfcut(sine.range(200, 3000).slow(4)).vcfres(0.6).osc()
 ```
 
 ## Project layout

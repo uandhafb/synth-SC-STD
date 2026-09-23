@@ -3,6 +3,11 @@
 Dated feedback from listening tests. Newest first.
 Format: date, stage, what was played (exact Tidal/Strudel line), what was heard, action.
 
+## 2026-09-23 — Stage 1 done
+- Filter A/B (#17A/B, #18A/B): user hears a clear difference and likes both.
+- Decision: keep both as a permanent param `vcfmodel` (0 = MoogLadder default, 1 = MoogFF).
+- Stage 1 approved; test synth sctest removed; gate test now uses scstd.
+
 ## 2026-09-23 — Stage 1, first listening
 - tidal/examples.tidal 1-16 played from VS Code.
 - Heard: everything works (user). #9 resonant sweep smooth: yes. #10 self-oscillation: yes.

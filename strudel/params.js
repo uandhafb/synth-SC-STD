@@ -15,13 +15,11 @@ createParams(
   // Analog character
   'drift', 'vspread',
   // VCF
-  'vcfcut', 'vcfres', 'vcfenv', 'vcfdrive', 'vcfmodel', // vcfmodel: temporary (Stage 1 A/B)
+  'vcfcut', 'vcfres', 'vcfenv', 'vcfdrive', 'vcfmodel', // vcfmodel: 0 = MoogLadder, 1 = MoogFF
   // VCA
   'vcalvl', 'vcaenv',
   // ADSR
   'eatk', 'edec', 'esus', 'erel', 'ecurve',
   // AR
   'aratk', 'arrel',
-  // Stage 0 test synth (sctest), temporary
-  'tstbright', 'tstrel',
 );

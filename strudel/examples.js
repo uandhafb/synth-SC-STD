@@ -13,8 +13,6 @@ n("0 3 7 10").s("scstd").osc()
 // #11 — filter envelope bass.
 // n("-24 -24 -12 -24").s("scstd").vcfcut(150).vcfres(0.6).vcfenv(0.8).edec(0.25).esus(0).osc()
 
-// #17 — filter A/B: MoogLadder (0) vs MoogFF (1), alternating every cycle.
+// #17 — two filter characters, alternating every cycle: MoogLadder (0) and MoogFF (1).
 // n("-24 -12 -24 -17").s("scstd").vcfcut(300).vcfres(0.85).vcfenv(0.6).edec(0.3).vcfmodel("<0 1>").osc()
 
-// Stage 0 test synth (sctest)
-// n("0 3 7 10").s("sctest").tstbright(sine.slow(4)).osc()

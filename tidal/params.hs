@@ -29,7 +29,7 @@ let o1wave   = pF "o1wave"
     vcfres   = pF "vcfres"
     vcfenv   = pF "vcfenv"
     vcfdrive = pF "vcfdrive"
-    vcfmodel = pF "vcfmodel"  -- temporary (Stage 1 A/B)
+    vcfmodel = pF "vcfmodel"  -- 0 = MoogLadder, 1 = MoogFF
 -- VCA
     vcalvl   = pF "vcalvl"
     vcaenv   = pF "vcaenv"
@@ -42,7 +42,4 @@ let o1wave   = pF "o1wave"
 -- AR
     aratk    = pF "aratk"
     arrel    = pF "arrel"
--- Stage 0 test synth (sctest), temporary
-    tstbright = pF "tstbright"
-    tstrel    = pF "tstrel"
 :}

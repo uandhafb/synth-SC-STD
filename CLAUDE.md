@@ -436,4 +436,4 @@ line at the bottom of this file when moving on.
 
 ## Current stage
 
-**Stage 1 — Single voice** (Stage 0 done 2026-09-23)
+**Stage 2 — Oscillator modulation** (Stage 0 and Stage 1 done 2026-09-23)

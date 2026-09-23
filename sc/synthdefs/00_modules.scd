@@ -24,7 +24,7 @@
 	// VCF (6.7)
 	vcfcut: [20, 18000, 2000], vcfres: [0, 1.1, 0.2], vcfenv: [-1, 1, 0.4],
 	vcfdrive: [0, 1, 0.3],
-	vcfmodel: [0, 1, 0],   // TEMPORARY (Stage 1 A/B): 0 = MoogLadder, 1 = MoogFF
+	vcfmodel: [0, 1, 0],   // filter character: 0 = MoogLadder (default, self-oscillates), 1 = MoogFF
 	// VCA (6.8)
 	vcalvl: [0, 1, 0.8], vcaenv: [0, 1, 1],
 	// ADSR (6.9) and AR (6.10)

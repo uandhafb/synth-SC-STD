@@ -56,22 +56,17 @@ d1 $ n "0 ~ ~ 7 ~ ~ 12 ~" # s "scstd" # legato 0.2 # arrel 2 # erel 2
 -- 16. Analog character: drift 0 + vspread 0 = perfectly static; 1 + 1 = wobbly, unstable.
 d1 $ n "0*4" # s "scstd" # legato 1 # drift "<0 1>" # vspread "<0 1>"
 
--- 17. FILTER COMPARISON — bass. Play A, listen ~10 s, then play B (it replaces A).
---     Switch back and forth a few times. Which do you prefer: warmth, resonance, brightness?
+-- 17. Two filter characters — bass. vcfmodel 0 = MoogLadder (default, can self-oscillate),
+--     vcfmodel 1 = MoogFF (different colour). Play A, then B, and switch back and forth.
 -- 17A (MoogLadder):
 d1 $ n "-24 -12 -24 -17" # s "scstd" # vcfcut 300 # vcfres 0.85 # vcfenv 0.6 # edec 0.3 # vcfmodel 0
 -- 17B (MoogFF):
 d1 $ n "-24 -12 -24 -17" # s "scstd" # vcfcut 300 # vcfres 0.85 # vcfenv 0.6 # edec 0.3 # vcfmodel 1
 
--- 18. FILTER COMPARISON — chords, filter more open. Same method: A, then B, back and forth.
+-- 18. Two filter characters — chords, filter more open.
 -- 18A (MoogLadder):
 d1 $ n "[0,3,7,10]" # s "scstd" # vcfcut 1200 # vcfres 0.5 # legato 1 # vcfmodel 0
 -- 18B (MoogFF):
 d1 $ n "[0,3,7,10]" # s "scstd" # vcfcut 1200 # vcfres 0.5 # legato 1 # vcfmodel 1
 
 hush
-
--- =============================================================================================
--- Stage 0 — test synth (sctest), kept until Stage 1 is approved.
--- =============================================================================================
-d1 $ n "0 3 7 10" # s "sctest" # tstbright (slow 4 sine)

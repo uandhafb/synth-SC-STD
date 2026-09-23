@@ -49,7 +49,7 @@ Parameters for later stages are listed in CLAUDE.md, Section 6; they move here w
 | `vcfres` | 0–1.1 | 0.2 | Resonance; above 1 the filter self-oscillates (sings) |
 | `vcfenv` | -1–1 | 0.4 | ADSR amount to cutoff (±1 = ±5 octaves) |
 | `vcfdrive` | 0–1 | 0.3 | Input saturation (anti-aliased tanh, 1×–8× gain) |
-| `vcfmodel` | 0/1 | 0 | **Temporary (Stage 1 A/B):** 0 = MoogLadder, 1 = MoogFF |
+| `vcfmodel` | 0/1 | 0 | Filter character: 0 = MoogLadder (default; self-oscillates), 1 = MoogFF (different colour; rings but does not self-oscillate) |
 
 ### VCA
 | Param | Range | Default | Description |
@@ -71,13 +71,6 @@ Parameters for later stages are listed in CLAUDE.md, Section 6; they move here w
 |---|---|---|---|
 | `aratk` | 0.001–10 s | 0.005 | Attack |
 | `arrel` | 0.001–15 s | 0.3 | Release |
-
-## Sound `sctest` — Stage 0 test synth (temporary, removed after Stage 1)
-
-| Param | Range | Default | Description |
-|---|---|---|---|
-| `tstbright` | 0–1 | 0.5 | Low-pass brightness, mapped exponentially to 200 Hz–12 kHz |
-| `tstrel` | 0.01–8 s | 0.3 | Release time; added to the event's `sustain` so the tail is not cut |
 
 ## Standard SuperDirt params we rely on
 
