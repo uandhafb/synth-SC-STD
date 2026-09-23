@@ -3,6 +3,18 @@
 Dated feedback from listening tests. Newest first.
 Format: date, stage, what was played (exact Tidal/Strudel line), what was heard, action.
 
+## 2026-09-23 — Stage 3, bug: patch cables never reached the synth via SuperDirt
+- User: #35 has no pitch jumps. Offline renders jumped, so reproduced with a private SuperDirt
+  instance (output to a silent bus, recorded): pitch stayed at +0.
+- Cause: SynthDesc treats a control name whose 2nd character is "_" as a rate prefix and strips it,
+  so SuperDirt's msgFunc expected "sh_pitch" while Tidal sent "m_sh_pitch": value silently dropped.
+- Fix: cable names are now <source>_<dest> (sh_pitch, sh_vcf); ~scstdParams refuses 2nd-char "_";
+  new test sc/tests/check_msgfunc.scd (all 47 params pass). Real SuperDirt probe now jumps:
+  -12 -5 -7 +10 +6 -2 ... semitones.
+- #34 "could be more bell": added ring-mod bells 34A church (partials 1, 2.4, 0.4, 3.8 x note,
+  -33 -> -54 dB over 2 s, brightness 525 -> 411 Hz) and 34B glass; preset ringmod_bell.
+  Note: 34 itself was also affected only by the level, not the bug (rmlvl has no "_").
+
 ## 2026-09-23 — Stage 3, R2-D2 third draft
 - User likes 40A/B/C but "neither similar: more talking and beeps".
 - New approach: many short sine beeps (Tidal: segment 16 + degradeBy 0.35, random pitch C5-C7),

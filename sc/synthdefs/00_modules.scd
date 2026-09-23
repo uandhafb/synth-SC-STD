@@ -26,8 +26,8 @@
 	nzcol: [0, 1, 0], nzlvl: [0, 1, 0], rmlvl: [0, 1, 0],
 	// Sample & hold (6.11), lag processor (6.12)
 	shrate: [0.1, 50, 6], shsrc: [0, 3, 0], shlag: [0, 1, 0], lagtime: [0, 5, 0],
-	// Patch cables (6.14), m_<source>_<dest>: pitch in semitones, vcf in octaves
-	m_sh_pitch: [-48, 48, 0], m_sh_vcf: [-6, 6, 0],
+	// Patch cables (6.14), <source>_<dest>: pitch in semitones, vcf in octaves
+	sh_pitch: [-48, 48, 0], sh_vcf: [-6, 6, 0],
 	// VCF (6.7)
 	vcfcut: [20, 18000, 2000], vcfres: [0, 1.1, 0.2], vcfenv: [-1, 1, 0.4],
 	vcfkey: [0, 1, 0.5], vcfdrive: [0, 1, 0.3],
@@ -49,6 +49,13 @@
 	{ |name|
 		var s = specs[name];
 		s.isNil.if { Error("scstd: unknown param %".format(name)).throw };
+		// A name whose 2nd character is "_" (e.g. "m_x", "t_x") is read by SuperCollider as a
+		// rate prefix: SynthDesc strips those 2 characters, so SuperDirt would never pass the
+		// value (found 2026-09-23 with "m_sh_pitch"). Refuse such names.
+		(name.asString[1] == $_).if {
+			Error("scstd: param name '%' has '_' as 2nd character; SuperDirt would drop it"
+				.format(name)).throw
+		};
 		name.kr(s[2]).clip(s[0], s[1])
 	}
 };
@@ -291,7 +298,7 @@
 	var nz = m[\noise].(p.(\nzcol));
 
 	// Sample & hold. Its input can be a VCO (shsrc 1-3), but the VCOs' pitch can in turn be
-	// modulated by the S&H (m_sh_pitch): a loop, as on the original when you patch it that way.
+	// modulated by the S&H (sh_pitch): a loop, as on the original when you patch it that way.
 	// A UGen graph cannot contain a direct loop, so the VCO signals come back through
 	// LocalIn/LocalOut with one block of delay (64 samples = 1.3 ms at 48 kHz). The S&H samples
 	// at most 50 times per second, so that delay is inaudible.
@@ -299,10 +306,10 @@
 	var shIn = Select.ar(p.(\shsrc).round, [nz, fb[0], fb[1], fb[2]]);
 	var sh = m[\sh].(shIn, p.(\shrate), p.(\shlag));
 
-	// Modulation summing points (Architecture decision 6). Patch-cable naming: m_<source>_<dest>.
+	// Modulation summing points (Architecture decision 6). Patch-cable naming: <source>_<dest>.
 	// Units per destination: pitch in semitones, vcf in octaves. Stage 4 adds the other sources.
-	var pitchMod = sh * p.(\m_sh_pitch);
-	var cutMod = sh * p.(\m_sh_vcf);
+	var pitchMod = sh * p.(\sh_pitch);
+	var cutMod = sh * p.(\sh_vcf);
 	var pwMod = 0, ampMod = 0;
 
 	// VCO 1 first: it is the modulation source for the others.

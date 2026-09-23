@@ -8,7 +8,7 @@
     "o2lvl": 0,
     "nzlvl": 1,
     "nzcol": 0.3,
-    "m_sh_vcf": 2.5,
+    "sh_vcf": 2.5,
     "shrate": 1.5,
     "shlag": 1,
     "vcfcut": 900,
@@ -19,5 +19,5 @@
     "arrel": 1.5,
     "erel": 1.5
   },
-  "tidal": "d1 $ n \"0\" # s \"scstd\" # o1lvl 0 # o2lvl 0 # nzlvl 1 # nzcol 0.3 # m_sh_vcf 2.5 # shrate 1.5 # shlag 1 # vcfcut 900 # vcfres 0.85 # vcfenv 0 # vcfkey 0 # aratk 0.8 # arrel 1.5 # erel 1.5 # legato 1"
+  "tidal": "d1 $ n \"0\" # s \"scstd\" # o1lvl 0 # o2lvl 0 # nzlvl 1 # nzcol 0.3 # sh_vcf 2.5 # shrate 1.5 # shlag 1 # vcfcut 900 # vcfres 0.85 # vcfenv 0 # vcfkey 0 # aratk 0.8 # arrel 1.5 # erel 1.5 # legato 1"
 }

@@ -1,0 +1,27 @@
+{
+  "name": "Ring-mod bell (church)",
+  "sound": "scstd",
+  "stage": 3,
+  "description": "VCO 1 x VCO 2 (sine) at an odd ratio gives inharmonic bell partials; struck envelope with a long ring; the filter opens on the strike and mellows.",
+  "params": {
+    "o1oct": 0.485,
+    "o1lvl": 0,
+    "o2wave": 3,
+    "o2lvl": 0.25,
+    "rmlvl": 1,
+    "vcalvl": 1,
+    "aratk": 0.001,
+    "eatk": 0.001,
+    "esus": 0,
+    "vcfkey": 1,
+    "vcfdrive": 0,
+    "drift": 0.05,
+    "vspread": 0,
+    "arrel": 3.5,
+    "erel": 3.5,
+    "edec": 1.8,
+    "vcfcut": 900,
+    "vcfenv": 0.45
+  },
+  "tidal": "d1 $ n \"0 ~ ~ 5 ~ ~ 7 ~\" # s \"scstd\" # o1oct 0.485 # o1lvl 0 # o2wave 3 # o2lvl 0.25 # rmlvl 1 # vcalvl 1 # aratk 0.001 # eatk 0.001 # esus 0 # vcfkey 1 # vcfdrive 0 # drift 0.05 # vspread 0 # arrel 3.5 # erel 3.5 # edec 1.8 # vcfcut 900 # vcfenv 0.45 # legato 0.05"
+}

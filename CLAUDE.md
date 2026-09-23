@@ -145,6 +145,9 @@ CLAUDE.md
   **Tidal functions** (e.g. `spread`, `range`, `every`) or **Strudel built-in
   controls**. All synth params use module prefixes (see Section 6). Check every
   new name against all three before using it.
+- **Never use "_" as the 2nd character of a param name** (e.g. `m_x`, `t_x`): SynthDesc reads it
+  as a rate prefix and strips it, so SuperDirt silently drops the value. Guarded in
+  `~scstdParams`; run `sc/tests/check_msgfunc.scd` after adding params.
 - Custom params must be declared for Tidal (e.g. `let vcfcut = pF "vcfcut"`)
   in `tidal/params.hs`, and for Strudel in `strudel/params.js` (confirm the
   current Strudel API for custom controls before writing it).
@@ -273,14 +276,14 @@ Sources: `vco1`, `vco2`, `vco3`, `noise`, `sh`, `adsr`, `ar`, `envf`, `rm`.
 Destinations: pitch (all VCOs), `o2pwm`, `vcfmod`, `vcamod`.
 
 Design: a fixed source × destination matrix with a depth parameter per
-connection (e.g. `m_sh_pitch`, `m_vco3_vcf`). Several sources may feed one
+connection (e.g. `sh_pitch`, `vco3_vcf`). Several sources may feed one
 destination (like the original's per-input attenuators). Normalled connections
 have non-zero defaults; setting any depth overrides the default.
 In the UI, each non-zero depth is also drawn as a cable (original visual style);
 dragging a cable creates/removes the connection, its knob sets the depth.
-Naming agreed 2026-09-23: `m_<source>_<dest>`; units per destination: pitch in
+Naming agreed 2026-09-23: `<source>_<dest>`; units per destination: pitch in
 semitones, vcf in octaves (pw, vca to be defined in Stage 4). First cables
-(`m_sh_pitch`, `m_sh_vcf`) added in Stage 3.
+(`sh_pitch`, `sh_vcf`) added in Stage 3.
 
 ### 6.15 Spring reverb (Stage 6)
 | Param | Range | Default | Description |

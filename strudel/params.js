@@ -18,8 +18,8 @@ createParams(
   'nzcol', 'nzlvl', 'rmlvl',
   // Sample & hold, lag
   'shrate', 'shsrc', 'shlag', 'lagtime',
-  // Patch cables (m_<source>_<dest>)
-  'm_sh_pitch', 'm_sh_vcf',
+  // Patch cables (<source>_<dest>)
+  'sh_pitch', 'sh_vcf',
   // VCF
   'vcfcut', 'vcfres', 'vcfenv', 'vcfkey', 'vcfdrive', 'vcfmodel', // vcfmodel: 0 = MoogLadder, 1 = MoogFF
   // VCA

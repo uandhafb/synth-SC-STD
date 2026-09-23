@@ -31,10 +31,10 @@ n("0 3 7 10").s("scstd").osc()
 // ---- Stage 3 — noise, ring mod, sample & hold, lag ----
 
 // #32 — Wind (presets/wind.json)
-// n("0").s("scstd").o1lvl(0).o2lvl(0).nzlvl(1).nzcol(0.3).m_sh_vcf(2.5).shrate(1.5).shlag(1).vcfcut(900).vcfres(0.85).vcfenv(0).vcfkey(0).aratk(0.8).arrel(1.5).erel(1.5).legato(1).osc()
+// n("0").s("scstd").o1lvl(0).o2lvl(0).nzlvl(1).nzcol(0.3).sh_vcf(2.5).shrate(1.5).shlag(1).vcfcut(900).vcfres(0.85).vcfenv(0).vcfkey(0).aratk(0.8).arrel(1.5).erel(1.5).legato(1).osc()
 
 // #39 — Computer sequence (presets/computer_sequence.json)
-// n("0").s("scstd").o1lvl(0).o2wave(1).o2pw(0.3).m_sh_pitch(12).shrate(8).vcfcut(2500).vcfres(0.5).vcfenv(0).arrel(0.1).erel(0.1).legato(1).osc()
+// n("0").s("scstd").o1lvl(0).o2wave(1).o2pw(0.3).sh_pitch(12).shrate(8).vcfcut(2500).vcfres(0.5).vcfenv(0).arrel(0.1).erel(0.1).legato(1).osc()
 
 // #40D — R2-D2-style talking (presets/r2d2_bleeps.json). Strudel's rand/irand also share a seed,
 // so the random sources are shifted in time (.late) to keep them independent. Untested in Strudel.

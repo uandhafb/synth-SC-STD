@@ -33,24 +33,24 @@ cases = [
 	["ringmod_c6", [84], 1.0, open ++ novco ++ [rmlvl: 1, o1oct: 0.485]],
 	["ringmod_sines", [72], 1.0, open ++ novco ++ [rmlvl: 1, o1oct: 0.485, o2wave: 3]],
 	// S&H from noise -> pitch: one long note, 8 steps per second, +-12 semitones.
-	["sh_pitch", [60], 3.0, [m_sh_pitch: 12, shrate: 8, vcfcut: 5000, vcfenv: 0, drift: 0, vspread: 0, o2lvl: 0]],
-	["sh_pitch_lag", [60], 3.0, [m_sh_pitch: 12, shrate: 8, shlag: 1, vcfcut: 5000, vcfenv: 0, drift: 0, vspread: 0, o2lvl: 0]],
+	["sh_pitch", [60], 3.0, [sh_pitch: 12, shrate: 8, vcfcut: 5000, vcfenv: 0, drift: 0, vspread: 0, o2lvl: 0]],
+	["sh_pitch_lag", [60], 3.0, [sh_pitch: 12, shrate: 8, shlag: 1, vcfcut: 5000, vcfenv: 0, drift: 0, vspread: 0, o2lvl: 0]],
 	// S&H -> filter: stepped filter (classic), and smooth random wander on noise (wind).
-	["sh_vcf", [48], 3.0, [m_sh_vcf: 2, shrate: 6, vcfcut: 800, vcfres: 0.7, vcfenv: 0]],
-	["wind", [60], 3.0, novco ++ [nzlvl: 1, nzcol: 0.3, m_sh_vcf: 2.5, shrate: 1.5, shlag: 1, vcfcut: 900,
+	["sh_vcf", [48], 3.0, [sh_vcf: 2, shrate: 6, vcfcut: 800, vcfres: 0.7, vcfenv: 0]],
+	["wind", [60], 3.0, novco ++ [nzlvl: 1, nzcol: 0.3, sh_vcf: 2.5, shrate: 1.5, shlag: 1, vcfcut: 900,
 		vcfres: 0.85, vcfenv: 0, vcfkey: 0, aratk: 0.8, arrel: 1.5]],
 	// S&H sampling VCO 2 (feedback loop through LocalIn), modulating pitch: must stay stable.
-	["sh_feedback", [60], 3.0, [shsrc: 2, m_sh_pitch: 12, shrate: 10, o2oct: 0.3, vcfcut: 4000, vcfenv: 0]],
+	["sh_feedback", [60], 3.0, [shsrc: 2, sh_pitch: 12, shrate: 10, o2oct: 0.3, vcfcut: 4000, vcfenv: 0]],
 	// Noise percussion: very short.
 	["noise_hat", [60], 0.03, open ++ novco ++ [nzlvl: 1, aratk: 0.001, arrel: 0.06, erel: 0.06, vcfcut: 9000]],
 	// Lag processor smoothing VCO 1's saw LFO for PWM (compare with Stage 2 pwm_pad clicks).
 	["pwm_lag0", [48], 3.0, [o1lf: 1, o1lfrate: 0.8, o1lvl: 0, o2wave: 1, o2pwm: 0.8, vcfcut: 1800, vcfenv: 0, lagtime: 0]],
 	["pwm_lag03", [48], 3.0, [o1lf: 1, o1lfrate: 0.8, o1lvl: 0, o2wave: 1, o2pwm: 0.8, vcfcut: 1800, vcfenv: 0, lagtime: 0.3]],
 	// R2-D2-style bleeps (first draft): sines, ring mod, fast S&H on pitch with a little lag.
-	["r2d2", [72], 3.0, [o1oct: 0.5, o1lvl: 0, o2wave: 3, o2lvl: 0.5, rmlvl: 0.6, m_sh_pitch: 24, shrate: 11,
+	["r2d2", [72], 3.0, [o1oct: 0.5, o1lvl: 0, o2wave: 3, o2lvl: 0.5, rmlvl: 0.6, sh_pitch: 24, shrate: 11,
 		shlag: 0.35, vcfcut: 9000, vcfenv: 0, o2fm: 0.03]],
 	// Worst case.
-	["everything", [36, 60], 2.0, [o1lvl: 1, o2lvl: 1, o3lvl: 1, nzlvl: 1, rmlvl: 1, m_sh_pitch: 48, m_sh_vcf: 6,
+	["everything", [36, 60], 2.0, [o1lvl: 1, o2lvl: 1, o3lvl: 1, nzlvl: 1, rmlvl: 1, sh_pitch: 48, sh_vcf: 6,
 		shrate: 50, o2sync: 1, o2fm: 1, vcfres: 1.1, vcfdrive: 1]]
 ];
 

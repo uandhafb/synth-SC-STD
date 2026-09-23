@@ -40,9 +40,9 @@ let o1wave   = pF "o1wave"
     shsrc    = pF "shsrc"
     shlag    = pF "shlag"
     lagtime  = pF "lagtime"
--- Patch cables (m_<source>_<dest>)
-    m_sh_pitch = pF "m_sh_pitch"
-    m_sh_vcf   = pF "m_sh_vcf"
+-- Patch cables (<source>_<dest>)
+    sh_pitch = pF "sh_pitch"
+    sh_vcf   = pF "sh_vcf"
 -- VCF
     vcfcut   = pF "vcfcut"
     vcfres   = pF "vcfres"

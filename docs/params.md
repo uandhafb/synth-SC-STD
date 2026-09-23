@@ -84,11 +84,11 @@ In event mode each note restarts the S&H: play one long note to hear a sequence.
 |---|---|---|---|
 | `lagtime` | 0–5 s | 0 | Smooths VCO 1's modulation output (PWM/FM). Turns the saw LFO's jump into a soft curve: smooth PWM pads |
 
-### Patch cables (`m_<source>_<destination>`)
+### Patch cables (`<source>_<destination>`)
 | Param | Range | Default | Description |
 |---|---|---|---|
-| `m_sh_pitch` | -48–48 | 0 | S&H → pitch of all VCOs, in semitones (12 = random steps within ±1 octave) |
-| `m_sh_vcf` | -6–6 | 0 | S&H → filter cutoff, in octaves |
+| `sh_pitch` | -48–48 | 0 | S&H → pitch of all VCOs, in semitones (12 = random steps within ±1 octave) |
+| `sh_vcf` | -6–6 | 0 | S&H → filter cutoff, in octaves |
 
 ### VCA
 | Param | Range | Default | Description |
