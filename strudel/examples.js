@@ -36,5 +36,5 @@ n("0 3 7 10").s("scstd").osc()
 // #39 — Computer sequence (presets/computer_sequence.json)
 // n("0").s("scstd").o1lvl(0).o2wave(1).o2pw(0.3).m_sh_pitch(12).shrate(8).vcfcut(2500).vcfres(0.5).vcfenv(0).arrel(0.1).erel(0.1).legato(1).osc()
 
-// #40 — R2-D2-style bleeps (presets/r2d2_bleeps.json)
-// n("<0 7 3 12>").s("scstd").o1oct(0.5).o1lvl(0).o2wave(3).o2lvl(0.5).rmlvl(0.6).m_sh_pitch(24).shrate(11).shlag(0.35).o2fm(0.03).vcfcut(9000).vcfenv(0).legato(0.9).osc()
+// #40A — R2-D2-style bleeps, whistle (presets/r2d2_bleeps.json)
+// n("<12 19 15 24>").s("scstd").o1lf(1).o1lfrate(16).o1lvl(0).o2wave(3).o2lvl(1).vcalvl(1).o2fm(0.035).m_sh_pitch(14).shrate(8).shlag(0.55).vcfcut(5000).vcfenv(0).vcfdrive(0).drift(0).legato(0.9).osc()

@@ -3,6 +3,13 @@
 Dated feedback from listening tests. Newest first.
 Format: date, stage, what was played (exact Tidal/Strudel line), what was heard, action.
 
+## 2026-09-23 — Stage 3, first listening
+- #36-38 unclear to the user: comments rewritten (36 = glides, 37 = S&H on filter, 38 = S&H on VCO 3).
+- #40 R2-D2 first draft: "cool but too harsh, not R2-D2". Cause: ring mod uses VCO 1's saw.
+  Second draft without ring mod: sine + fast VCO 1 trill + S&H with lag, pitched higher.
+  Energy above 4 kHz: -19 dB (draft 1) -> -41 dB (40A whistle) / -30 dB (40B chirp).
+  Preset updated to 40A; waiting for user's choice.
+
 ## 2026-09-23 — Stage 3, offline measurements (before listening)
 Rendered with `sc/tests/stage3_render.scd`, measured with `analysis/stage3_check.py`.
 - Noise: PinkNoise measured ~3.7x quieter than white/brown (RMS 0.155 vs 0.58); gain added.

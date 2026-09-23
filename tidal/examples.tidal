@@ -141,19 +141,28 @@ d1 $ n "0 3 7 10" # s "scstd" # rmlvl "<0 0.6>"
 --     This is the classic "computer" sound. (Each new note restarts the S&H.)
 d1 $ n "0" # s "scstd" # legato 1 # o2lvl 0 # m_sh_pitch 12 # shrate 8 # vcfcut 3000 # vcfenv 0
 
--- 36. Same, with shlag: the steps become glides.
+-- 36. Same as 35, but shlag makes the jumps into GLIDES (slides). One cycle each:
+--     shlag 0 = hard jumps (like 35), 0.5 = quick slides, 1 = slow continuous slides.
 d1 $ n "0" # s "scstd" # legato 1 # o2lvl 0 # m_sh_pitch 12 # shrate 8 # shlag "<0 0.5 1>" # vcfcut 3000 # vcfenv 0
 
--- 37. S&H -> filter: the classic stepped "bubbling" filter on a steady note.
+-- 37. S&H moves the FILTER instead of the pitch: the note stays the same, but its tone
+--     jumps between dark and bright ("bubbling", "blip-blop"). Compare with 35: 35 = pitch jumps.
 d1 $ n "-12" # s "scstd" # legato 1 # m_sh_vcf 2 # shrate 6 # vcfcut 800 # vcfres 0.7 # vcfenv 0
 
--- 38. S&H sampling VCO 3 (slow) instead of noise: the steps form a repeating pattern, not random.
+-- 38. Like 35 (pitch jumps), but the S&H reads a slow wave (VCO 3) instead of noise. So the jumps
+--     are NOT random: they form a pattern that repeats, like a little arpeggio/sequencer.
 d1 $ n "0" # s "scstd" # legato 1 # o2lvl 0 # shsrc 3 # o3oct (-3) # m_sh_pitch 12 # shrate 6 # vcfcut 3000 # vcfenv 0
 
 -- 39. PRESET: Computer sequence (presets/computer_sequence.json).
 d1 $ n "0" # s "scstd" # o1lvl 0 # o2wave 1 # o2pw 0.3 # m_sh_pitch 12 # shrate 8 # vcfcut 2500 # vcfres 0.5 # vcfenv 0 # arrel 0.1 # erel 0.1 # legato 1
 
--- 40. PRESET: R2-D2-style bleeps (presets/r2d2_bleeps.json). First draft: tell me how to tune it.
+-- 40. R2-D2-style, second draft: pure sine tones (no harsh ring mod) that jump and glide
+--     randomly, with a fast trill from VCO 1 as an LFO. Two versions, compare them:
+-- 40A "whistle" (PRESET presets/r2d2_bleeps.json): smoother, more like whistling.
+d1 $ n "<12 19 15 24>" # s "scstd" # o1lf 1 # o1lfrate 16 # o1lvl 0 # o2wave 3 # o2lvl 1 # vcalvl 1 # o2fm 0.035 # m_sh_pitch 14 # shrate 8 # shlag 0.55 # vcfcut 5000 # vcfenv 0 # vcfdrive 0 # drift 0 # legato 0.9
+-- 40B "chirp": faster, jumpier, a bit brighter.
+d1 $ n "<12 19 15 24>" # s "scstd" # o1lf 1 # o1lfrate 22 # o1lvl 0 # o2wave 2.6 # o2lvl 1 # vcalvl 1 # o2fm 0.05 # m_sh_pitch 20 # shrate 14 # shlag 0.25 # vcfcut 4000 # vcfres 0.3 # vcfenv 0 # vcfdrive 0 # drift 0 # legato 0.9
+-- 40C first draft (for comparison; ring mod of VCO 1's saw = harsh).
 d1 $ n "<0 7 3 12>" # s "scstd" # o1oct 0.5 # o1lvl 0 # o2wave 3 # o2lvl 0.5 # rmlvl 0.6 # m_sh_pitch 24 # shrate 11 # shlag 0.35 # o2fm 0.03 # vcfcut 9000 # vcfenv 0 # legato 0.9
 
 -- 41. Lag processor: the PWM pad from 22, first with clicks (lagtime 0), then smooth (0.3).
