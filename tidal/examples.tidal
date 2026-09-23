@@ -1,14 +1,71 @@
--- Stage 0: test synth (sctest). Needs sc/startup.scd running and tidal/params.hs loaded.
+-- synth-SC-STD examples. Needs sc/startup.scd running and the project BootTidal.hs loaded.
+-- Click on a line (or a block) and press Shift+Enter. `hush` stops everything.
 
--- 1. Basic: should play a short saw melody.
-d1 $ n "0 3 7 10" # s "sctest"
-
--- 2. Custom param: the filter should slowly open and close.
-d1 $ n "0 3 7 10" # s "sctest" # tstbright (slow 4 sine)
-
--- 3. Gate test: short notes with a long release should overlap and fade out smoothly,
---    not stop abruptly.
-d1 $ n "0 ~ 7 ~" # s "sctest" # tstrel 2 # legato 0.2
-
-d1 silence
 hush
+
+-- =============================================================================================
+-- Stage 1 — single voice (sound "scstd"). Each block tests one module.
+-- =============================================================================================
+
+-- 1. Default sound: two slightly detuned saws through the filter. Warm, a bit buzzy.
+d1 $ n "0 3 7 10" # s "scstd"
+
+-- 2. Chords: should be clean, no distortion or crackle.
+d1 $ n "[0,4,7] [2,5,9] [-1,2,7] [0,4,7,11]" # s "scstd" # legato 1
+
+-- 3. VCO waves. Listen for: saw (bright) -> square (hollow) as o1wave goes 0 -> 1.
+d1 $ n "0 ~ 0 ~" # s "scstd" # o2lvl 0 # vcfcut 8000 # vcfenv 0 # o1wave "<0 0.5 1>"
+
+-- 4. VCO 2 morph: saw -> pulse -> triangle -> sine, one per cycle (gets softer and rounder).
+d1 $ n "0*4" # s "scstd" # o1lvl 0 # vcfcut 8000 # vcfenv 0 # o2wave "<0 1 2 3>"
+
+-- 5. Pulse width: thin, nasal pulse (0.1) vs. full square (0.5).
+d1 $ n "0*4" # s "scstd" # o1lvl 0 # o2wave 1 # vcfcut 8000 # vcfenv 0 # o2pw "<0.5 0.1>"
+
+-- 6. VCO 3 one octave down adds weight. Listen for: fuller, deeper sound on the second cycle.
+d1 $ n "0 3 7 10" # s "scstd" # o3lvl "<0 0.7>"
+
+-- 7. Detune: o2fine 0 = static; 0.15 = slow beating "chorus".
+d1 $ n "0" # s "scstd" # legato 1 # vcfenv 0 # o2fine "<0 0.15>"
+
+-- 8. Filter cutoff (dark -> bright), no resonance.
+d1 $ n "-12*8" # s "scstd" # vcfenv 0 # vcfres 0 # vcfcut (range 100 6000 $ slow 4 sine)
+
+-- 9. Resonance: same sweep, strong resonance. Listen for: a smooth whistling peak, no clicks
+--    or "zipper" steps.
+d1 $ n "-12*8" # s "scstd" # vcfenv 0 # vcfres 0.9 # vcfcut (range 100 6000 $ slow 4 sine)
+
+-- 10. Self-oscillation: no oscillators, filter alone sings a sine at the cutoff frequency.
+d1 $ n "0" # s "scstd" # o1lvl 0 # o2lvl 0 # vcfres 1.1 # vcfenv 0 # vcfcut "<440 660 880>" # legato 1
+
+-- 11. Filter envelope: classic "pew" / "wow" bass. vcfenv 0.8 = strong sweep down on each note.
+d1 $ n "-24 -24 -12 -24" # s "scstd" # vcfcut 150 # vcfres 0.6 # vcfenv 0.8 # edec 0.25 # esus 0
+
+-- 12. Negative envelope: the filter closes on the attack and opens as the note ends.
+d1 $ n "-12 -5" # s "scstd" # vcfcut 3000 # vcfenv (-0.6) # eatk 0.3 # edec 0.5 # esus 0.2 # legato 1
+
+-- 13. Drive: clean (0) -> saturated (1). Listen for: grittier, more harmonics, not much louder.
+d1 $ n "-12 -12 -5 -12" # s "scstd" # vcfres 0.5 # vcfdrive "<0 1>"
+
+-- 14. AR envelope (volume): slow swell pad vs. plucky.
+d1 $ n "[0,4,7]" # s "scstd" # aratk "<1 0.005>" # arrel "<1.5 0.2>" # legato 1
+
+-- 15. Long release: short notes that ring out and overlap.
+d1 $ n "0 ~ ~ 7 ~ ~ 12 ~" # s "scstd" # legato 0.2 # arrel 2 # erel 2
+
+-- 16. Analog character: drift 0 + vspread 0 = perfectly static; 1 + 1 = wobbly, unstable.
+d1 $ n "0*4" # s "scstd" # legato 1 # drift "<0 1>" # vspread "<0 1>"
+
+-- 17. FILTER A/B (please compare!): 0 = MoogLadder, 1 = MoogFF. Alternates every cycle.
+--     Which one do you prefer for resonance, bass warmth and brightness?
+d1 $ n "-24 -12 -24 -17" # s "scstd" # vcfcut 300 # vcfres 0.85 # vcfenv 0.6 # edec 0.3 # vcfmodel "<0 1>"
+
+-- 18. Same A/B on chords with the filter more open.
+d1 $ n "[0,3,7,10]" # s "scstd" # vcfcut 1200 # vcfres 0.5 # legato 1 # vcfmodel "<0 1>"
+
+hush
+
+-- =============================================================================================
+-- Stage 0 — test synth (sctest), kept until Stage 1 is approved.
+-- =============================================================================================
+d1 $ n "0 3 7 10" # s "sctest" # tstbright (slow 4 sine)

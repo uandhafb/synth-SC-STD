@@ -3,6 +3,17 @@
 Dated feedback from listening tests. Newest first.
 Format: date, stage, what was played (exact Tidal/Strudel line), what was heard, action.
 
+## 2026-09-23 — Stage 1, offline measurements (before listening)
+Rendered with `sc/tests/stage1_render.scd`, measured with `analysis/stage1_check.py`.
+- No NaN, no clicks at note edges, chord with 3 full VCOs + full drive peaks at -3 dBFS.
+- Drive: plain tanh added 10-15 dB aliasing vs. the raw saw. Switched to ADAA tanh:
+  non-harmonic energy at C8 (open filter) -35 dB -> -47 dB (saw), -52 dB (square).
+- Self-oscillation: MoogLadder needs res > ~1.1 (1.5 = strong); remapped vcfres 1..1.1 -> 1..1.5.
+  Now sings at ~1044 Hz for vcfcut 1000 (slightly sharp; check tracking in Stage 6).
+  MoogFF caps gain at 4 and does not self-oscillate at all (-90 dBFS).
+- Release tail 2 s decays smoothly (-26 -> -75 dB over 1.9 s).
+- Pending: user listening + filter A/B choice (examples 17-18 in tidal/examples.tidal).
+
 ## 2026-09-23 — Stage 0, Strudel
 - strudel.cc + `npx @strudel/osc` (v1.3.2): `n("0 3 7 10").s("sctest").tstbright(sine.slow(4)).osc()`
 - Heard: works (user confirmed). createParams path works; no fallback needed.

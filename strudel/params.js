@@ -1,8 +1,27 @@
 // Custom controls for Strudel. Paste at the top of a Strudel REPL session
-// (strudel.cc or a local REPL). Keep in sync with docs/params.md, tidal/params.hs
-// and the UI (CLAUDE.md, decision 8).
+// (strudel.cc or a local REPL). Keep in sync with docs/params.md, tidal/params.hs,
+// ~scstdSpecs in sc/synthdefs/00_modules.scd, and the UI (CLAUDE.md, decision 8).
 //
 // createParams (from @strudel/core, checked in v1.2.6) returns an object of control
-// functions and also adds each name as a pattern method, so `.tstbright(0.8)` works.
+// functions and also adds each name as a pattern method, so `.vcfcut(800)` works.
 
-const { tstbright, tstrel } = createParams('tstbright', 'tstrel');
+createParams(
+  // VCO 1
+  'o1wave', 'o1lvl', 'o1oct', 'o1fine',
+  // VCO 2
+  'o2wave', 'o2lvl', 'o2oct', 'o2fine', 'o2pw',
+  // VCO 3
+  'o3wave', 'o3lvl', 'o3oct', 'o3fine', 'o3pw',
+  // Analog character
+  'drift', 'vspread',
+  // VCF
+  'vcfcut', 'vcfres', 'vcfenv', 'vcfdrive', 'vcfmodel', // vcfmodel: temporary (Stage 1 A/B)
+  // VCA
+  'vcalvl', 'vcaenv',
+  // ADSR
+  'eatk', 'edec', 'esus', 'erel', 'ecurve',
+  // AR
+  'aratk', 'arrel',
+  // Stage 0 test synth (sctest), temporary
+  'tstbright', 'tstrel',
+);
