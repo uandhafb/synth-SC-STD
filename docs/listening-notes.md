@@ -3,6 +3,21 @@
 Dated feedback from listening tests. Newest first.
 Format: date, stage, what was played (exact Tidal/Strudel line), what was heard, action.
 
+## 2026-09-23 — Stage 4, offline and real-SuperDirt measurements (before listening)
+- 28 new cables (<source>_<dest>) + rma/rmb + o1kbd..o3kbd = 80 params; all reach the synth via
+  SuperDirt (check_msgfunc.scd). Rendered with sc/tests/stage4_render.scd / analysis/stage4_check.py.
+- adsr_pitch 12: +9 -> 0 st over the decay; ar_pitch -12: 0 -> -12 st over the attack; vco1_vca -0.5
+  (square LFO 5 Hz): AM depth 0.43; o2kbd 0: VCO 2 at 261.2 Hz while playing 523 Hz.
+- Panel buses: default sound via buses identical (-16.4 dBFS). Changing vcfcut on the bus mid-note:
+  brightness 236 -> 132 Hz; same change with vcfcut sent by the pattern: 236 -> 236 Hz (pattern wins).
+  Same result through a private real SuperDirt (385 -> 134 Hz vs 217 -> 212 Hz); preset loaded into
+  the panel then a plain note sounds like the preset.
+- Worst case (many pitch cables at full) produced NaN: summed modulation up to +-180 st drove VCO
+  frequencies to ~0 / MHz. Fix: VCO frequency clamped to 0.01 Hz..20 kHz. New fuzz test
+  (sc/tests/fuzz_render.scd: 40 notes, all 80 params random): all finite, peaks -45..-1.6 dBFS.
+- Correction: "two sines" ring mod is not possible (only VCO 2 has a sine); comment fixed.
+- Pending: user listening (tidal/examples.tidal 43-53, sc/tests/panel_demo.scd).
+
 ## 2026-09-23 — Stage 3 done
 - After the LFO and cable fixes: 32A/32B wind, 38 staircase, 22 PWM pad (no clicks), 19 vibrato: OK.
 - Earlier: R2-D2 variants 40A-F "all pretty cool"; bells 34A/B added after "could be more bell".

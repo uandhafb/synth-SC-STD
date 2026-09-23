@@ -1,0 +1,15 @@
+{
+  "name": "Laser zap",
+  "sound": "scstd",
+  "stage": 4,
+  "description": "ADSR patched to pitch: each note starts two octaves up and swoops down fast.",
+  "params": {
+    "adsr_pitch": 24,
+    "eatk": 0.001,
+    "edec": 0.15,
+    "esus": 0,
+    "vcfenv": 0.3,
+    "arrel": 0.1
+  },
+  "tidal": "d1 $ n \"-12*4\" # s \"scstd\" # adsr_pitch 24 # eatk 0.001 # edec 0.15 # esus 0 # vcfenv 0.3 # arrel 0.1"
+}

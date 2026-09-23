@@ -198,3 +198,51 @@ d1 $ n "<[0,4,7] [-3,0,4]>" # s "scstd" # legato 1 # o1lf 1 # o1lfrate 0.8 # o1l
 d1 $ n "0" # s "scstd" # o1lvl 0 # o2lvl 0 # vcfres 1.1 # vcfenv 0 # vcfkey 0 # legato 1 # vcfcut "<440 880>"
 
 hush
+
+-- =============================================================================================
+-- Stage 4 — patch cables (<source>_<destination>) and panel memory.
+-- Sources: vco1 vco2 vco3 noise sh adsr ar rm.  Destinations: pitch (semitones), vcf (octaves),
+-- pw (-1..1 pulse width), vca (-1..1 volume). Several cables into one destination add up.
+-- =============================================================================================
+
+-- 43. ADSR -> pitch: every note starts 2 octaves up and swoops down fast. "Laser" / "zap".
+--     (PRESET presets/laser_zap.json)
+d1 $ n "-12*4" # s "scstd" # adsr_pitch 24 # eatk 0.001 # edec 0.15 # esus 0 # vcfenv 0.3 # arrel 0.1
+
+-- 44. AR -> pitch: each note slides UP into place as the volume swells ("whoop").
+d1 $ n "0 5" # s "scstd" # ar_pitch (-7) # aratk 0.4 # legato 1
+
+-- 45. Tremolo: VCO 1 as a square LFO pumping the volume (vco1 -> vca), 6 times per second.
+d1 $ n "[0,4,7]" # s "scstd" # legato 1 # o1lf 1 # o1lfrate 6 # o1wave 1 # o1lvl 0 # vco1_vca (-0.6)
+
+-- 46. Vibrato on ALL oscillators (vco1 -> pitch), compare with 19 (o2fm moves only VCO 2).
+d1 $ n "0 7" # s "scstd" # legato 1 # o1lf 1 # o1lfrate 5 # o1lvl 0 # vco1_pitch 0.3 # o3lvl 0.6
+
+-- 47. Noise -> filter: the tone gets a gritty, breathy, unstable edge.
+d1 $ n "-12 -5" # s "scstd" # legato 1 # vcfcut 600 # vcfres 0.6 # noise_vcf "<0 1.5>"
+
+-- 48. S&H -> pulse width: the pulse jumps to a random width 6 times per second (random timbre).
+d1 $ n "-12" # s "scstd" # legato 1 # o1lvl 0 # o2wave 1 # sh_pw 0.9 # shrate 6 # vcfcut 3000 # vcfenv 0
+
+-- 49. FM drone: VCO 3 is unplugged from the keyboard (o3kbd 0) and modulates the pitch of all
+--     VCOs at audio rate (vco3 -> pitch). Metallic, and it changes character with each note.
+--     (PRESET presets/fm_drone.json)
+d1 $ n "<0 3 7 5>" # s "scstd" # legato 1 # o1lvl 0 # o2wave 3 # o3kbd 0 # o3oct (-1) # vco3_pitch 4 # vcfcut 4000 # vcfenv 0 # arrel 1.5 # aratk 0.3
+
+-- 50. Ring mod inputs: VCO 2 (sine) x NOISE (rmb 3) = a band of noise around the note, like a
+--     radio between stations. Then VCO 2 x VCO 3 (rmb 2).
+d1 $ n "0 7" # s "scstd" # legato 1 # o1lvl 0 # o2lvl 0 # o2wave 3 # rmlvl 1 # rma 1 # rmb "<3 2>" # vcfcut 5000 # vcfenv 0
+
+-- 51. Keyboard off on VCO 1: VCO 1 holds a drone at middle C while VCO 2 plays the melody.
+d1 $ n "0 3 5 7 10 7 5 3" # s "scstd" # o1kbd 0 # o1lvl 0.5 # legato 1
+
+-- 52. Overriding the normalled (default) connections from Tidal:
+--     vcfenv 0 = unplug ADSR -> filter; vcaenv 0 = unplug AR -> VCA (organ-like, no envelope).
+d1 $ n "0 3 7" # s "scstd" # legato 1 # vcfenv "<0.4 0>" # vcaenv "<1 0>"
+
+-- 53. PANEL MEMORY. In SuperCollider, open sc/tests/panel_demo.scd and follow it: you load a preset
+--     or move a value there, and this plain pattern changes with it (even notes already playing).
+d1 $ n "0 3 7 10" # s "scstd" # legato 1
+
+hush
+

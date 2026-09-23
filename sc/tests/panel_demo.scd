@@ -1,0 +1,20 @@
+// Panel memory demo (Stage 4). Needs sc/startup.scd running.
+// In VS Code play example 53:   d1 $ n "0 3 7 10" # s "scstd" # legato 1
+// Then click on each line below and press Shift+Enter, and listen to the pattern change.
+
+~scstdSet.(\vcfcut, 300);          // darker (even the note that is already sounding)
+~scstdSet.(\vcfcut, 4000);         // brighter
+~scstdSet.(\vcfres, 0.9);          // resonant
+~scstdSet.(\sh_vcf, 2);            // patch S&H -> filter: bubbling
+~scstdSet.(\sh_vcf, 0);            // unpatch
+~scstdGet.(\vcfcut).postln;        // read a value (shown in the Post window)
+
+~scstdLoadPreset.("wind");         // the whole panel becomes the wind preset
+~scstdLoadPreset.("laser_zap");
+~scstdLoadPreset.("ringmod_bell");
+~scstdLoadPreset.("fm_drone");
+
+~scstdReset.();                    // back to the default sound
+
+// Note: a value written in the Tidal pattern always wins over the panel.
+// Try: d1 $ n "0 3 7 10" # s "scstd" # legato 1 # vcfcut 2000   -> ~scstdSet.(\vcfcut, 300) does nothing.

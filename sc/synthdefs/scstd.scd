@@ -8,6 +8,8 @@
 // Captured now: the sustain function below runs inside SuperDirt's event environment,
 // where project variables like ~scstdDefault are not visible.
 var defErel = ~scstdDefault.(\erel), defArrel = ~scstdDefault.(\arrel);
+// The panel state (sc/buses.scd), so a release set on the panel also lengthens the event.
+var state = ~scstdState ?? { () };
 
 SynthDef(\scstd, { |out, pan = 0, freq = 220, sustain = 1|
 	var p = ~scstdParams.();
@@ -21,7 +23,8 @@ SynthDef(\scstd, { |out, pan = 0, freq = 220, sustain = 1|
 	instrument: \scstd,
 	sustain: {
 		var len = (~delta.value ? 0.25) * (~legato.value ? 1);
-		var rel = max((~erel.value ? defErel).clip(0.001, 15), (~arrel.value ? defArrel).clip(0.001, 15));
+		var rel = max((~erel.value ? state[\erel] ? defErel).clip(0.001, 15),
+			(~arrel.value ? state[\arrel] ? defArrel).clip(0.001, 15));
 		len + rel
 	}
 ));

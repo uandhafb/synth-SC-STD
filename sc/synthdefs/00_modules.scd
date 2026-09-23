@@ -26,8 +26,22 @@
 	nzcol: [0, 1, 0], nzlvl: [0, 1, 0], rmlvl: [0, 1, 0],
 	// Sample & hold (6.11), lag processor (6.12)
 	shrate: [0.1, 50, 6], shsrc: [0, 3, 0], shlag: [0, 1, 0], lagtime: [0, 5, 0],
-	// Patch cables (6.14), <source>_<dest>: pitch in semitones, vcf in octaves
-	sh_pitch: [-48, 48, 0], sh_vcf: [-6, 6, 0],
+	// Keyboard on/off per VCO (1 = follows the notes; 0 = fixed pitch around middle C, for drones
+	// or a fixed modulator, like unplugging the original's keyboard CV)
+	o1kbd: [0, 1, 1], o2kbd: [0, 1, 1], o3kbd: [0, 1, 1],
+	// Ring mod inputs (6.6): 0 VCO 1, 1 VCO 2, 2 VCO 3, 3 noise
+	rma: [0, 3, 0], rmb: [0, 3, 1],
+	// Patch cables (6.14), <source>_<dest>. Units: pitch in semitones (all VCOs), vcf in octaves,
+	// pw -1..1 (= +-0.45 pulse width, VCO 2 and 3), vca -1..1 (added to the VCA gain).
+	// ADSR -> VCF and AR -> VCA are the normalled cables vcfenv and vcaenv (no duplicates).
+	vco1_pitch: [-48, 48, 0], vco1_vcf: [-6, 6, 0], vco1_pw: [-1, 1, 0], vco1_vca: [-1, 1, 0],
+	vco2_pitch: [-48, 48, 0], vco2_vcf: [-6, 6, 0], vco2_pw: [-1, 1, 0], vco2_vca: [-1, 1, 0],
+	vco3_pitch: [-48, 48, 0], vco3_vcf: [-6, 6, 0], vco3_pw: [-1, 1, 0], vco3_vca: [-1, 1, 0],
+	noise_pitch: [-48, 48, 0], noise_vcf: [-6, 6, 0], noise_pw: [-1, 1, 0], noise_vca: [-1, 1, 0],
+	sh_pitch: [-48, 48, 0], sh_vcf: [-6, 6, 0], sh_pw: [-1, 1, 0], sh_vca: [-1, 1, 0],
+	adsr_pitch: [-48, 48, 0], adsr_pw: [-1, 1, 0], adsr_vca: [-1, 1, 0],
+	ar_pitch: [-48, 48, 0], ar_vcf: [-6, 6, 0], ar_pw: [-1, 1, 0],
+	rm_pitch: [-48, 48, 0], rm_vcf: [-6, 6, 0], rm_pw: [-1, 1, 0], rm_vca: [-1, 1, 0],
 	// VCF (6.7)
 	vcfcut: [20, 18000, 2000], vcfres: [0, 1.1, 0.2], vcfenv: [-1, 1, 0.4],
 	vcfkey: [0, 1, 0.5], vcfdrive: [0, 1, 0.3],
@@ -43,11 +57,20 @@
 // Default of a param (used by the SuperDirt sustain function in sclang).
 ~scstdDefault = { |name| ~scstdSpecs[name][2] };
 
-// Builds the lookup used inside SynthDefs: a NamedControl with the spec default, clipped.
+// "Not set by the pattern" marker. Far outside every range (several params go negative, so -1
+// as suggested in CLAUDE.md decision 2 would clash with real values).
+~scstdUnset = -1e6;
+
+// Builds the lookup used inside SynthDefs (Architecture decision 2):
+//   - the pattern sent a value  -> use it;
+//   - otherwise                 -> read the panel's control bus (sc/buses.scd), so changing the
+//                                  panel also changes notes that are already sounding;
+//   - no buses (offline mocks)  -> the spec default.
+// Always clipped to the spec range.
 ~scstdParams = {
-	var specs = ~scstdSpecs;
+	var specs = ~scstdSpecs, buses = ~scstdBuses, unset = ~scstdUnset;
 	{ |name|
-		var s = specs[name];
+		var s = specs[name], raw, panel;
 		s.isNil.if { Error("scstd: unknown param %".format(name)).throw };
 		// A name whose 2nd character is "_" (e.g. "m_x", "t_x") is read by SuperCollider as a
 		// rate prefix: SynthDesc strips those 2 characters, so SuperDirt would never pass the
@@ -56,7 +79,9 @@
 			Error("scstd: param name '%' has '_' as 2nd character; SuperDirt would drop it"
 				.format(name)).throw
 		};
-		name.kr(s[2]).clip(s[0], s[1])
+		raw = name.kr(unset);
+		panel = if(buses.notNil and: { buses[name].notNil }) { In.kr(buses[name].index) } { s[2] };
+		Select.kr(raw > (unset * 0.1), [panel, raw]).clip(s[0], s[1])
 	}
 };
 
@@ -75,7 +100,10 @@
 	// oct is continuous, like the original's coarse tuning knob: whole numbers = octaves,
 	// fractions tune in between (e.g. 1.5 = an octave and a tritone up). Needed for hard sync
 	// and FM, where the interesting sounds come from non-octave ratios.
-	freq * (2 ** oct) * (fine + driftSemi + spreadSemi + pitchMod).midiratio
+	// Clamped to 0.01 Hz .. 20 kHz: with several pitch cables at full the modulation can sum to
+	// +-180 semitones, and near-zero or huge frequencies made the sync maths divide by ~0 (NaN,
+	// found in the Stage 4 worst-case render). A real VCO has a limited range too.
+	(freq * (2 ** oct) * (fine + driftSemi + spreadSemi + pitchMod).midiratio).clip(0.01, 20000)
 };
 
 // ---------------------------------------------------------------------------------------------
@@ -311,52 +339,80 @@
 	// Noise first: it feeds the mixer and is the normalled S&H input.
 	var nz = m[\noise].(p.(\nzcol));
 
-	// Sample & hold. Its input can be a VCO (shsrc 1-3), but the VCOs' pitch can in turn be
-	// modulated by the S&H (sh_pitch): a loop, as on the original when you patch it that way.
-	// A UGen graph cannot contain a direct loop, so the VCO signals come back through
-	// LocalIn/LocalOut with one block of delay (64 samples = 1.3 ms at 48 kHz). The S&H samples
-	// at most 50 times per second, so that delay is inaudible.
-	var fb = LocalIn.ar(3);                      // [VCO 1 mod, VCO 2, VCO 3] from the last block
+	// Feedback path. VCO signals can modulate the VCOs' own pitch and pulse width (e.g.
+	// vco2_pitch, S&H reading VCO 2 while moving pitch): loops, as when patching the original.
+	// A UGen graph cannot contain a direct loop, so these come back through LocalIn/LocalOut with
+	// one block of delay (64 samples = 1.3 ms at 48 kHz). For S&H (<= 50 Hz) that is inaudible;
+	// for audio-rate FM it only shifts the modulator's phase, which does not change the timbre.
+	var fb = LocalIn.ar(4);                      // [VCO 1 mod, VCO 2, VCO 3, ring mod], last block
 	var shIn = Select.ar(p.(\shsrc).round, [nz, fb[0], fb[1], fb[2]]);
 	var sh = m[\sh].(shIn, p.(\shrate), p.(\shlag));
 
-	// Modulation summing points (Architecture decision 6). Patch-cable naming: <source>_<dest>.
-	// Units per destination: pitch in semitones, vcf in octaves. Stage 4 adds the other sources.
-	var pitchMod = sh * p.(\sh_pitch);
-	var cutMod = sh * p.(\sh_vcf);
-	var pwMod = 0, ampMod = 0;
+	// Patch cables (6.14): <source>_<dest>. Each destination is a summing point (decision 6).
+	// Sources that come before the VCOs (noise, S&H, envelopes) are used directly; VCO and ring
+	// mod sources use the feedback copies for pitch and pulse width (see above).
+	var early = (noise: nz, sh: sh, adsr: adsr, ar: ar,
+		vco1: fb[0], vco2: fb[1], vco3: fb[2], rm: fb[3]);
+	var cable = { |srcs, dest, scale = 1|
+		srcs.collect { |src|
+			var name = (src ++ "_" ++ dest).asSymbol;
+			if(~scstdSpecs[name].notNil) { early[src] * p.(name) * scale } { 0 }
+		}.sum
+	};
+	var srcNames = [\vco1, \vco2, \vco3, \noise, \sh, \adsr, \ar, \rm];
+	var pitchMod = cable.(srcNames, \pitch);         // semitones
+	var pwMod = cable.(srcNames, \pw, 0.45);         // -1..1 -> +-0.45 pulse width
+
+	// Keyboard on/off per VCO: 0 = fixed pitch around middle C (drones, fixed modulator).
+	var kbd = { |k| var on = p.(k).round; (freq * on) + (261.6256 * (1 - on)) };
 
 	// VCO 1 first: it is the modulation source for the others.
 	// LF mode: VCO 1 stops following the keyboard and runs at o1lfrate (0.01-30 Hz), like the
 	// original's low-frequency switch. It still feeds the mixer (as on the original), so set
 	// o1lvl 0 to use it purely as an LFO.
 	var lf = p.(\o1lf).round;
-	var f1kb = m[\pitch].(freq, p.(\o1oct), p.(\o1fine), drift, spread, pitchMod);
+	var f1kb = m[\pitch].(kbd.(\o1kbd), p.(\o1oct), p.(\o1fine), drift, spread, pitchMod);
 	var f1 = (f1kb * (1 - lf)) + (p.(\o1lfrate) * lf);
 	var vco1 = m[\vco1].(f1, p.(\o1wave));
 	var v1 = vco1[0], mod1 = vco1[1];
 	// Lag processor (6.12) on VCO 1's modulation output: smooths the saw's jump into a rounded
 	// "shark fin", so PWM/FM from VCO 1 in LF mode become smooth (the original's way to get a
 	// soft LFO from a saw). Exponential lag, like an RC circuit. lagtime 0 = no smoothing.
-	// Not applied to ring mod or S&H, which use the raw VCO 1.
+	// Not applied to ring mod, S&H or the patch cables, which use the raw VCO 1.
 	var mod1s = Lag.ar(mod1, p.(\lagtime));
 
 	// FM is exponential (the mod signal moves pitch in semitones, like a CV into the original's
 	// FM inputs): depth 1 = +-36 semitones (+-3 octaves). Audio-rate exponential FM gives the
 	// clangy, inharmonic bell/metal tones typical of analog FM, not DX7-style linear FM.
-	var f2 = m[\pitch].(freq, p.(\o2oct), p.(\o2fine), drift, spread,
+	var f2 = m[\pitch].(kbd.(\o2kbd), p.(\o2oct), p.(\o2fine), drift, spread,
 		pitchMod + (mod1s * p.(\o2fm) * 36));
 	// PWM: VCO 1 swings the pulse width by up to +-0.45 around o2pw (clipped to 0.05..0.95).
 	var v2 = m[\vco2].(f2, p.(\o2wave), p.(\o2pw), pwMod + (mod1s * p.(\o2pwm) * 0.45),
 		p.(\o2sync), f1);
 
-	var f3 = m[\pitch].(freq, p.(\o3oct), p.(\o3fine), drift, spread,
+	var f3 = m[\pitch].(kbd.(\o3kbd), p.(\o3oct), p.(\o3fine), drift, spread,
 		pitchMod + (v2 * p.(\o3fm) * 36));
 	var v3 = m[\vco3].(f3, p.(\o3wave), p.(\o3pw), pwMod + (mod1s * p.(\o3pwm) * 0.45));
 
-	var fbOut = LocalOut.ar([mod1, v2, v3]);
+	// Ring modulator with selectable inputs (rma/rmb: 0 VCO 1, 1 VCO 2, 2 VCO 3, 3 noise).
+	// Only VCO 2 has a sine, so the softest ring-mod tones use VCO 2 (sine) against VCO 3 or
+	// VCO 1 with the filter taming the other input's harmonics; noise as an input gives
+	// band-limited noise around the other input's frequency.
+	var rmSrc = [mod1, v2, v3, nz];
+	var rm = m[\ringmod].(Select.ar(p.(\rma).round, rmSrc), Select.ar(p.(\rmb).round, rmSrc));
 
-	var rm = m[\ringmod].(mod1, v2);
+	var fbOut = LocalOut.ar([mod1, v2, v3, rm]);
+
+	// Cables into the filter and VCA come after the VCOs, so they use the current signals.
+	var late = (noise: nz, sh: sh, adsr: adsr, ar: ar, vco1: mod1, vco2: v2, vco3: v3, rm: rm);
+	var lateCable = { |dest, scale = 1|
+		srcNames.collect { |src|
+			var name = (src ++ "_" ++ dest).asSymbol;
+			if(~scstdSpecs[name].notNil) { late[src] * p.(name) * scale } { 0 }
+		}.sum
+	};
+	var cutMod = lateCable.(\vcf);                   // octaves
+	var ampMod = lateCable.(\vca);                   // added to the VCA gain (0..1 after clip)
 
 	var mix = m[\mixer].([v1, v2, v3, nz, rm],
 		[p.(\o1lvl), p.(\o2lvl), p.(\o3lvl), p.(\nzlvl), p.(\rmlvl)]);

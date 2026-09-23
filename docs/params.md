@@ -6,9 +6,14 @@ same commit (CLAUDE.md, decision 8). Before adding a name, check it against Supe
 params, Tidal functions and Strudel controls (CLAUDE.md, Section 5).
 
 Values outside the range are clipped inside the synth.
+
+**Panel values (Stage 4):** every parameter also has a stored panel value (sc/buses.scd). If a pattern
+sends a parameter, the pattern wins; if not, the panel value is used, and changing it affects notes
+that are already sounding. From SuperCollider: `~scstdSet.(\vcfcut, 500)`, `~scstdReset.()`,
+`~scstdLoadPreset.("wind")`.
 Parameters for later stages are listed in CLAUDE.md, Section 6; they move here when built.
 
-## Sound `scstd` — Stages 1–3
+## Sound `scstd` — Stages 1–4
 
 ### VCO 1
 | Param | Range | Default | Description |
@@ -19,6 +24,7 @@ Parameters for later stages are listed in CLAUDE.md, Section 6; they move here w
 | `o1fine` | -1–1 | 0 | Fine tune (semitones) |
 | `o1lf` | 0/1 | 0 | Low-frequency mode: VCO 1 ignores the notes and runs at `o1lfrate` (an LFO). Still feeds the mixer: use `o1lvl 0` for a pure LFO |
 | `o1lfrate` | 0.01–30 Hz | 2 | Rate in LF mode |
+| `o1kbd` | 0/1 | 1 | Keyboard on/off: 0 = VCO 1 stays at a fixed pitch around middle C (drones, fixed modulator) |
 
 ### VCO 2
 | Param | Range | Default | Description |
@@ -31,6 +37,7 @@ Parameters for later stages are listed in CLAUDE.md, Section 6; they move here w
 | `o2pwm` | 0–1 | 0 | Pulse-width modulation from VCO 1 (1 = ±0.45 around `o2pw`) |
 | `o2sync` | 0/1 | 0 | Hard sync to VCO 1 (alias-reduced; tune VCO 2 higher with `o2oct` for the classic sweep) |
 | `o2fm` | 0–1 | 0 | Exponential FM from VCO 1 (1 = ±36 semitones) |
+| `o2kbd` | 0/1 | 1 | Keyboard on/off (see `o1kbd`) |
 
 ### VCO 3
 | Param | Range | Default | Description |
@@ -42,6 +49,7 @@ Parameters for later stages are listed in CLAUDE.md, Section 6; they move here w
 | `o3pw` | 0.05–0.95 | 0.5 | Pulse width |
 | `o3pwm` | 0–1 | 0 | Pulse-width modulation from VCO 1 |
 | `o3fm` | 0–1 | 0 | Exponential FM from VCO 2 (1 = ±36 semitones) |
+| `o3kbd` | 0/1 | 1 | Keyboard on/off (see `o1kbd`) |
 
 ### Analog character
 | Param | Range | Default | Description |
@@ -68,7 +76,9 @@ Parameters for later stages are listed in CLAUDE.md, Section 6; they move here w
 ### Ring modulator
 | Param | Range | Default | Description |
 |---|---|---|---|
-| `rmlvl` | 0–1 | 0 | Level of VCO 1 × VCO 2 into the mixer (metallic, bell, robot tones). Input choice (`rma`/`rmb`) comes in Stage 4 |
+| `rmlvl` | 0–1 | 0 | Ring mod level into the mixer (metallic, bell, robot tones) |
+| `rma` | 0–3 | 0 | Input A: 0 VCO 1, 1 VCO 2, 2 VCO 3, 3 noise |
+| `rmb` | 0–3 | 1 | Input B: same choices (default VCO 2) |
 
 ### Sample & hold
 | Param | Range | Default | Description |
@@ -85,10 +95,43 @@ In event mode each note restarts the S&H: play one long note to hear a sequence.
 | `lagtime` | 0–5 s | 0 | Smooths VCO 1's modulation output (PWM/FM). Turns the saw LFO's jump into a soft curve: smooth PWM pads |
 
 ### Patch cables (`<source>_<destination>`)
+Any source into any destination; several cables into one destination add up.
+Units: **pitch** in semitones (all 3 VCOs), **vcf** in octaves (cutoff), **pw** −1…1 (= ±0.45 pulse
+width, VCO 2 and 3), **vca** −1…1 (added to the volume). The normalled ADSR → filter and AR → VCA
+cables are `vcfenv` and `vcaenv` (so there is no `adsr_vcf` / `ar_vca`).
+
 | Param | Range | Default | Description |
 |---|---|---|---|
-| `sh_pitch` | -48–48 | 0 | S&H → pitch of all VCOs, in semitones (12 = random steps within ±1 octave) |
-| `sh_vcf` | -6–6 | 0 | S&H → filter cutoff, in octaves |
+| `vco1_pitch` | -48–48 | 0 | VCO 1 (full-scale wave; in LF mode an LFO) → pitch |
+| `vco1_vcf` | -6–6 | 0 | VCO 1 (full-scale wave; in LF mode an LFO) → vcf |
+| `vco1_pw` | -1–1 | 0 | VCO 1 (full-scale wave; in LF mode an LFO) → pw |
+| `vco1_vca` | -1–1 | 0 | VCO 1 (full-scale wave; in LF mode an LFO) → vca |
+| `vco2_pitch` | -48–48 | 0 | VCO 2 → pitch |
+| `vco2_vcf` | -6–6 | 0 | VCO 2 → vcf |
+| `vco2_pw` | -1–1 | 0 | VCO 2 → pw |
+| `vco2_vca` | -1–1 | 0 | VCO 2 → vca |
+| `vco3_pitch` | -48–48 | 0 | VCO 3 → pitch |
+| `vco3_vcf` | -6–6 | 0 | VCO 3 → vcf |
+| `vco3_pw` | -1–1 | 0 | VCO 3 → pw |
+| `vco3_vca` | -1–1 | 0 | VCO 3 → vca |
+| `noise_pitch` | -48–48 | 0 | noise → pitch |
+| `noise_vcf` | -6–6 | 0 | noise → vcf |
+| `noise_pw` | -1–1 | 0 | noise → pw |
+| `noise_vca` | -1–1 | 0 | noise → vca |
+| `sh_pitch` | -48–48 | 0 | sample & hold → pitch |
+| `sh_vcf` | -6–6 | 0 | sample & hold → vcf |
+| `sh_pw` | -1–1 | 0 | sample & hold → pw |
+| `sh_vca` | -1–1 | 0 | sample & hold → vca |
+| `adsr_pitch` | -48–48 | 0 | ADSR envelope (0..1) → pitch |
+| `adsr_pw` | -1–1 | 0 | ADSR envelope (0..1) → pw |
+| `adsr_vca` | -1–1 | 0 | ADSR envelope (0..1) → vca |
+| `ar_pitch` | -48–48 | 0 | AR envelope (0..1) → pitch |
+| `ar_vcf` | -6–6 | 0 | AR envelope (0..1) → vcf |
+| `ar_pw` | -1–1 | 0 | AR envelope (0..1) → pw |
+| `rm_pitch` | -48–48 | 0 | ring modulator → pitch |
+| `rm_vcf` | -6–6 | 0 | ring modulator → vcf |
+| `rm_pw` | -1–1 | 0 | ring modulator → pw |
+| `rm_vca` | -1–1 | 0 | ring modulator → vca |
 
 ### VCA
 | Param | Range | Default | Description |

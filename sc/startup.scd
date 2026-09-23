@@ -24,8 +24,12 @@ s.reboot {
 		// Handy orbit shortcuts, as in the standard SuperDirt setup.
 		~d1 = ~dirt.orbits[0]; ~d2 = ~dirt.orbits[1]; ~d3 = ~dirt.orbits[2];
 
-		// Load project synthdefs (each file registers itself with ~dirt.soundLibrary).
-		(projectDir +/+ "synthdefs/*.scd").pathMatch.do { |path|
+		// Load order matters: module specs, then the panel buses (the SynthDefs read them), then
+		// the voices (each file registers itself with ~dirt.soundLibrary).
+		(projectDir +/+ "synthdefs/00_modules.scd").load;
+		(projectDir +/+ "buses.scd").load;
+		s.sync;
+		(projectDir +/+ "synthdefs/*.scd").pathMatch.reject { |path| path.basename == "00_modules.scd" }.do { |path|
 			path.load;
 		};
 		s.sync;
@@ -35,5 +39,6 @@ s.reboot {
 };
 )
 
-// Reload only the synthdefs (after editing a file, while SuperDirt keeps running):
-// (thisProcess.nowExecutingPath.dirname +/+ "synthdefs/*.scd").pathMatch.do(_.load);
+// Reload the synth code without restarting SuperDirt (after editing a file). Panel values are kept.
+// (var d = thisProcess.nowExecutingPath.dirname; (d +/+ "synthdefs/00_modules.scd").load; (d +/+ "buses.scd").load;
+//  (d +/+ "synthdefs/*.scd").pathMatch.reject { |p| p.basename == "00_modules.scd" }.do(_.load))

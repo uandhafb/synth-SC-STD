@@ -42,8 +42,9 @@ through the envelope follower).
    values to control buses. Each SynthDef parameter falls back to its bus value
    when the pattern does not set it. Convention: a pattern value overrides the
    panel; no pattern value means "use the panel."
-   Implementation hint: SynthDef args default to a sentinel (e.g. -1) and the
-   synth uses `Select.kr(arg < 0, [arg, In.kr(bus)])`.
+   Implemented (Stage 4, sc/buses.scd + ~scstdParams): args default to the sentinel
+   -1e6 (-1 would clash with params that go negative); the synth uses
+   `Select.kr(arg > -1e5, [In.kr(bus), arg])`.
 
 3. **Two-way UI state sync.** sclang is the single owner of panel state. The
    relay broadcasts every change to all connected panels, and on (re)connect
@@ -281,9 +282,11 @@ destination (like the original's per-input attenuators). Normalled connections
 have non-zero defaults; setting any depth overrides the default.
 In the UI, each non-zero depth is also drawn as a cable (original visual style);
 dragging a cable creates/removes the connection, its knob sets the depth.
-Naming agreed 2026-09-23: `<source>_<dest>`; units per destination: pitch in
-semitones, vcf in octaves (pw, vca to be defined in Stage 4). First cables
-(`sh_pitch`, `sh_vcf`) added in Stage 3.
+Naming agreed 2026-09-23: `<source>_<dest>`; units: pitch in semitones (all VCOs),
+vcf in octaves, pw -1..1 (= +-0.45 width, VCO 2/3), vca -1..1 (added to gain).
+Implemented in Stage 4 (28 cables + sh_pitch/sh_vcf); ADSR->VCF and AR->VCA stay
+`vcfenv`/`vcaenv` (no duplicate cables). VCO/ring-mod sources reach pitch and pw
+through a one-block LocalIn feedback path. Also added: `o1kbd`..`o3kbd`, `rma`/`rmb`.
 
 ### 6.15 Spring reverb (Stage 6)
 | Param | Range | Default | Description |

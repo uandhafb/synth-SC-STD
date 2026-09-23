@@ -1,0 +1,18 @@
+{
+  "name": "FM drone",
+  "sound": "scstd",
+  "stage": 4,
+  "description": "VCO 3 unplugged from the keyboard modulates the pitch of all VCOs at audio rate: metallic drone that changes with each note.",
+  "params": {
+    "o1lvl": 0,
+    "o2wave": 3,
+    "o3kbd": 0,
+    "o3oct": -1,
+    "vco3_pitch": 4,
+    "vcfcut": 4000,
+    "vcfenv": 0,
+    "arrel": 1.5,
+    "aratk": 0.3
+  },
+  "tidal": "d1 $ n \"<0 3 7 5>\" # s \"scstd\" # o1lvl 0 # o2wave 3 # o3kbd 0 # o3oct (-1) # vco3_pitch 4 # vcfcut 4000 # vcfenv 0 # arrel 1.5 # aratk 0.3 # legato 1"
+}

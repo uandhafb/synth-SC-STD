@@ -39,3 +39,11 @@ n("0 3 7 10").s("scstd").osc()
 // #40D — R2-D2-style talking (presets/r2d2_bleeps.json). Strudel's rand/irand also share a seed,
 // so the random sources are shifted in time (.late) to keep them independent. Untested in Strudel.
 // n(irand(24).late(0.37).add(12).segment(16)).degradeBy(0.35).s("scstd").o1lf(1).o1lvl(0).o2wave(3).o2lvl(1).vcalvl(1).aratk(0.003).arrel(0.03).erel(0.03).vcfcut(6000).vcfenv(0).vcfdrive(0).drift(0).o1lfrate(rand.range(4, 30).late(0.13)).o2fm(rand.range(0, 0.2).late(0.71)).legato(rand.range(0.4, 0.9).late(0.53)).osc()
+
+// ---- Stage 4 — patch cables ----
+
+// #43 — Laser zap (presets/laser_zap.json): ADSR -> pitch
+// n("-12*4").s("scstd").adsr_pitch(24).eatk(0.001).edec(0.15).esus(0).vcfenv(0.3).arrel(0.1).osc()
+
+// #49 — FM drone (presets/fm_drone.json): VCO 3 off the keyboard, modulating all pitches
+// n("<0 3 7 5>").s("scstd").legato(1).o1lvl(0).o2wave(3).o3kbd(0).o3oct(-1).vco3_pitch(4).vcfcut(4000).vcfenv(0).arrel(1.5).aratk(0.3).osc()
