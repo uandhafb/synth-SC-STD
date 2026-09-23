@@ -1,0 +1,19 @@
+{
+  "name": "Computer sequence",
+  "sound": "scstd",
+  "stage": 3,
+  "description": "The classic sample-and-hold 'computer' sound: random pitch steps 8 times per second on a pulse wave, with a resonant filter.",
+  "params": {
+    "o1lvl": 0,
+    "o2wave": 1,
+    "o2pw": 0.3,
+    "m_sh_pitch": 12,
+    "shrate": 8,
+    "vcfcut": 2500,
+    "vcfres": 0.5,
+    "vcfenv": 0,
+    "arrel": 0.1,
+    "erel": 0.1
+  },
+  "tidal": "d1 $ n \"0\" # s \"scstd\" # o1lvl 0 # o2wave 1 # o2pw 0.3 # m_sh_pitch 12 # shrate 8 # vcfcut 2500 # vcfres 0.5 # vcfenv 0 # arrel 0.1 # erel 0.1 # legato 1"
+}

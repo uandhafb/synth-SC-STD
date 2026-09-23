@@ -8,7 +8,7 @@ params, Tidal functions and Strudel controls (CLAUDE.md, Section 5).
 Values outside the range are clipped inside the synth.
 Parameters for later stages are listed in CLAUDE.md, Section 6; they move here when built.
 
-## Sound `scstd` — Stages 1–2 (single voice + oscillator modulation)
+## Sound `scstd` — Stages 1–3
 
 ### VCO 1
 | Param | Range | Default | Description |
@@ -52,12 +52,43 @@ Parameters for later stages are listed in CLAUDE.md, Section 6; they move here w
 ### VCF
 | Param | Range | Default | Description |
 |---|---|---|---|
-| `vcfcut` | 20–18000 Hz | 2000 | Cutoff frequency |
+| `vcfcut` | 20–18000 Hz | 2000 | Cutoff (corner) frequency. Calibrated: both filter models now match it (MoogLadder within ~3% up to 2 kHz; its ceiling is a ~12.8 kHz corner, so use `vcfmodel 1` for fully open, very bright sounds). With `vcfres` > 1 the filter sings at this pitch (±0.6 semitones) |
 | `vcfres` | 0–1.1 | 0.2 | Resonance; above 1 the filter self-oscillates (sings) |
 | `vcfenv` | -1–1 | 0.4 | ADSR amount to cutoff (±1 = ±5 octaves) |
 | `vcfkey` | 0–1 | 0.5 | Keyboard tracking: cutoff follows the note (1 = fully, relative to middle C) |
 | `vcfdrive` | 0–1 | 0.3 | Input saturation (anti-aliased tanh, 1×–8× gain) |
 | `vcfmodel` | 0/1 | 0 | Filter character: 0 = MoogLadder (default; self-oscillates), 1 = MoogFF (different colour; rings but does not self-oscillate) |
+
+### Noise
+| Param | Range | Default | Description |
+|---|---|---|---|
+| `nzcol` | 0–1 | 0 | Colour: 0 white (bright hiss), 0.5 pink, 1 brown/red (dark rumble); equal loudness |
+| `nzlvl` | 0–1 | 0 | Level into the mixer |
+
+### Ring modulator
+| Param | Range | Default | Description |
+|---|---|---|---|
+| `rmlvl` | 0–1 | 0 | Level of VCO 1 × VCO 2 into the mixer (metallic, bell, robot tones). Input choice (`rma`/`rmb`) comes in Stage 4 |
+
+### Sample & hold
+| Param | Range | Default | Description |
+|---|---|---|---|
+| `shrate` | 0.1–50 Hz | 6 | Internal clock: new random value this many times per second |
+| `shsrc` | 0–3 | 0 | Input: 0 noise (random steps), 1 VCO 1, 2 VCO 2, 3 VCO 3 (stepped patterns) |
+| `shlag` | 0–1 | 0 | Smooths the steps (1 = glides all the way to the next value) |
+
+In event mode each note restarts the S&H: play one long note to hear a sequence.
+
+### Lag processor
+| Param | Range | Default | Description |
+|---|---|---|---|
+| `lagtime` | 0–5 s | 0 | Smooths VCO 1's modulation output (PWM/FM). Turns the saw LFO's jump into a soft curve: smooth PWM pads |
+
+### Patch cables (`m_<source>_<destination>`)
+| Param | Range | Default | Description |
+|---|---|---|---|
+| `m_sh_pitch` | -48–48 | 0 | S&H → pitch of all VCOs, in semitones (12 = random steps within ±1 octave) |
+| `m_sh_vcf` | -6–6 | 0 | S&H → filter cutoff, in octaves |
 
 ### VCA
 | Param | Range | Default | Description |

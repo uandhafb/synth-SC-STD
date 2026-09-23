@@ -113,3 +113,54 @@ d1 $ n "-12*2" # s "scstd" # o1lvl 0 # o2lvl 0.2 # o3lvl 0.8 # o3oct 0.7 # vcfcu
 d1 $ n "0 5 12 17 24 29 36" # s "scstd" # vcfcut 400 # vcfenv 0 # vcfkey "<0 1>"
 
 hush
+
+-- =============================================================================================
+-- Stage 3 — noise, ring mod, sample & hold (S&H), lag processor.
+-- Note: the filter was calibrated in Stage 3, so vcfcut now really means that frequency.
+-- The default sound is a little brighter than before.
+-- =============================================================================================
+
+-- 30. Noise colours, one per cycle: white (bright hiss) -> pink (rain) -> brown (dark rumble).
+--     They should sound about equally loud.
+d1 $ n "0" # s "scstd" # o1lvl 0 # o2lvl 0 # nzlvl 1 # vcfmodel 1 # vcfcut 18000 # vcfenv 0 # legato 1 # nzcol "<0 0.5 1>"
+
+-- 31. Noise as percussion: hi-hat (short, bright) and snare-ish (noise + low VCO).
+d1 $ n "0*8" # s "scstd" # o1lvl 0 # o2lvl 0 # nzlvl 1 # aratk 0.001 # arrel 0.05 # erel 0.05 # legato 0.05 # vcfcut 9000 # vcfenv 0
+d1 $ n "~ -24 ~ -24" # s "scstd" # o1lvl 0 # o2lvl 0.4 # o2wave 2 # nzlvl 1 # aratk 0.001 # arrel 0.15 # erel 0.15 # legato 0.1 # vcfcut 4000 # vcfenv 0
+
+-- 32. PRESET: Wind (presets/wind.json). Noise through a resonant filter that wanders slowly.
+d1 $ n "0" # s "scstd" # o1lvl 0 # o2lvl 0 # nzlvl 1 # nzcol 0.3 # m_sh_vcf 2.5 # shrate 1.5 # shlag 1 # vcfcut 900 # vcfres 0.85 # vcfenv 0 # vcfkey 0 # aratk 0.8 # arrel 1.5 # erel 1.5 # legato 1
+
+-- 33. Ring mod alone: metallic, bell-like, not quite in tune. Changes as o1oct changes.
+d1 $ n "0 5 7 12" # s "scstd" # o1lvl 0 # o2lvl 0 # rmlvl 1 # vcfcut 6000 # vcfenv 0 # o1oct "<0.485 0.25 1.1>"
+
+-- 34. Ring mod mixed with the normal sound: adds a clangy edge.
+d1 $ n "0 3 7 10" # s "scstd" # rmlvl "<0 0.6>"
+
+-- 35. S&H -> pitch: ONE long note that jumps to a new random pitch 8 times per second.
+--     This is the classic "computer" sound. (Each new note restarts the S&H.)
+d1 $ n "0" # s "scstd" # legato 1 # o2lvl 0 # m_sh_pitch 12 # shrate 8 # vcfcut 3000 # vcfenv 0
+
+-- 36. Same, with shlag: the steps become glides.
+d1 $ n "0" # s "scstd" # legato 1 # o2lvl 0 # m_sh_pitch 12 # shrate 8 # shlag "<0 0.5 1>" # vcfcut 3000 # vcfenv 0
+
+-- 37. S&H -> filter: the classic stepped "bubbling" filter on a steady note.
+d1 $ n "-12" # s "scstd" # legato 1 # m_sh_vcf 2 # shrate 6 # vcfcut 800 # vcfres 0.7 # vcfenv 0
+
+-- 38. S&H sampling VCO 3 (slow) instead of noise: the steps form a repeating pattern, not random.
+d1 $ n "0" # s "scstd" # legato 1 # o2lvl 0 # shsrc 3 # o3oct (-3) # m_sh_pitch 12 # shrate 6 # vcfcut 3000 # vcfenv 0
+
+-- 39. PRESET: Computer sequence (presets/computer_sequence.json).
+d1 $ n "0" # s "scstd" # o1lvl 0 # o2wave 1 # o2pw 0.3 # m_sh_pitch 12 # shrate 8 # vcfcut 2500 # vcfres 0.5 # vcfenv 0 # arrel 0.1 # erel 0.1 # legato 1
+
+-- 40. PRESET: R2-D2-style bleeps (presets/r2d2_bleeps.json). First draft: tell me how to tune it.
+d1 $ n "<0 7 3 12>" # s "scstd" # o1oct 0.5 # o1lvl 0 # o2wave 3 # o2lvl 0.5 # rmlvl 0.6 # m_sh_pitch 24 # shrate 11 # shlag 0.35 # o2fm 0.03 # vcfcut 9000 # vcfenv 0 # legato 0.9
+
+-- 41. Lag processor: the PWM pad from 22, first with clicks (lagtime 0), then smooth (0.3).
+d1 $ n "<[0,4,7] [-3,0,4]>" # s "scstd" # legato 1 # o1lf 1 # o1lfrate 0.8 # o1lvl 0 # o2wave 1 # o2pwm 0.8 # vcfcut 1800 # vcfenv 0.1 # aratk 0.4 # arrel 1.2 # lagtime "<0 0.3>"
+
+-- 42. Filter calibration check: the filter alone sings the note A (440 Hz), then A an octave up.
+--     Compare with any tuner or piano: it should be in tune.
+d1 $ n "0" # s "scstd" # o1lvl 0 # o2lvl 0 # vcfres 1.1 # vcfenv 0 # vcfkey 0 # legato 1 # vcfcut "<440 880>"
+
+hush

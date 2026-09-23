@@ -207,7 +207,7 @@ per VCO.
 | Param | Range | Default | Description |
 |---|---|---|---|
 | `rmlvl` | 0–1 | 0 | Level into the mixer |
-| `rma` | enum | vco1 | Input A (normalled: VCO 1) |
+| `rma` | enum | vco1 | Input A (normalled: VCO 1) — deferred to Stage 4 (patching) |
 | `rmb` | enum | vco2 | Input B (normalled: VCO 2) |
 
 ### 6.7 VCF (filter)
@@ -250,15 +250,15 @@ compare alternatives in Stage 6.
 | Param | Range | Default | Description |
 |---|---|---|---|
 | `shrate` | 0.1–50 Hz | 6 | Internal clock rate |
-| `shsrc` | enum | noise | Input (normalled: noise) |
+| `shsrc` | 0–3 | 0 | Input: 0 noise (normalled), 1–3 VCO 1–3 |
 | `shlag` | 0–1 | 0 | Smoothing via the lag processor |
 Output available as a mod source (6.14).
 
 ### 6.12 Lag processor
 | Param | Range | Default | Description |
 |---|---|---|---|
-| `lagtime` | 0–5 s | 0 | Smoothing time |
-| `glide` | 0–5 s | 0 | Portamento (true glide needs mono mode) |
+| `lagtime` | 0–5 s | 0 | Smoothing time (input normalled to VCO 1's mod output; original's normalling unverified) |
+| `glide` | 0–5 s | 0 | Portamento — deferred to Stage 5 (needs mono mode) |
 
 ### 6.13 Utilities (Stage 5)
 - **Audio input preamp:** `inlvl`, `ingain`. External audio (cello, mic) via
@@ -278,7 +278,9 @@ destination (like the original's per-input attenuators). Normalled connections
 have non-zero defaults; setting any depth overrides the default.
 In the UI, each non-zero depth is also drawn as a cable (original visual style);
 dragging a cable creates/removes the connection, its knob sets the depth.
-Final naming scheme to be agreed with the user before Stage 4.
+Naming agreed 2026-09-23: `m_<source>_<dest>`; units per destination: pitch in
+semitones, vcf in octaves (pw, vca to be defined in Stage 4). First cables
+(`m_sh_pitch`, `m_sh_vcf`) added in Stage 3.
 
 ### 6.15 Spring reverb (Stage 6)
 | Param | Range | Default | Description |

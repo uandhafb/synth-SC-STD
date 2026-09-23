@@ -22,6 +22,12 @@
 	o3pw: [0.05, 0.95, 0.5], o3pwm: [0, 1, 0], o3fm: [0, 1, 0],
 	// Analog character (6.4)
 	drift: [0, 1, 0.15], vspread: [0, 1, 0.1],
+	// Noise (6.5), ring mod (6.6)
+	nzcol: [0, 1, 0], nzlvl: [0, 1, 0], rmlvl: [0, 1, 0],
+	// Sample & hold (6.11), lag processor (6.12)
+	shrate: [0.1, 50, 6], shsrc: [0, 3, 0], shlag: [0, 1, 0], lagtime: [0, 5, 0],
+	// Patch cables (6.14), m_<source>_<dest>: pitch in semitones, vcf in octaves
+	m_sh_pitch: [-48, 48, 0], m_sh_vcf: [-6, 6, 0],
 	// VCF (6.7)
 	vcfcut: [20, 18000, 2000], vcfres: [0, 1.1, 0.2], vcfenv: [-1, 1, 0.4],
 	vcfkey: [0, 1, 0.5], vcfdrive: [0, 1, 0.3],
@@ -196,7 +202,20 @@
 	//   MoogLadder only self-oscillates for res > ~1.1; at 1.5 it sings strongly. So vcfres 0..1
 	//   maps to 0..1 (resonant, stable) and 1..1.1 maps to 1..1.5 (self-oscillation).
 	//   MoogFF caps its gain at 4 and never truly self-oscillates; it rings at most.
-	var ladder = MoogLadder.ar(driven, freq, res + ((res - 1).max(0) * 4));
+	// Cutoff calibration for MoogLadder (measured offline 2026-09-23, docs/listening-notes.md).
+	// Its real corner frequency is 0.88x (at 60 Hz) to 0.59x (at 20 kHz) of the value it is given,
+	// so it was much darker than vcfcut said and "fully open" was only ~4 kHz (-3 dB). MoogFF is
+	// accurate (textbook 4-pole: -3 dB at 0.44x the corner). kPass makes MoogLadder's corner match
+	// vcfcut: k = 1.2 + 0.03 per kHz (fits the measurements within ~4%). Its ceiling is a corner of
+	// ~12.8 kHz, so it stays a little darker than MoogFF when fully open.
+	// When self-oscillating, the sung pitch follows a different curve (1.10x at 110 Hz .. 0.83x at
+	// 7 kHz), so kOsc makes the pitch match vcfcut instead: k = 0.9 + 0.043 per kHz.
+	// Between vcfres 0.9 and 1.1 the correction crossfades from kPass to kOsc.
+	var kPass = 1.2 + (freq * 0.00003);
+	var kOsc = 0.9 + (freq * 0.000043);
+	var wOsc = ((res - 0.9) / 0.2).clip(0, 1);
+	var ladderFreq = (freq * ((kPass * (1 - wOsc)) + (kOsc * wOsc))).clip(20, SampleRate.ir * 0.45);
+	var ladder = MoogLadder.ar(driven, ladderFreq, res + ((res - 1).max(0) * 4));
 	var ff = MoogFF.ar(driven, freq, res.linlin(0, 1.1, 0, 4));
 	// Ladder filters lose passband level as resonance rises; add back up to +6 dB.
 	var comp = 1 + res.clip(0, 1);
@@ -224,6 +243,30 @@
 };
 
 // ---------------------------------------------------------------------------------------------
+// Noise generator (6.5). col 0 = white (flat, bright hiss), 0.5 = pink (-3 dB/octave, "rain"),
+// 1 = brown/red (-6 dB/octave, dark rumble). SelectX crossfades neighbours with equal power.
+// Gains measured offline so all three have the same RMS (~0.58): PinkNoise is ~3.7x quieter.
+~scstdMods[\noise] = { |col|
+	SelectX.ar(col * 2, [WhiteNoise.ar, PinkNoise.ar * 3.7, BrownNoise.ar])
+};
+
+// Ring modulator (6.6): four-quadrant multiply of A and B (normalled: VCO 1 x VCO 2).
+// The output contains only the sum and difference frequencies of the inputs, not the inputs
+// themselves, which gives the metallic, bell-like, "robot" tones.
+~scstdMods[\ringmod] = { |a, b| a * b };
+
+// Sample & hold (6.11) with its internal clock and lag.
+// On every clock tick the input is sampled and held until the next tick: random steps from noise,
+// stepped patterns from a slow VCO. The clock starts with the note, so the first value is taken
+// at note-on. `lag` 0..1 smooths each step over that fraction of the clock period (1 = the next
+// value is reached just as the following tick arrives: a smooth random wander).
+// Output is clipped to -1..1 so every source gives the same modulation range.
+~scstdMods[\sh] = { |in, rate, lag|
+	var held = Latch.ar(in, Impulse.ar(rate));
+	Lag.ar(held, lag / rate).clip(-1, 1)
+};
+
+// ---------------------------------------------------------------------------------------------
 // VCA: level x envelope. vcaenv crossfades between "always open" (0) and "fully enveloped" (1).
 // ampMod is the VCA modulation summing point (Stage 4).
 ~scstdMods[\vca] = { |in, lvl, envAmt, env, ampMod = 0|
@@ -242,11 +285,25 @@
 	var adsr = m[\adsr].(gate, p.(\eatk), p.(\edec), p.(\esus), p.(\erel), p.(\ecurve));
 	var ar = m[\ar].(gate, p.(\aratk), p.(\arrel));
 
-	// Modulation summing points (Architecture decision 6). Stage 2 connects VCO 1 (and VCO 2 -> 3)
-	// below; Stage 3-4 add more sources (S&H, noise, envelopes, patch matrix) here.
-	var pitchMod = 0, pwMod = 0, cutMod = 0, ampMod = 0;
-
 	var drift = p.(\drift), spread = p.(\vspread);
+
+	// Noise first: it feeds the mixer and is the normalled S&H input.
+	var nz = m[\noise].(p.(\nzcol));
+
+	// Sample & hold. Its input can be a VCO (shsrc 1-3), but the VCOs' pitch can in turn be
+	// modulated by the S&H (m_sh_pitch): a loop, as on the original when you patch it that way.
+	// A UGen graph cannot contain a direct loop, so the VCO signals come back through
+	// LocalIn/LocalOut with one block of delay (64 samples = 1.3 ms at 48 kHz). The S&H samples
+	// at most 50 times per second, so that delay is inaudible.
+	var fb = LocalIn.ar(3);                      // [VCO 1 mod, VCO 2, VCO 3] from the last block
+	var shIn = Select.ar(p.(\shsrc).round, [nz, fb[0], fb[1], fb[2]]);
+	var sh = m[\sh].(shIn, p.(\shrate), p.(\shlag));
+
+	// Modulation summing points (Architecture decision 6). Patch-cable naming: m_<source>_<dest>.
+	// Units per destination: pitch in semitones, vcf in octaves. Stage 4 adds the other sources.
+	var pitchMod = sh * p.(\m_sh_pitch);
+	var cutMod = sh * p.(\m_sh_vcf);
+	var pwMod = 0, ampMod = 0;
 
 	// VCO 1 first: it is the modulation source for the others.
 	// LF mode: VCO 1 stops following the keyboard and runs at o1lfrate (0.01-30 Hz), like the
@@ -257,21 +314,31 @@
 	var f1 = (f1kb * (1 - lf)) + (p.(\o1lfrate) * lf);
 	var vco1 = m[\vco1].(f1, p.(\o1wave));
 	var v1 = vco1[0], mod1 = vco1[1];
+	// Lag processor (6.12) on VCO 1's modulation output: smooths the saw's jump into a rounded
+	// "shark fin", so PWM/FM from VCO 1 in LF mode become smooth (the original's way to get a
+	// soft LFO from a saw). Exponential lag, like an RC circuit. lagtime 0 = no smoothing.
+	// Not applied to ring mod or S&H, which use the raw VCO 1.
+	var mod1s = Lag.ar(mod1, p.(\lagtime));
 
 	// FM is exponential (the mod signal moves pitch in semitones, like a CV into the original's
 	// FM inputs): depth 1 = +-36 semitones (+-3 octaves). Audio-rate exponential FM gives the
 	// clangy, inharmonic bell/metal tones typical of analog FM, not DX7-style linear FM.
 	var f2 = m[\pitch].(freq, p.(\o2oct), p.(\o2fine), drift, spread,
-		pitchMod + (mod1 * p.(\o2fm) * 36));
+		pitchMod + (mod1s * p.(\o2fm) * 36));
 	// PWM: VCO 1 swings the pulse width by up to +-0.45 around o2pw (clipped to 0.05..0.95).
-	var v2 = m[\vco2].(f2, p.(\o2wave), p.(\o2pw), pwMod + (mod1 * p.(\o2pwm) * 0.45),
+	var v2 = m[\vco2].(f2, p.(\o2wave), p.(\o2pw), pwMod + (mod1s * p.(\o2pwm) * 0.45),
 		p.(\o2sync), f1);
 
 	var f3 = m[\pitch].(freq, p.(\o3oct), p.(\o3fine), drift, spread,
 		pitchMod + (v2 * p.(\o3fm) * 36));
-	var v3 = m[\vco3].(f3, p.(\o3wave), p.(\o3pw), pwMod + (mod1 * p.(\o3pwm) * 0.45));
+	var v3 = m[\vco3].(f3, p.(\o3wave), p.(\o3pw), pwMod + (mod1s * p.(\o3pwm) * 0.45));
 
-	var mix = m[\mixer].([v1, v2, v3], [p.(\o1lvl), p.(\o2lvl), p.(\o3lvl)]);
+	var fbOut = LocalOut.ar([mod1, v2, v3]);
+
+	var rm = m[\ringmod].(mod1, v2);
+
+	var mix = m[\mixer].([v1, v2, v3, nz, rm],
+		[p.(\o1lvl), p.(\o2lvl), p.(\o3lvl), p.(\nzlvl), p.(\rmlvl)]);
 
 	// Keyboard tracking: the cutoff follows the played note, in octaves relative to middle C.
 	// vcfkey 1 = the cutoff moves 1:1 with pitch (same brightness everywhere); 0 = fixed cutoff.

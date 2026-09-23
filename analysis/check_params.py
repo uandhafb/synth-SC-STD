@@ -14,25 +14,25 @@ ROOT = Path(__file__).resolve().parent.parent
 def from_docs() -> set[str]:
     text = (ROOT / "docs/params.md").read_text()
     text = text.split("## Standard SuperDirt params")[0]
-    return set(re.findall(r"^\| `([a-z0-9]+)` \|", text, re.M))
+    return set(re.findall(r"^\| `([a-z0-9_]+)` \|", text, re.M))
 
 
 def from_tidal() -> set[str]:
-    return set(re.findall(r'pF "([a-z0-9]+)"', (ROOT / "tidal/params.hs").read_text()))
+    return set(re.findall(r'pF "([a-z0-9_]+)"', (ROOT / "tidal/params.hs").read_text()))
 
 
 def from_strudel() -> set[str]:
     text = (ROOT / "strudel/params.js").read_text()
     body = text.split("createParams(")[1].split(");")[0]
     body = re.sub(r"//.*", "", body)
-    return set(re.findall(r"'([a-z0-9]+)'", body))
+    return set(re.findall(r"'([a-z0-9_]+)'", body))
 
 
 def from_sc() -> set[str]:
     text = (ROOT / "sc/synthdefs/00_modules.scd").read_text()
     body = text.split("~scstdSpecs = (")[1].split(");")[0]
     body = re.sub(r"//.*", "", body)
-    return set(re.findall(r"([a-z0-9]+):\s*\[", body))
+    return set(re.findall(r"([a-z0-9_]+):\s*\[", body))
 
 
 def main() -> int:

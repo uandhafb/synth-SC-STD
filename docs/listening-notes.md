@@ -3,6 +3,24 @@
 Dated feedback from listening tests. Newest first.
 Format: date, stage, what was played (exact Tidal/Strudel line), what was heard, action.
 
+## 2026-09-23 — Stage 3, offline measurements (before listening)
+Rendered with `sc/tests/stage3_render.scd`, measured with `analysis/stage3_check.py`.
+- Noise: PinkNoise measured ~3.7x quieter than white/brown (RMS 0.155 vs 0.58); gain added.
+- S&H -> pitch works: one note, 8 steps/s, e.g. -4 -9 +1 -11 ... semitones; shlag 1 halves the
+  spectral-flux peaks (16.7 -> 7.0). S&H sampling VCO 2 while moving its pitch (feedback via
+  LocalIn, 1 block delay) is stable. Wind very smooth (flux ratio 1.5). No NaN; worst case -6.9 dBFS.
+- Lag processor on VCO 1 mod: PWM flux peak 5.1 -> 3.7 at lagtime 0.3.
+- Ring mod of two saws aliases a little at high notes (-27.5 dB off-line energy at C6); the filter
+  normally removes most of it. Left as is.
+- FILTER CALIBRATION (affects all stages): MoogLadder's real corner was 0.88x (60 Hz) .. 0.59x
+  (20 kHz) of vcfcut; "open" was only ~4 kHz at -3 dB. Its self-oscillation pitch was +1.7 st
+  (110 Hz) .. -3 st (7 kHz) off. Added a resonance-dependent correction: corner now 0.97-1.01x up
+  to 2 kHz (0.87x at 8 kHz, 0.81x at 12 kHz: MoogLadder's ceiling is a ~12.8 kHz corner); sung
+  pitch within +-0.6 st (110 Hz: +0.03, 440 Hz: -0.07). Default sound is now brighter than the
+  Stage 1 approval. MoogFF was already accurate (textbook 0.44x at -3 dB).
+  Possible later (Stage 6): compare BMoog / StkMoog as an alternative core.
+- Pending: user listening (tidal/examples.tidal 30-42, presets wind / computer_sequence / r2d2_bleeps).
+
 ## 2026-09-23 — Stage 2 done
 - #20 (VCO 1 in LF mode, not muted): "annoying but maybe interesting" -> keep faithful (no auto-mute).
 - #22 PWM pad: user hears clicks and likes them. Measured: they occur exactly one LFO period

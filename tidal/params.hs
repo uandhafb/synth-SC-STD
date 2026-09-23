@@ -31,6 +31,18 @@ let o1wave   = pF "o1wave"
 -- Analog character
     drift    = pF "drift"
     vspread  = pF "vspread"
+-- Noise, ring mod
+    nzcol    = pF "nzcol"
+    nzlvl    = pF "nzlvl"
+    rmlvl    = pF "rmlvl"
+-- Sample & hold, lag
+    shrate   = pF "shrate"
+    shsrc    = pF "shsrc"
+    shlag    = pF "shlag"
+    lagtime  = pF "lagtime"
+-- Patch cables (m_<source>_<dest>)
+    m_sh_pitch = pF "m_sh_pitch"
+    m_sh_vcf   = pF "m_sh_vcf"
 -- VCF
     vcfcut   = pF "vcfcut"
     vcfres   = pF "vcfres"

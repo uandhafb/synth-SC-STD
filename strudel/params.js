@@ -14,6 +14,12 @@ createParams(
   'o3wave', 'o3lvl', 'o3oct', 'o3fine', 'o3pw', 'o3pwm', 'o3fm',
   // Analog character
   'drift', 'vspread',
+  // Noise, ring mod
+  'nzcol', 'nzlvl', 'rmlvl',
+  // Sample & hold, lag
+  'shrate', 'shsrc', 'shlag', 'lagtime',
+  // Patch cables (m_<source>_<dest>)
+  'm_sh_pitch', 'm_sh_vcf',
   // VCF
   'vcfcut', 'vcfres', 'vcfenv', 'vcfkey', 'vcfdrive', 'vcfmodel', // vcfmodel: 0 = MoogLadder, 1 = MoogFF
   // VCA

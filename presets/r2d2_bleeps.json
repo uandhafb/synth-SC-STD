@@ -1,0 +1,20 @@
+{
+  "name": "R2-D2-style bleeps",
+  "sound": "scstd",
+  "stage": 3,
+  "description": "Sine waves with ring modulation and fast, slightly smoothed random pitch jumps from the S&H: chirpy robot talk. First draft, tune by ear.",
+  "params": {
+    "o1oct": 0.5,
+    "o1lvl": 0,
+    "o2wave": 3,
+    "o2lvl": 0.5,
+    "rmlvl": 0.6,
+    "m_sh_pitch": 24,
+    "shrate": 11,
+    "shlag": 0.35,
+    "o2fm": 0.03,
+    "vcfcut": 9000,
+    "vcfenv": 0
+  },
+  "tidal": "d1 $ n \"<0 7 3 12>\" # s \"scstd\" # o1oct 0.5 # o1lvl 0 # o2wave 3 # o2lvl 0.5 # rmlvl 0.6 # m_sh_pitch 24 # shrate 11 # shlag 0.35 # o2fm 0.03 # vcfcut 9000 # vcfenv 0 # legato 0.9"
+}
