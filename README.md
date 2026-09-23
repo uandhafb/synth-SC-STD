@@ -46,7 +46,8 @@ Quick check without Tidal:
 ```
 
 ### 2. Play from TidalCycles
-Add this line to your `BootTidal.hs` (after the default setup), then restart Tidal:
+Open this folder in VS Code: the Tidal extension picks up the project's `BootTidal.hs`.
+If you boot Tidal another way, add this line to your own `BootTidal.hs` (after the default setup):
 ```haskell
 :script "/absolute/path/to/synth-SC-STD/tidal/params.hs"
 ```
