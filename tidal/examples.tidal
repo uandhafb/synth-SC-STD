@@ -209,6 +209,13 @@ hush
 --     (PRESET presets/laser_zap.json)
 d1 $ n "-12*4" # s "scstd" # adsr_pitch 24 # eatk 0.001 # edec 0.15 # esus 0 # vcfenv 0.3 # arrel 0.1
 
+-- 43 CHECK (to hear what the cable does): the same slow notes, cable OFF then ON.
+--     OFF: a plain note. ON: each note starts 2 octaves higher and slides down over ~0.6 s.
+-- 43-off:
+d1 $ n "-12 ~ -12 ~" # s "scstd" # legato 1 # vcfenv 0 # adsr_pitch 0
+-- 43-on:
+d1 $ n "-12 ~ -12 ~" # s "scstd" # legato 1 # vcfenv 0 # adsr_pitch 24 # eatk 0.001 # edec 0.6 # esus 0
+
 -- 44. AR -> pitch: each note slides UP into place as the volume swells ("whoop").
 d1 $ n "0 5" # s "scstd" # ar_pitch (-7) # aratk 0.4 # legato 1
 
@@ -223,6 +230,14 @@ d1 $ n "-12 -5" # s "scstd" # legato 1 # vcfcut 600 # vcfres 0.6 # noise_vcf "<0
 
 -- 48. S&H -> pulse width: the pulse jumps to a random width 6 times per second (random timbre).
 d1 $ n "-12" # s "scstd" # legato 1 # o1lvl 0 # o2wave 1 # sh_pw 0.9 # shrate 6 # vcfcut 3000 # vcfenv 0
+
+-- 48 CHECK: filter wide open, low note, slower S&H (3 per second) so each change is clear.
+--     OFF: one steady buzzy tone. ON: the tone changes colour 3 times per second (thin/nasal,
+--     hollow, full), while the pitch stays the same.
+-- 48-off:
+d1 $ n "-24" # s "scstd" # legato 1 # o1lvl 0 # o2wave 1 # vcfcut 12000 # vcfenv 0 # sh_pw 0
+-- 48-on:
+d1 $ n "-24" # s "scstd" # legato 1 # o1lvl 0 # o2wave 1 # vcfcut 12000 # vcfenv 0 # sh_pw 1 # shrate 3
 
 -- 49. FM drone: VCO 3 is unplugged from the keyboard (o3kbd 0) and modulates the pitch of all
 --     VCOs at audio rate (vco3 -> pitch). Metallic, and it changes character with each note.
