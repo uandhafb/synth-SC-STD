@@ -8,9 +8,8 @@ It is being built for live coding performance and research on embodied
 interaction, including acoustic instruments (e.g. cello) driving the synth
 through an envelope follower.
 
-> **Status: Stage 3 — noise, ring mod, sample & hold, lag (next).** Stages 1–2 are done: the voice `scstd`
-> has three VCOs with PWM, FM and alias-reduced hard sync, a ladder filter (two characters), VCA and
-> ADSR/AR envelopes. Presets in `presets/`.
+> **Status: Stage 4 — patching system (next).** Stages 1–3 are done: three VCOs (PWM, FM, alias-reduced
+> hard sync), noise, ring mod, sample & hold, lag, calibrated ladder filter, VCA, ADSR/AR. Presets in `presets/`.
 > See [`CLAUDE.md`](CLAUDE.md) for the full design and the stage plan.
 
 ## Requirements

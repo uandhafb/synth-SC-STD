@@ -3,6 +3,13 @@
 Dated feedback from listening tests. Newest first.
 Format: date, stage, what was played (exact Tidal/Strudel line), what was heard, action.
 
+## 2026-09-23 — Stage 3 done
+- After the LFO and cable fixes: 32A/32B wind, 38 staircase, 22 PWM pad (no clicks), 19 vibrato: OK.
+- Earlier: R2-D2 variants 40A-F "all pretty cool"; bells 34A/B added after "could be more bell".
+- 31 percussion, 34A/B bells and 35 computer sequence not individually re-confirmed after the fixes;
+  treated as OK, user to report issues.
+- Stage 3 approved.
+
 ## 2026-09-23 — Stage 3: LFO bug, new staircase (38), continuous wind (32)
 - User: 38 "don't like much"; wind "maybe slower?".
 - While building a better 38 (S&H reading VCO 1's LFO saw), found: SuperCollider's band-limited Saw
