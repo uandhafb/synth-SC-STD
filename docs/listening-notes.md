@@ -3,6 +3,13 @@
 Dated feedback from listening tests. Newest first.
 Format: date, stage, what was played (exact Tidal/Strudel line), what was heard, action.
 
+## 2026-09-23 — Stage 1, first listening
+- tidal/examples.tidal 1-16 played from VS Code.
+- Heard: everything works (user). #9 resonant sweep smooth: yes. #10 self-oscillation: yes.
+- Two GHC parse errors in the Tidal log were not from the examples (all 18 lines type-check);
+  likely a comment/partial line evaluated. Red /score/play lines = global score bridge (known).
+- Filter A/B (#17-18): alternating version was confusing; split into A/B lines. Choice pending.
+
 ## 2026-09-23 — Stage 1, offline measurements (before listening)
 Rendered with `sc/tests/stage1_render.scd`, measured with `analysis/stage1_check.py`.
 - No NaN, no clicks at note edges, chord with 3 full VCOs + full drive peaks at -3 dBFS.
