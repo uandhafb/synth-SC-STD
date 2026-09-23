@@ -1,0 +1,7 @@
+# Python tools (optional). The synth itself runs in SuperCollider and does not need Python.
+# Used for: sending test OSC messages to SuperDirt, and comparing recordings in Stage 6.
+python-osc>=1.8
+numpy>=1.26
+scipy>=1.11
+soundfile>=0.12
+matplotlib>=3.8

@@ -1,0 +1,14 @@
+-- Stage 0: test synth (sctest). Needs sc/startup.scd running and tidal/params.hs loaded.
+
+-- 1. Basic: should play a short saw melody.
+d1 $ n "0 3 7 10" # s "sctest"
+
+-- 2. Custom param: the filter should slowly open and close.
+d1 $ n "0 3 7 10" # s "sctest" # tstbright (slow 4 sine)
+
+-- 3. Gate test: short notes with a long release should overlap and fade out smoothly,
+--    not stop abruptly.
+d1 $ n "0 ~ 7 ~" # s "sctest" # tstrel 2 # legato 0.2
+
+d1 silence
+hush
