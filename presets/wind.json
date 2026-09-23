@@ -2,22 +2,22 @@
   "name": "Wind",
   "sound": "scstd",
   "stage": 3,
-  "description": "Filtered noise with a resonant filter that wanders randomly and smoothly (S&H with full lag on the cutoff).",
+  "description": "Noise through a resonant filter that wanders slowly and randomly (S&H with full lag on the cutoff). Long overlapping notes make it continuous.",
   "params": {
     "o1lvl": 0,
     "o2lvl": 0,
     "nzlvl": 1,
     "nzcol": 0.3,
     "sh_vcf": 2.5,
-    "shrate": 1.5,
+    "shrate": 0.6,
     "shlag": 1,
     "vcfcut": 900,
     "vcfres": 0.85,
     "vcfenv": 0,
     "vcfkey": 0,
-    "aratk": 0.8,
-    "arrel": 1.5,
-    "erel": 1.5
+    "aratk": 2,
+    "arrel": 3,
+    "erel": 3
   },
-  "tidal": "d1 $ n \"0\" # s \"scstd\" # o1lvl 0 # o2lvl 0 # nzlvl 1 # nzcol 0.3 # sh_vcf 2.5 # shrate 1.5 # shlag 1 # vcfcut 900 # vcfres 0.85 # vcfenv 0 # vcfkey 0 # aratk 0.8 # arrel 1.5 # erel 1.5 # legato 1"
+  "tidal": "d1 $ slow 4 $ n \"0\" # s \"scstd\" # o1lvl 0 # o2lvl 0 # nzlvl 1 # nzcol 0.3 # sh_vcf 2.5 # shrate 0.6 # shlag 1 # vcfcut 900 # vcfres 0.85 # vcfenv 0 # vcfkey 0 # aratk 2 # arrel 3 # erel 3 # legato 1.2"
 }

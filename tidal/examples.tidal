@@ -87,6 +87,7 @@ d1 $ n "0" # s "scstd" # legato 1 # o1lf 1 # o1lfrate 3 # vcfcut 4000
 d1 $ n "-12" # s "scstd" # legato 1 # o1lf 1 # o1lfrate 0.5 # o1lvl 0 # o2wave 1 # o2pwm 0.9 # vcfcut 3000 # vcfenv 0
 
 -- 22. PRESET: PWM pad (presets/pwm_pad.json). Wide, moving chords.
+--     (Fixed in Stage 3: VCO 1's LFO used to send spikes instead of a ramp, which caused clicks.)
 d1 $ n "<[0,4,7] [-3,0,4] [-7,-3,0] [-5,-1,2]>" # s "scstd" # o1lf 1 # o1lfrate 0.8 # o1lvl 0 # o2wave 1 # o2pwm 0.8 # o3lvl 0.6 # o3wave 1 # o3pwm 0.6 # o3oct 0 # o3fine (-0.08) # vcfcut 1800 # vcfres 0.2 # vcfenv 0.1 # aratk 0.4 # arrel 1.2 # erel 1.2 # legato 1
 
 -- 23. Hard sync, step by step: o2oct moves VCO 2's tuning while it stays locked to VCO 1.
@@ -128,8 +129,14 @@ d1 $ n "0" # s "scstd" # o1lvl 0 # o2lvl 0 # nzlvl 1 # vcfmodel 1 # vcfcut 18000
 d1 $ n "0*8" # s "scstd" # o1lvl 0 # o2lvl 0 # nzlvl 1 # aratk 0.001 # arrel 0.05 # erel 0.05 # legato 0.05 # vcfcut 9000 # vcfenv 0
 d1 $ n "~ -24 ~ -24" # s "scstd" # o1lvl 0 # o2lvl 0.4 # o2wave 2 # nzlvl 1 # aratk 0.001 # arrel 0.15 # erel 0.15 # legato 0.1 # vcfcut 4000 # vcfenv 0
 
--- 32. PRESET: Wind (presets/wind.json). Noise through a resonant filter that wanders slowly.
-d1 $ n "0" # s "scstd" # o1lvl 0 # o2lvl 0 # nzlvl 1 # nzcol 0.3 # sh_vcf 2.5 # shrate 1.5 # shlag 1 # vcfcut 900 # vcfres 0.85 # vcfenv 0 # vcfkey 0 # aratk 0.8 # arrel 1.5 # erel 1.5 # legato 1
+-- 32. WIND. Each note lasts 4 cycles (slow 4) and overlaps the next (legato 1.2) with long fades,
+--     so the wind blows continuously instead of restarting every cycle.
+-- 32A calm, slow (PRESET presets/wind.json):
+d1 $ slow 4 $ n "0" # s "scstd" # o1lvl 0 # o2lvl 0 # nzlvl 1 # vcfenv 0 # vcfkey 0 # nzcol 0.3 # sh_vcf 2.5 # shrate 0.6 # shlag 1 # vcfcut 900 # vcfres 0.85 # aratk 2 # arrel 3 # erel 3 # legato 1.2
+-- 32B gusty: faster, wider swings, a bit more whistle.
+d1 $ slow 2 $ n "0" # s "scstd" # o1lvl 0 # o2lvl 0 # nzlvl 1 # vcfenv 0 # vcfkey 0 # nzcol 0.5 # sh_vcf 3 # shrate 1.2 # shlag 1 # vcfcut 1000 # vcfres 0.9 # aratk 1 # arrel 2 # erel 2 # legato 1.2
+-- 32C the first version (restarts every cycle), for comparison.
+d1 $ n "0" # s "scstd" # o1lvl 0 # o2lvl 0 # nzlvl 1 # vcfenv 0 # vcfkey 0 # nzcol 0.3 # sh_vcf 2.5 # shrate 1.5 # shlag 1 # vcfcut 900 # vcfres 0.85 # aratk 0.8 # arrel 1.5 # erel 1.5 # legato 1
 
 -- 33. Ring mod alone: metallic, bell-like, not quite in tune. Changes as o1oct changes.
 d1 $ n "0 5 7 12" # s "scstd" # o1lvl 0 # o2lvl 0 # rmlvl 1 # vcfcut 6000 # vcfenv 0 # o1oct "<0.485 0.25 1.1>"
@@ -156,9 +163,10 @@ d1 $ n "0" # s "scstd" # legato 1 # o2lvl 0 # sh_pitch 12 # shrate 8 # shlag "<0
 --     jumps between dark and bright ("bubbling", "blip-blop"). Compare with 35: 35 = pitch jumps.
 d1 $ n "-12" # s "scstd" # legato 1 # sh_vcf 2 # shrate 6 # vcfcut 800 # vcfres 0.7 # vcfenv 0
 
--- 38. Like 35 (pitch jumps), but the S&H reads a slow wave (VCO 3) instead of noise. So the jumps
---     are NOT random: they form a pattern that repeats, like a little arpeggio/sequencer.
-d1 $ n "0" # s "scstd" # legato 1 # o2lvl 0 # shsrc 3 # o3oct (-3) # sh_pitch 12 # shrate 6 # vcfcut 3000 # vcfenv 0
+-- 38. STAIRCASE: the S&H reads VCO 1's slow rising sawtooth (VCO 1 as an LFO) instead of noise.
+--     Each tick grabs a higher value, so the pitch climbs in steps (+3, +6, +9, +12 semitones) and
+--     starts over: an automatic arpeggio. Change o1lfrate to change how fast it climbs.
+d1 $ n "0" # s "scstd" # legato 1 # shsrc 1 # o1lf 1 # o1lfrate 0.75 # o1lvl 0 # sh_pitch 12 # shrate 6 # vcfcut 3000 # vcfenv 0
 
 -- 39. PRESET: Computer sequence (presets/computer_sequence.json).
 d1 $ n "0" # s "scstd" # o1lvl 0 # o2wave 1 # o2pw 0.3 # sh_pitch 12 # shrate 8 # vcfcut 2500 # vcfres 0.5 # vcfenv 0 # arrel 0.1 # erel 0.1 # legato 1
@@ -182,7 +190,7 @@ d1 $ degradeBy 0.4 $ n (segment 12 $ (0.37 <~ irand 24) + 12) # s "scstd" # o1lv
 -- 40F both mixed: every cycle, randomly either talking (bends) or plain beeps.
 d1 $ degradeBy 0.35 $ n (segment 16 $ (0.37 <~ irand 24) + 12) # s "scstd" # o1lf 1 # o1lvl 0 # o2wave 3 # o2lvl 1 # vcalvl 1 # aratk 0.003 # arrel 0.03 # erel 0.03 # vcfcut 6000 # vcfenv 0 # vcfdrive 0 # drift 0 # o1lfrate (range 4 30 $ 0.13 <~ rand) # o2fm (segment 1 $ wchooseBy (0.71 <~ rand) [(0, 1), (0.15, 1)]) # legato (range 0.4 0.9 $ 0.53 <~ rand)
 
--- 41. Lag processor: the PWM pad from 22, first with clicks (lagtime 0), then smooth (0.3).
+-- 41. Lag processor: the PWM pad from 22, lagtime 0 then 0.3 (the saw LFO's jump gets rounded).
 d1 $ n "<[0,4,7] [-3,0,4]>" # s "scstd" # legato 1 # o1lf 1 # o1lfrate 0.8 # o1lvl 0 # o2wave 1 # o2pwm 0.8 # vcfcut 1800 # vcfenv 0.1 # aratk 0.4 # arrel 1.2 # lagtime "<0 0.3>"
 
 -- 42. Filter calibration check: the filter alone sings the note A (440 Hz), then A an octave up.

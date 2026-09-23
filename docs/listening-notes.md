@@ -3,6 +3,20 @@
 Dated feedback from listening tests. Newest first.
 Format: date, stage, what was played (exact Tidal/Strudel line), what was heard, action.
 
+## 2026-09-23 — Stage 3: LFO bug, new staircase (38), continuous wind (32)
+- User: 38 "don't like much"; wind "maybe slower?".
+- While building a better 38 (S&H reading VCO 1's LFO saw), found: SuperCollider's band-limited Saw
+  and Pulse break down below ~20 Hz (Saw at 0.5 Hz: spikes up to +30, 2 Hz: +8, 5 Hz: +3; clean
+  only above ~20 Hz). So since Stage 2, VCO 1 in LF mode sent spikes into FM/PWM/S&H.
+  The "PWM clicks" in #22 (Stage 2 notes: "saw LFO resetting") were these spikes.
+- Fix: ~scstdMods[\saw]/[\pulse] use LFSaw/LFPulse below 20 Hz (all VCOs). Verified: vibrato
+  #19 now +-0.36 st as designed; PWM flux 5.1 -> 1.4 (smooth sweep, no clicks); staircase works.
+- 38 now: S&H reads VCO 1's slow saw -> rising staircase 0 +3 +6 +9 +12, repeating.
+- 32 wind: the old version restarted every cycle (one note per cycle with fade-in = pulsing).
+  32A: slow 4 + legato 1.2 + long fades + shrate 0.6 -> continuous, level varies only 4.4 dB,
+  no dips at note joins (measured over 3 overlapping notes). 32B gusty, 32C old for comparison.
+- Regression renders of Stages 1-3 unchanged (no NaN, default level, sync -60 dB); msgFunc OK.
+
 ## 2026-09-23 — Stage 3, bug: patch cables never reached the synth via SuperDirt
 - User: #35 has no pitch jumps. Offline renders jumped, so reproduced with a private SuperDirt
   instance (output to a silent bus, recorded): pitch stayed at +0.

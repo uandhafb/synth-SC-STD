@@ -79,14 +79,28 @@
 };
 
 // ---------------------------------------------------------------------------------------------
+// Saw and pulse that work at every frequency, including LFO rates.
+// SuperCollider's band-limited Saw and Pulse are built from band-limited impulses and break down
+// below ~20 Hz: measured 2026-09-23, Saw at 0.5 Hz outputs spikes up to +30 with almost nothing in
+// between (2 Hz: +8, 5 Hz: +3; clean -1..1 only above ~20 Hz). As an LFO that sent huge spikes into
+// FM/PWM. Below 20 Hz we therefore use the simple LFSaw/LFPulse (exact -1..1; aliasing is no issue
+// at these rates). Above 20 Hz the band-limited versions are used, so audio stays alias-free.
+~scstdMods[\saw] = { |f|
+	Select.ar(f < 20, [Saw.ar(f), LFSaw.ar(f)])
+};
+~scstdMods[\pulse] = { |f, width|
+	Select.ar(f < 20, [Pulse.ar(f, width), (LFPulse.ar(f, 0, width) * 2) - 1])
+};
+
+// ---------------------------------------------------------------------------------------------
 // VCO 1: saw -> square crossfade.
 // Saw and Pulse are band-limited in SuperCollider, so high notes do not alias.
 // Returns [audio, mod]: `audio` goes to the mixer (square scaled by 0.6 so its loudness roughly
 // matches the saw; square RMS is ~1.7x saw RMS), `mod` is the same wave at full +-1 scale, used as
 // the modulation source for PWM, FM and sync (on the original, VCO 1 is the classic mod source).
 ~scstdMods[\vco1] = { |f, wave|
-	var saw = Saw.ar(f);
-	var sqr = Pulse.ar(f, 0.5);
+	var saw = ~scstdMods[\saw].(f);
+	var sqr = ~scstdMods[\pulse].(f, 0.5);
 	[(saw * (1 - wave)) + (sqr * 0.6 * wave), (saw * (1 - wave)) + (sqr * wave)]
 };
 
@@ -100,8 +114,8 @@
 ~scstdMods[\vco2] = { |f, wave, pw, pwMod = 0, sync = 0, syncFreq = 100|
 	var width = (pw + pwMod).clip(0.05, 0.95);   // PWM summing point
 	var free = SelectX.ar(wave, [
-		Saw.ar(f),
-		Pulse.ar(f, width) * 0.6,
+		~scstdMods[\saw].(f),
+		~scstdMods[\pulse].(f, width) * 0.6,
 		LFTri.ar(f) * 0.9,
 		SinOsc.ar(f) * 0.9
 	]);
@@ -159,7 +173,7 @@
 // VCO 3: saw -> pulse crossfade.
 ~scstdMods[\vco3] = { |f, wave, pw, pwMod = 0|
 	var width = (pw + pwMod).clip(0.05, 0.95);
-	(Saw.ar(f) * (1 - wave)) + (Pulse.ar(f, width) * 0.6 * wave)
+	(~scstdMods[\saw].(f) * (1 - wave)) + (~scstdMods[\pulse].(f, width) * 0.6 * wave)
 };
 
 // ---------------------------------------------------------------------------------------------
