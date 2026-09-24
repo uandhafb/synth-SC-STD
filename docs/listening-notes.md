@@ -3,6 +3,11 @@
 Dated feedback from listening tests. Newest first.
 Format: date, stage, what was played (exact Tidal/Strudel line), what was heard, action.
 
+## 2026-09-24 — Stage 8, user test
+- strudel.cc + npx @strudel/osc, setcps(0.575): #1, #22, #32A, #54, #40D, each compared with the
+  same example in Tidal. Heard: "everything worked perfectly".
+- Action: Stage 8 done. Stage 9 (VS Code extension) postponed ("later, if time"); next Stage 10.
+
 ## 2026-09-24 — Stage 8 (Strudel parity), automatic checks
 - analysis/parity_check.mjs: all 89 examples queried for 8 cycles in Tidal (ghci queryArc) and
   Strudel (@strudel/core 1.2.6 + mini + transpiler): 86 identical event by event (onsets, lengths,

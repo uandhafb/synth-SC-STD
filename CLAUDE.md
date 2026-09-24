@@ -475,4 +475,6 @@ line at the bottom of this file when moving on.
 
 ## Current stage
 
-**Stage 8 — Strudel integration** (Stages 0–5 done 2026-09-23; Stages 6 and 7 done 2026-09-24)
+**Stage 10 — Documentation and performance testing** (Stages 0–5 done 2026-09-23; Stages 6–8 done
+2026-09-24). Stage 9 (VS Code extension) postponed by the user: "later, if time".
+License chosen by the user: GPL-3.0.
