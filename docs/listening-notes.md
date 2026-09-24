@@ -3,6 +3,10 @@
 Dated feedback from listening tests. Newest first.
 Format: date, stage, what was played (exact Tidal/Strudel line), what was heard, action.
 
+## 2026-09-23 — Stage 5, first listening
+- Mic (Mac built-in) reaches SuperCollider and the audio-input examples react (user: "it worked").
+  Added sc/tests/mic_check.scd (s.meter + mic level readout) for checking the input.
+
 ## 2026-09-23 — Stage 5, offline and real-SuperDirt measurements (before listening)
 - New: mono mode (monomode, glide), audio input (ingain, inlvl, efatk, efrel, source envf),
   electronic switch, mixer/inverter (source mix, shsrc 4, lagsrc 1), vcainit. 104 params in sync;
