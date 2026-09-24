@@ -459,4 +459,4 @@ line at the bottom of this file when moving on.
 
 ## Current stage
 
-**Stage 5 — Mono mode and utilities** (Stages 0–4 done 2026-09-23)
+**Stage 6 — Spring reverb and calibration** (Stages 0–5 done 2026-09-23)

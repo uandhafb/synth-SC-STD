@@ -291,6 +291,18 @@ d1 $ n "0 3 7 10" # s "scstd" # glide 0.1 # legato 1.05
 -- 59. Your sound opens the FILTER: louder = brighter. (PRESET presets/mic_filter.json)
 d1 $ n "-12" # s "scstd" # monomode 1 # legato 1 # envf_vcf 4 # vcfcut 200 # vcfres 0.5 # vcfenv 0
 
+-- 59B. HOW STRONG the mic reacts. Two controls:
+--      ingain = mic sensitivity (0-1), affects everything that listens to the mic;
+--      the cable amount (envf_vcf here) = how much the mic moves this one thing.
+--      One cycle each: ingain 0.2 (subtle), 0.4 (default), 0.7 (very sensitive).
+d1 $ n "-12" # s "scstd" # monomode 1 # legato 1 # envf_vcf 4 # vcfcut 200 # vcfres 0.5 # vcfenv 0 # ingain "<0.2 0.4 0.7>"
+--      Same sensitivity, smaller cable amount: the filter opens half as much.
+d1 $ n "-12" # s "scstd" # monomode 1 # legato 1 # envf_vcf 2 # vcfcut 200 # vcfres 0.5 # vcfenv 0
+--      Slow follower: reacts smoothly and lets go slowly (efatk/efrel in seconds).
+d1 $ n "-12" # s "scstd" # monomode 1 # legato 1 # envf_vcf 4 # vcfcut 200 # vcfres 0.5 # vcfenv 0 # efatk 0.2 # efrel 1.5
+--      LIVE: while 59 plays, set the sensitivity from SuperCollider (no pattern change):
+--      ~scstdSet.(\ingain, 0.25);   ~scstdSet.(\ingain, 0.5);
+
 -- 60. Your sound GATES the synth: it only sounds while you make sound (VCA closed at rest).
 d1 $ n "<0 5 7 3>" # s "scstd" # monomode 1 # legato 1 # vcaenv 0 # vcainit 0 # envf_vca 1 # vcfcut 2500
 

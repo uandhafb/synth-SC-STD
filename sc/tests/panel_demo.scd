@@ -18,6 +18,9 @@
 ~scstdSet.(\glide, 0.2);           // slower glide
 ~scstdSet.(\monomode, 0);         // back to normal (polyphonic) mode
 
+~scstdSet.(\ingain, 0.25);        // Stage 5: less mic sensitivity (examples 59-61)
+~scstdSet.(\ingain, 0.6);         // more mic sensitivity
+
 ~scstdReset.();                    // back to the default sound
 
 // Note: a value written in the Tidal pattern always wins over the panel.

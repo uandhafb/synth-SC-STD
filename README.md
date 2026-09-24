@@ -8,8 +8,8 @@ It is being built for live coding performance and research on embodied
 interaction, including acoustic instruments (e.g. cello) driving the synth
 through an envelope follower.
 
-> **Status: Stage 5 — mono mode and audio input (next).** Stages 1–4 are done: full voice, 30 patch
-> cables (`<source>_<dest>`), panel memory (`~scstdSet`, `~scstdLoadPreset`). Presets in `presets/`.
+> **Status: Stage 6 — spring reverb and calibration (next).** Stages 1–5 are done: full voice, 38 patch
+> cables, panel memory, mono mode with glide, mic/instrument input (envelope follower). Presets in `presets/`.
 > See [`CLAUDE.md`](CLAUDE.md) for the full design and the stage plan.
 
 ## Requirements

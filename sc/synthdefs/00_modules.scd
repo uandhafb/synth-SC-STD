@@ -30,7 +30,7 @@
 	// Mono mode (Stage 5): monomode is read by sclang (sc/synthdefs/scstd.scd), glide by the mono synth
 	monomode: [0, 1, 0], glide: [0, 5, 0],
 	// Audio input (6.13): preamp and envelope follower. Input 1 = the Mac's built-in mic.
-	inlvl: [0, 1, 0], ingain: [0, 1, 0.5], efatk: [0.001, 1, 0.01], efrel: [0.01, 5, 0.3],
+	inlvl: [0, 1, 0], ingain: [0, 1, 0.4], efatk: [0.001, 1, 0.01], efrel: [0.01, 5, 0.3],
 	// Electronic switch: alternates between two audio sources (0 VCO 1, 1 VCO 2, 2 VCO 3, 3 noise, 4 input)
 	swrate: [0.1, 50, 4], swa: [0, 4, 1], swb: [0, 4, 2], swlvl: [0, 1, 0],
 	// Mixer/inverter: two sources (0 vco1 1 vco2 2 vco3 3 noise 4 sh 5 adsr 6 ar 7 envf 8 rm),

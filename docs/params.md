@@ -106,7 +106,7 @@ Input 1 of the computer (the Mac's built-in mic by default). **Use headphones wh
 
 | Param | Range | Default | Description |
 |---|---|---|---|
-| `ingain` | 0–1 | 0.5 | Preamp gain, 1×–100× (0 to +40 dB); 0.5 = 10× |
+| `ingain` | 0–1 | 0.4 | Mic sensitivity (preamp gain 1×–100×, 0 to +40 dB); 0.4 ≈ 6× (default lowered from 0.5 after listening: "a little strong") |
 | `inlvl` | 0–1 | 0 | The input's own sound into the mixer (e.g. the cello through the synth's filter) |
 | `efatk` | 0.001–1 s | 0.01 | Envelope follower attack: how fast it follows louder playing |
 | `efrel` | 0.01–5 s | 0.3 | Envelope follower release: how fast it lets go when you play softer / stop |

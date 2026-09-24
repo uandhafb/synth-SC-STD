@@ -3,6 +3,12 @@
 Dated feedback from listening tests. Newest first.
 Format: date, stage, what was played (exact Tidal/Strudel line), what was heard, action.
 
+## 2026-09-23 — Stage 5 done
+- 54 mono glide and 55 same code in both modes: fine (user).
+- Mic reaction "could be a little strong": default ingain 0.5 -> 0.4 (~ -4 dB); added 59B lines
+  (ingain per cycle, smaller cable amount, slow follower) and live ~scstdSet.(\ingain, ...) lines.
+- Stage 5 approved.
+
 ## 2026-09-23 — Stage 5, first listening
 - Mic (Mac built-in) reaches SuperCollider and the audio-input examples react (user: "it worked").
   Added sc/tests/mic_check.scd (s.meter + mic level readout) for checking the input.
