@@ -28,7 +28,8 @@ docs/references/**/*.aif
 docs/references/**/*.aiff
 docs/references/**/*.flac
 docs/references/**/*.mp3
-analysis/output/
+analysis/output/*
+!analysis/output/.gitkeep
 
 # Local secrets / settings
 .env
