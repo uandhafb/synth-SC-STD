@@ -1,6 +1,7 @@
 """Check that parameter names are in sync across the project (CLAUDE.md, decision 8).
 
-Compares: docs/params.md, tidal/params.hs, strudel/params.js, sc/synthdefs/00_modules.scd.
+Compares: docs/params.md, tidal/params.hs, strudel/params.js, sc/synthdefs/00_modules.scd,
+and checks that BootTidal.hs is up to date with tidal/params.hs (analysis/build_boot.py).
 Usage:  .venv/bin/python analysis/check_params.py   (exit code 1 on mismatch)
 """
 
@@ -43,6 +44,10 @@ def main() -> int:
         if missing:
             ok = False
             print(f"{name}: missing in {', '.join(missing)}")
+    from build_boot import expected
+    if (ROOT / "BootTidal.hs").read_text() != expected():
+        ok = False
+        print("BootTidal.hs is out of date: run .venv/bin/python analysis/build_boot.py")
     print(f"{len(all_names)} params, {'in sync' if ok else 'OUT OF SYNC'}")
     return 0 if ok else 1
 
