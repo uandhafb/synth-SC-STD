@@ -40,7 +40,7 @@ tools exist there), but are untested.
 | [SuperCollider](https://supercollider.github.io/downloads) | the sound engine | 3.14.1 |
 | [sc3-plugins](https://github.com/supercollider/sc3-plugins/releases) | the default filter (`MoogLadder`) | — |
 | [SuperDirt](https://github.com/musikinformatik/SuperDirt) | receives Tidal/Strudel events | 1.7.3 |
-| [TidalCycles](https://tidalcycles.org/docs/) + [VS Code](https://code.visualstudio.com/) with the "TidalCycles" extension | playing from Tidal | Tidal 1.10.1, extension 2.0.2 |
+| [TidalCycles](https://tidalcycles.org/docs/) + an editor: [Pulsar](https://pulsar-edit.dev/) with the "tidalcycles" package, or [VS Code](https://code.visualstudio.com/) with the "TidalCycles" extension | playing from Tidal | Tidal 1.10.1, Pulsar package 4.1.3, VS Code extension 2.0.2 |
 | [Node.js](https://nodejs.org/) | the web panel and the Strudel bridge | 24 |
 | Python 3 (optional) | test and analysis scripts | 3.14 |
 
@@ -52,7 +52,8 @@ tools exist there), but are untested.
    *Language → Recompile Class Library*.
 4. **TidalCycles**: follow the official installation guide for your system
    ([tidalcycles.org](https://tidalcycles.org/docs/)); it installs Haskell and Tidal
-   (`cabal install tidal --lib`). Then install VS Code and its "TidalCycles" extension.
+   (`cabal install tidal --lib`). Then install an editor: Pulsar and its "tidalcycles" package
+   (*Settings → Install*), or VS Code and its "TidalCycles" extension.
 5. **Node.js**: install the LTS version from nodejs.org (for the panel and Strudel).
 6. **This project**:
    ```sh
@@ -71,22 +72,25 @@ tools exist there), but are untested.
 Open `sc/startup.scd` in SuperCollider, click inside the outer parentheses and press **Cmd+Enter**
 (Ctrl+Enter on Linux/Windows). Wait for `[synth] project ready on port 57120` in the post window.
 
-### 2. Play from TidalCycles
-Open **this folder** in VS Code (*File → Open Folder*). The Tidal extension uses the project's
-`BootTidal.hs`, which starts Tidal and adds the synth's names. Open `tidal/examples.tidal`, click
-on a line and press **Shift+Enter**:
+### 2. Play from TidalCycles (Pulsar or VS Code)
+Open **this folder** in Pulsar or VS Code (*File → Open Folder*; in Pulsar it must be the first
+project folder). Both editors then use the project's `BootTidal.hs`, which starts Tidal and adds the
+synth's names, as long as no other boot file is set in the editor's settings (Pulsar: *Settings →
+Packages → tidalcycles → Boot Tidal Path* empty; VS Code: `tidalcycles.bootTidalPath` empty).
+Open `tidal/examples.tidal`, click on a line and press **Shift+Enter** (a block: Cmd+Enter in
+Pulsar):
 ```haskell
 d1 $ n "0 3 7 10" # s "scstd" # vcfcut (range 200 3000 $ slow 4 sine) # vcfres 0.6
 ```
 `hush` stops. The file has 89 examples, each with a note on what to listen for.
 
-*Using your own `BootTidal.hs` or another editor?* Add this line after your Tidal setup:
-`:script "/absolute/path/to/synth-SC-STD/tidal/params.hs"`.
+*Already have your own Tidal setup* (your own `BootTidal.hs`, another editor, several setups)?
+Keep it and add one line after it, in the boot file or even typed during a session:
+`:script "/absolute/path/to/synth-SC-STD/tidal/params.hs"`. It only adds the synth's names, so it
+combines with any setup (Link, editor highlighting, other synths).
 
-*Tidal starts twice?* If your `~/.ghci` already starts Tidal, the project's boot file would start
-it a second time. Then tell VS Code to load only the synth's names: create `.vscode/settings.json`
-in this folder with
-`{ "tidalcycles.bootTidalPath": "/absolute/path/to/synth-SC-STD/tidal/params.hs" }`.
+*Tidal starts twice?* If your `~/.ghci` starts Tidal by itself, every editor starts it a second
+time. Remove that line from `~/.ghci` and let the editor's boot file do it.
 
 ### 3. Play from Strudel
 1. Keep SuperCollider running (step 1).
