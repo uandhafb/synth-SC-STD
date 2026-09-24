@@ -3,6 +3,11 @@
 Dated feedback from listening tests. Newest first.
 Format: date, stage, what was played (exact Tidal/Strudel line), what was heard, action.
 
+## 2026-09-23 — Stage 4 done
+- 43-off/on and 48-off/on: cables audible as intended; panel_demo.scd with example 53: works (user).
+- Examples 44-47 and 49-52 not individually commented; treated as OK, user to report issues.
+- Stage 4 approved.
+
 ## 2026-09-23 — Stage 4, first listening
 - #43 "cool but not sure it does what it should", #48 same. Both verified offline: adsr_pitch
   +9 -> 0 st; sh_pw gives random duty per step (0.90 0.59 0.43 0.31 0.16 0.84 ...).

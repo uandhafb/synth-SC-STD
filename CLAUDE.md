@@ -445,4 +445,4 @@ line at the bottom of this file when moving on.
 
 ## Current stage
 
-**Stage 4 — Patching system** (Stages 0–3 done 2026-09-23)
+**Stage 5 — Mono mode and utilities** (Stages 0–4 done 2026-09-23)
