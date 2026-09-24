@@ -3,6 +3,21 @@
 Dated feedback from listening tests. Newest first.
 Format: date, stage, what was played (exact Tidal/Strudel line), what was heard, action.
 
+## 2026-09-23 — Stage 7 (web panel), built ahead while Stage 6 waits for listening
+- relay/index.js (ws only; own OSC codec after `osc` pulled a vulnerable ws), ui/ built from
+  /scstd/specs, keyboard voice (mono, last-note priority) in scstd.scd, protocol in buses.scd.
+- analysis/ui_check.mjs (protocol, 16/16): specs, A->B sync, late panel state, clipping,
+  presets incl. partial, unsafe names refused, path traversal refused, reset, screenshots.
+  Keyboard audio: C4 at 263 Hz, brightness 296 -> 537 Hz after a mid-note panel change,
+  last-note priority C4 -> G4 -> C4, silence after release.
+- analysis/ui_browser_check.mjs (real headless Chrome via DevTools, 14/14): slider, switch,
+  choice buttons, matrix cable + cable view, double-click reset, outside change shown, preset
+  load, reset, computer key (recorded: C3 131 Hz for ~1 s), theme.
+- Screenshots: phone width needed a 390 px iframe (Chrome's window has a minimum width).
+  Fixed: slider columns overflowing on narrow screens, normalled cables not visibly dashed,
+  status wording while connecting, float32 noise in values (relay rounds to 7 digits).
+- Pending: user test after Stage 6.
+
 ## 2026-09-23 — Stage 6, measurements (before listening)
 - Spring reverb as SuperDirt global effect, off by default (user chose B). First dispersion design
   (plain one-sample allpasses) spread only ~1 ms: inaudible chirp. Stretched allpasses (11-12

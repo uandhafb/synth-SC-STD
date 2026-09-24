@@ -8,8 +8,8 @@ It is being built for live coding performance and research on embodied
 interaction, including acoustic instruments (e.g. cello) driving the synth
 through an envelope follower.
 
-> **Status: Stage 6 — spring reverb and calibration (next).** Stages 1–5 are done: full voice, 38 patch
-> cables, panel memory, mono mode with glide, mic/instrument input (envelope follower). Presets in `presets/`.
+> **Status: Stage 6 (spring reverb) waiting for listening; Stage 7 (web panel) built ahead.** Stages 1–5
+> are done: full voice, 38 patch cables, panel memory, mono mode with glide, mic/instrument input.
 > See [`CLAUDE.md`](CLAUDE.md) for the full design and the stage plan.
 
 ## Requirements
@@ -67,14 +67,31 @@ Open [strudel.cc](https://strudel.cc), paste [`strudel/params.js`](strudel/param
 n("0 3 7 10").s("scstd").vcfcut(sine.range(200, 3000).slow(4)).vcfres(0.6).osc()
 ```
 
+### 4. Web panel (optional)
+A control panel in the browser: sliders for every setting, patch cables, a playable keyboard,
+presets. It needs [Node.js](https://nodejs.org/) (tested with 24).
+
+```sh
+cd relay
+npm install          # once
+npm start            # = node index.js
+```
+Then open **http://localhost:8090** (keep SuperCollider running `sc/startup.scd`).
+
+- Moving a slider changes the sound live, also for notes that are already playing.
+- A value written in your Tidal/Strudel pattern always wins over the panel.
+- Keyboard: click the keys, or use the computer keys A W S E D F T G Y H U J K (Z/X = octave).
+- Several panels (tabs, devices on this computer) stay in sync; reloading shows the current state.
+- The panel only listens on this computer (127.0.0.1).
+
 ## Project layout
 
 ```
 sc/          SuperCollider: startup, synthdefs, utilities, per-module tests
 tidal/       Tidal param definitions and example patterns
 strudel/     Strudel controls and example patterns
-relay/       Node relay between the web UI and SuperCollider (Stage 7)
-ui/          Web control panel (Stage 7)
+relay/       Node relay between the web panel and SuperCollider
+ui/          Web control panel (built from SuperCollider's parameter list)
 presets/     Saved panel states (JSON)
 analysis/    Python helpers: OSC test, recording comparison
 docs/        Parameter reference, default routing, listening notes, references

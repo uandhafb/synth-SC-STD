@@ -45,9 +45,42 @@ SynthDef(\scstd_mono, { |out = 0, pan = 0.5, amp = 0.4|
 	Out.ar(out, DirtPan.ar(sig, ~dirt.numChannels, pan) * amp);
 }).add;
 
+// On-screen keyboard (web panel, Stage 7): one persistent mono voice on the first orbit, playing
+// entirely from the panel (every param unset -> panel bus), incl. glide and the spring reverb.
+// Last-note priority like a monophonic synth keyboard: pressing a key while another is held
+// glides without retriggering the envelopes; releasing returns to the previous held key.
+~scstdKeyboard = (node: nil, held: List[]);
+~scstdKeyOn = { |midi|
+	var kb = ~scstdKeyboard, orbit = ~dirt.orbits[0], server = orbit.server;
+	var retrig = kb[\held].isEmpty;
+	var freq = midi.asFloat.midicps;
+	kb[\held].remove(midi); kb[\held].add(midi);
+	if(kb[\node].isNil) {
+		kb[\node] = server.nextNodeID;
+		server.sendMsg(*([\s_new, \scstd_mono, kb[\node], 0, orbit.group, \out, orbit.dryBus.index,
+			\amp, 0.4, \pan, 0.5, \freq, freq, \gate, 1]
+			++ synthParams.collect { |k| [k, unset] }.flatten));
+	} {
+		server.sendMsg(*([\n_set, kb[\node], \freq, freq, \gate, 1] ++ if(retrig) { [\retrig, 1] } { [] }));
+	};
+	// Wake the orbit's spring reverb with the panel's values (it sleeps until an event sets it).
+	orbit.globalEffects.do { |x| x.set(().putPairs(fxParams.collect { |k| [k, state[k]] }.flatten)) };
+};
+~scstdKeyOff = { |midi|
+	var kb = ~scstdKeyboard, server = ~dirt.orbits[0].server;
+	kb[\held].remove(midi);
+	if(kb[\node].notNil) {
+		if(kb[\held].isEmpty) {
+			server.sendMsg(\n_set, kb[\node], \gate, 0);
+		} {
+			server.sendMsg(\n_set, kb[\node], \freq, kb[\held].last.asFloat.midicps);
+		}
+	}
+};
+
 // Cmd+. frees every node on the server, so forget the mono voices then.
 ~scstdMonoCmdPeriod !? { CmdPeriod.remove(~scstdMonoCmdPeriod) };
-~scstdMonoCmdPeriod = { voices.clear };
+~scstdMonoCmdPeriod = { voices.clear; topEnvironment[\scstdKeyboard] = (node: nil, held: List[]) };
 CmdPeriod.add(~scstdMonoCmdPeriod);
 ~scstdMonoVoices = voices;   // for inspection from the IDE
 

@@ -10,8 +10,8 @@
 //   ~scstdReset.();                  // all values back to defaults
 //   ~scstdLoadPreset.("wind");       // load presets/wind.json into the panel
 //   ~scstdSavePreset.("venue", [\ingain]);   // save (all changed params, or only the listed ones)
-// Over OSC (for the web panel, Stage 7), to sclang's port (57120):
-//   /scstd/set <name> <value>    /scstd/reset    /scstd/preset <name>
+// Over OSC (the web panel's relay, Stage 7), to sclang's port (57120): see "Web panel protocol"
+// below (/scstd/set, /scstd/reset, /scstd/preset, /scstd/hello, /scstd/noteon, ...).
 
 (
 var srv = Server.default;
@@ -28,7 +28,7 @@ var root = thisProcess.nowExecutingPath.dirname.dirname;
 // Drop state for params that no longer exist (renamed in a later version).
 ~scstdState.keys.copy.do { |k| if(~scstdSpecs[k].isNil) { ~scstdState.removeAt(k) } };
 
-// Called after every change; the relay (Stage 7) will hook in here to update all panels.
+// Called after every change; set below (web panel protocol) to update all open panels.
 ~scstdChanged = ~scstdChanged ?? { { |name, value| } };
 
 ~scstdSet = { |name, value|
@@ -54,8 +54,11 @@ var root = thisProcess.nowExecutingPath.dirname.dirname;
 // Afterwards a plain pattern like  d1 $ n "0 3 7" # s "scstd"  plays the preset sound.
 // A preset saved with only some params ("partial": true, e.g. a venue's mic sensitivity) is
 // applied without the reset, so the rest of the sound stays as it is.
+// Preset names are file names: letters, digits, _ and - only (no paths).
+~scstdSafeName = { |name| name.asString.select { |c| c.isAlphaNum or: { "_-".includes(c) } }.keep(64) };
+
 ~scstdLoadPreset = { |name|
-	var path = root +/+ "presets" +/+ name.asString ++ ".json";
+	var path = root +/+ "presets" +/+ ~scstdSafeName.(name) ++ ".json";
 	var json;
 	if(File.exists(path).not) {
 		"scstd: no preset %".format(path).warn;
@@ -73,7 +76,7 @@ var root = thisProcess.nowExecutingPath.dirname.dirname;
 //   ~scstdSavePreset.("venue_hall", [\ingain, \efatk, \efrel]); // only these (a "partial" preset)
 // Partial presets are loaded without resetting the rest (see ~scstdLoadPreset).
 ~scstdSavePreset = { |name, keys|
-	var path = root +/+ "presets" +/+ name.asString ++ ".json";
+	var path = root +/+ "presets" +/+ (name = ~scstdSafeName.(name)) ++ ".json";
 	var partial = keys.notNil;
 	var names = (keys ?? {
 		~scstdSpecs.keys.asArray.select { |k| ~scstdState[k] != ~scstdSpecs[k][2] }
@@ -99,10 +102,73 @@ var root = thisProcess.nowExecutingPath.dirname.dirname;
 // Push the state to the server now (if it is running).
 if(srv.serverRunning) { ~scstdState.keysValuesDo { |k, v| ~scstdBuses[k].set(v) } };
 
-// OSC: the functions run from the OSC thread, so look them up in the top environment.
-OSCdef(\scstdSet, { |msg| topEnvironment[\scstdSet].(msg[1], msg[2]) }, '/scstd/set');
-OSCdef(\scstdReset, { topEnvironment[\scstdReset].() }, '/scstd/reset');
-OSCdef(\scstdPreset, { |msg| topEnvironment[\scstdLoadPreset].(msg[1]) }, '/scstd/preset');
+// ---------------------------------------------------------------------------------------------
+// Web panel protocol (Stage 7). The relay (relay/index.js) talks OSC to this sclang; every reply
+// goes back to the address the request came from (the relay's own UDP port).
+//   relay -> sclang:  /scstd/hello            register; reply /scstd/specs + /scstd/presetlist
+//                     /scstd/ping             heartbeat; reply /scstd/pong (registers if unknown,
+//                                             e.g. after SuperCollider was restarted)
+//                     /scstd/set name value   /scstd/reset   /scstd/preset name
+//                     /scstd/savepreset name [key ...]      /scstd/presets
+//                     /scstd/noteon midi      /scstd/noteoff midi   (on-screen keyboard)
+//   sclang -> relay:  /scstd/specs  name min max default value ...  (all params, sorted)
+//                     /scstd/changed name value                     (after every change)
+//                     /scstd/presetlist name ...                    /scstd/pong
+// OSC callbacks run outside the top environment, so every handler uses topEnvironment.use.
+
+~scstdRelays = ~scstdRelays ?? { Set.new };
+
+~scstdSendRelays = { |...msg| ~scstdRelays.do { |addr| addr.sendMsg(*msg) } };
+
+// Every change (from any panel, SuperCollider code or a preset) goes to every panel.
+~scstdChanged = { |name, value| topEnvironment[\scstdSendRelays].('/scstd/changed', name, value) };
+
+~scstdSendSpecs = { |addr|
+	var args = ~scstdSpecs.keys.asArray.sort.collect { |k|
+		var s = ~scstdSpecs[k];
+		[k, s[0], s[1], s[2], ~scstdState[k]]
+	}.flatten;
+	addr.sendMsg('/scstd/specs', *args);
+};
+
+~scstdPresetNames = {
+	PathName(root +/+ "presets").files
+		.select { |f| f.extension == "json" }
+		.collect(_.fileNameWithoutExtension).sort
+};
+
+~scstdSendPresetList = { |addr|
+	var msg = ['/scstd/presetlist'] ++ ~scstdPresetNames.();
+	if(addr.notNil) { addr.sendMsg(*msg) } { ~scstdSendRelays.(*msg) };
+};
+
+~scstdRegisterRelay = { |addr|
+	~scstdRelays.add(addr);
+	~scstdSendSpecs.(addr);
+	~scstdSendPresetList.(addr);
+};
+
+OSCdef(\scstdHello, { |msg, time, addr| topEnvironment.use { ~scstdRegisterRelay.(addr) } }, '/scstd/hello');
+OSCdef(\scstdPing, { |msg, time, addr|
+	topEnvironment.use {
+		if(~scstdRelays.includes(addr).not) { ~scstdRegisterRelay.(addr) };
+		addr.sendMsg('/scstd/pong');
+	}
+}, '/scstd/ping');
+OSCdef(\scstdSet, { |msg| topEnvironment.use { ~scstdSet.(msg[1], msg[2]) } }, '/scstd/set');
+OSCdef(\scstdReset, { topEnvironment.use { ~scstdReset.() } }, '/scstd/reset');
+OSCdef(\scstdPreset, { |msg| topEnvironment.use { ~scstdLoadPreset.(msg[1]) } }, '/scstd/preset');
+OSCdef(\scstdSavePreset, { |msg|
+	topEnvironment.use {
+		var keys = if(msg.size > 2) { msg[2..].collect(_.asSymbol) } { nil };
+		~scstdSavePreset.(msg[1], keys);
+		~scstdSendPresetList.();
+	}
+}, '/scstd/savepreset');
+OSCdef(\scstdPresets, { |msg, time, addr| topEnvironment.use { ~scstdSendPresetList.(addr) } }, '/scstd/presets');
+// The keyboard voice itself lives in sc/synthdefs/scstd.scd (~scstdKeyOn / ~scstdKeyOff).
+OSCdef(\scstdNoteOn, { |msg| topEnvironment.use { ~scstdKeyOn !? { ~scstdKeyOn.(msg[1]) } } }, '/scstd/noteon');
+OSCdef(\scstdNoteOff, { |msg| topEnvironment.use { ~scstdKeyOff !? { ~scstdKeyOff.(msg[1]) } } }, '/scstd/noteoff');
 
 "[synth] panel buses ready (% params)".format(~scstdSpecs.size).postln;
 )

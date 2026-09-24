@@ -49,6 +49,10 @@ through the envelope follower).
 3. **Two-way UI state sync.** sclang is the single owner of panel state. The
    relay broadcasts every change to all connected panels, and on (re)connect
    sclang sends a full state snapshot so a reloaded page shows real values.
+   Implemented (Stage 7): OSC protocol in `sc/buses.scd` (hello/ping/specs/changed/
+   presetlist/noteon/noteoff); `relay/index.js` (no deps but `ws`, own minimal OSC codec,
+   127.0.0.1 only, input validation); `ui/` is generated from `/scstd/specs`, so new params
+   appear in the UI without UI changes (decision 8 is satisfied automatically for the UI).
 
 4. **Two voice modes.**
    - **Event mode (default):** one synth per Tidal/Strudel event via SuperDirt.
@@ -466,3 +470,4 @@ line at the bottom of this file when moving on.
 ## Current stage
 
 **Stage 6 — Spring reverb and calibration** (Stages 0–5 done 2026-09-23)
+Stage 7 (web panel) built ahead on the user's request while Stage 6 waits for listening.

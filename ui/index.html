@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>synth-SC-STD panel</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-name">synth-SC-STD</span>
+      <span class="brand-sub">semi-modular panel</span>
+    </div>
+    <div id="status" class="status" role="status" aria-live="polite">
+      <span class="dot"></span><span class="status-text">connecting…</span>
+    </div>
+    <div class="presets" aria-label="Presets">
+      <label class="sr-only" for="preset-select">Preset</label>
+      <select id="preset-select"></select>
+      <button id="preset-load" type="button">Load</button>
+      <span class="sep"></span>
+      <label class="sr-only" for="preset-name">Save as</label>
+      <input id="preset-name" type="text" placeholder="save as…" maxlength="64" pattern="[A-Za-z0-9_-]+">
+      <label class="check"><input id="preset-mic" type="checkbox"> mic settings only</label>
+      <button id="preset-save" type="button">Save</button>
+      <span class="sep"></span>
+      <button id="reset" type="button" title="All settings back to their defaults">Reset</button>
+      <button id="theme" type="button" title="Colour theme: follow the computer, light or dark">theme: auto</button>
+    </div>
+  </header>
+
+  <main>
+    <p id="waiting" class="waiting">Waiting for SuperCollider… Run <code>sc/startup.scd</code> (Cmd+Enter) and keep this page open.</p>
+    <section id="modules" class="modules" aria-label="Modules"></section>
+
+    <section class="card patch" aria-labelledby="patch-title">
+      <div class="card-head">
+        <h2 id="patch-title">Patch cables</h2>
+        <p class="hint">Drag from a source to a destination to connect. Double-click a cable to remove it. Dashed = normalled (default) connection.</p>
+      </div>
+      <div class="patch-body">
+        <svg id="cables" class="cables" role="img" aria-label="Cable view"></svg>
+        <div class="matrix-wrap"><table id="matrix" class="matrix"></table></div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="keyboard-bar" aria-label="Keyboard">
+    <div class="kb-controls">
+      <button id="oct-down" type="button" aria-label="Octave down">−</button>
+      <span id="oct-label">C3</span>
+      <button id="oct-up" type="button" aria-label="Octave up">+</button>
+      <span class="hint kb-hint">Keys A W S E D F T G Y H U J K · Z/X octave</span>
+    </div>
+    <div id="keyboard" class="keyboard"></div>
+  </footer>
+
+  <script src="ui.js"></script>
+</body>
+</html>
