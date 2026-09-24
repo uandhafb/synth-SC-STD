@@ -1,5 +1,5 @@
--- Custom params for the synth. Loaded by the project's BootTidal.hs:
---   :script "/Users/uandha/ARP 2600/tidal/params.hs"
+-- Custom params for the synth (copied into the project's BootTidal.hs by analysis/build_boot.py).
+-- With your own boot file:  :script "/absolute/path/to/synth-SC-STD/tidal/params.hs"
 -- Keep in sync with docs/params.md, strudel/params.js, ~scstdSpecs in
 -- sc/synthdefs/00_modules.scd, and the UI (CLAUDE.md, decision 8).
 

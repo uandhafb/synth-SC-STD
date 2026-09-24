@@ -215,6 +215,6 @@ A SuperDirt global effect, one per orbit (`d1`, `d2`…), like Tidal's `room`. *
 | Param | Notes |
 |---|---|
 | `n` / `note` | Pitch in semitones (0 = middle C, 261.6 Hz, with the default `octave 5`) |
-| `legato` | Gate length as a fraction of the event; the release is added after it |
+| `legato` | Gate length as a fraction of the event; the release is added after it. Strudel sends it as `clip` (read the same way) |
 | `sustain` | If set by the pattern: total length **including** release |
-| `pan`, `orbit` | Standard SuperDirt behaviour |
+| `pan`, `orbit` | Standard SuperDirt behaviour. Tidal's `d1`, `d2`… use orbits 0, 1…; Strudel labels (`d1:`) all use orbit 0 unless `.orbit(n)` is set |
