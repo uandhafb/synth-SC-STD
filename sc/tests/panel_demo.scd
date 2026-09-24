@@ -21,6 +21,11 @@
 ~scstdSet.(\ingain, 0.25);        // Stage 5: less mic sensitivity (examples 59-61)
 ~scstdSet.(\ingain, 0.6);         // more mic sensitivity
 
+// SAVE settings for next time (files go into presets/):
+~scstdSavePreset.("venue_example", [\ingain, \efatk, \efrel]);  // only the mic settings (partial)
+~scstdLoadPreset.("venue_example");                               // next performance: load them back
+~scstdSavePreset.("my_sound");     // the whole current sound (everything that differs from default)
+
 ~scstdReset.();                    // back to the default sound
 
 // Note: a value written in the Tidal pattern always wins over the panel.
