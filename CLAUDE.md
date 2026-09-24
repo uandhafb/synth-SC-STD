@@ -469,5 +469,4 @@ line at the bottom of this file when moving on.
 
 ## Current stage
 
-**Stage 6 — Spring reverb and calibration** (Stages 0–5 done 2026-09-23)
-Stage 7 (web panel) built ahead on the user's request while Stage 6 waits for listening.
+**Stage 8 — Strudel integration** (Stages 0–5 done 2026-09-23; Stages 6 and 7 done 2026-09-24)

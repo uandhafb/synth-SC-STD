@@ -3,6 +3,14 @@
 Dated feedback from listening tests. Newest first.
 Format: date, stage, what was played (exact Tidal/Strudel line), what was heard, action.
 
+## 2026-09-24 — Stages 6 and 7, user test
+- Stage 6: examples 65–70 (spring reverb; 69 = reverb from the panel via `~scstdSet.(\spmix, 0.4)`).
+  Heard: "everything worked great". Reverb and the +8 dB output level accepted.
+- Stage 7: `npm start` in relay/, http://localhost:8090: sliders, keyboard, presets (load + reset),
+  two tabs. User: "everything is working".
+- Action: Stages 6 and 7 done. Next: Stage 8 (Strudel parity); user asked for a guide to Tidal vs
+  Strudel, panel vs pattern, and patching from code.
+
 ## 2026-09-23 — Stage 7 (web panel), built ahead while Stage 6 waits for listening
 - relay/index.js (ws only; own OSC codec after `osc` pulled a vulnerable ws), ui/ built from
   /scstd/specs, keyboard voice (mono, last-note priority) in scstd.scd, protocol in buses.scd.

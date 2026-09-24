@@ -8,8 +8,8 @@ It is being built for live coding performance and research on embodied
 interaction, including acoustic instruments (e.g. cello) driving the synth
 through an envelope follower.
 
-> **Status: Stage 6 (spring reverb) waiting for listening; Stage 7 (web panel) built ahead.** Stages 1–5
-> are done: full voice, 38 patch cables, panel memory, mono mode with glide, mic/instrument input.
+> **Status: Stage 8 (Strudel parity) next.** Stages 1–7 are done: full voice, 38 patch cables,
+> panel memory, mono mode with glide, mic/instrument input, spring reverb, web panel.
 > See [`CLAUDE.md`](CLAUDE.md) for the full design and the stage plan.
 
 ## Requirements
