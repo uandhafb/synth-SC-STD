@@ -133,6 +133,11 @@ Examples 59–61 and 70: the input's loudness can open the filter or the volume,
 played through the filter. **Use headphones** when the input's own sound is up (`inlvl`), or the
 speakers feed back into the microphone. The input is the computer's first audio input.
 
+### 6. Your own extras (other synths, samples)
+To load more things every time the synth starts (another SuperDirt synth, sample folders, MIDI
+mappings), copy `sc/local.example.scd` to `sc/local.scd` and edit it. `startup.scd` loads it at the
+end. It is not in git, so it can hold personal paths or code you may use but not publish.
+
 ## Documentation
 
 | File | What it is |
