@@ -33,3 +33,6 @@ analysis/output/*
 
 # Local secrets / settings
 .env
+
+# Personal SuperCollider extras (machine-specific paths, other people's code)
+sc/local.scd

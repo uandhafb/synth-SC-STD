@@ -34,6 +34,13 @@ s.reboot {
 		};
 		s.sync;
 		"[synth] project ready on port 57120".postln;
+		// Personal extras (other synths, samples, MIDI): sc/local.scd, if it exists. Not in git;
+		// see sc/local.example.scd.
+		if(File.exists(projectDir +/+ "local.scd")) {
+			(projectDir +/+ "local.scd").load;
+			s.sync;
+			"[synth] loaded sc/local.scd".postln;
+		};
 	};
 	s.latency = 0.3;
 };
