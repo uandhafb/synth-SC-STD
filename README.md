@@ -59,12 +59,31 @@ d1 $ n "0 3 7 10" # s "scstd" # vcfcut (range 200 3000 $ slow 4 sine) # vcfres 0
 More in [`tidal/examples.tidal`](tidal/examples.tidal).
 
 ### 3. Play from Strudel
+1. Keep SuperCollider running (step 1).
+2. In a terminal, start the bridge from the browser to SuperDirt and leave it open:
+   ```sh
+   npx @strudel/osc
+   ```
+3. Open [strudel.cc](https://strudel.cc). Paste [`strudel/params.js`](strudel/params.js), then
+   [`strudel/examples.js`](strudel/examples.js) below it.
+4. Every example is muted (`_d1:`). Delete the `_` in front of one, press **Ctrl+Enter**.
+   **Ctrl+.** stops. Or write your own:
+   ```js
+   d1: n("0 3 7 10").s("scstd").vcfcut(sine.range(200, 3000).slow(4)).vcfres(0.6).osc()
+   ```
+   Always end with `.osc()`, which sends the pattern to SuperCollider.
+
+The Strudel examples have the same numbers as the Tidal ones and make the same notes (checked
+event by event, see below). Good to know:
+- `examples.js` sets `setcps(0.575)`, Tidal's default tempo (Strudel's own default is 0.5).
+- Strudel sends `.legato(x)` under the name `clip`; the synth reads both.
+- Random patterns (examples 40D–F) pick different random values in Tidal and Strudel: same
+  style, different notes.
+
+Check that both languages still agree after changing examples (no sound needed):
 ```sh
-npx @strudel/osc     # bridge from the browser to SuperDirt
-```
-Open [strudel.cc](https://strudel.cc), paste [`strudel/params.js`](strudel/params.js), then:
-```js
-n("0 3 7 10").s("scstd").vcfcut(sine.range(200, 3000).slow(4)).vcfres(0.6).osc()
+cd analysis && npm install && cd ..    # once
+node analysis/parity_check.mjs
 ```
 
 ### 4. Web panel (optional)

@@ -3,6 +3,18 @@
 Dated feedback from listening tests. Newest first.
 Format: date, stage, what was played (exact Tidal/Strudel line), what was heard, action.
 
+## 2026-09-24 — Stage 8 (Strudel parity), automatic checks
+- analysis/parity_check.mjs: all 89 examples queried for 8 cycles in Tidal (ghci queryArc) and
+  Strudel (@strudel/core 1.2.6 + mini + transpiler): 86 identical event by event (onsets, lengths,
+  every param), 40D–F alike (random generators differ after the first values). Planted errors
+  (a value, a note, degrade amount, a random range) are caught.
+- Found: Strudel sends legato as "clip" -> Strudel notes were 0.4–0.6 s off (legato ignored).
+  Fixed in scstd.scd; strudel_probe.scd/strudel_check.py: clip = legato within 0–13 ms, event
+  and mono mode; the same check fails without the fix.
+- Found: Tidal 1.10's default tempo is 0.575 cps (captured from its OSC), Strudel's 0.5 ->
+  examples.js sets setcps(0.575).
+- Pending: user listening, a few examples in both.
+
 ## 2026-09-24 — Stages 6 and 7, user test
 - Stage 6: examples 65–70 (spring reverb; 69 = reverb from the panel via `~scstdSet.(\spmix, 0.4)`).
   Heard: "everything worked great". Reverb and the +8 dB output level accepted.

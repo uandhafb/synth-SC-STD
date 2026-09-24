@@ -1,0 +1,11 @@
+{
+  "name": "scstd-analysis",
+  "private": true,
+  "type": "module",
+  "description": "Node helpers for the analysis scripts (Strudel parity check).",
+  "devDependencies": {
+    "@strudel/core": "1.2.6",
+    "@strudel/mini": "1.2.6",
+    "@strudel/transpiler": "1.2.6"
+  }
+}

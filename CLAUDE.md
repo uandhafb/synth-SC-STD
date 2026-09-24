@@ -161,6 +161,8 @@ CLAUDE.md
 - **Never use "_" as the 2nd character of a param name** (e.g. `m_x`, `t_x`): SynthDesc reads it
   as a rate prefix and strips it, so SuperDirt silently drops the value. Guarded in
   `~scstdParams`; run `sc/tests/check_msgfunc.scd` after adding params.
+- **Strudel sends `legato` as `clip`** (an alias in @strudel/core); `scstd` reads `~legato ? ~clip`.
+  Verified on the real SuperDirt path by `sc/tests/strudel_probe.scd` + `analysis/strudel_check.py`.
 - Custom params must be declared for Tidal (e.g. `let vcfcut = pF "vcfcut"`)
   in `tidal/params.hs`, and for Strudel in `strudel/params.js` (confirm the
   current Strudel API for custom controls before writing it).
@@ -417,6 +419,10 @@ line at the bottom of this file when moving on.
 - Full custom controls in `strudel/params.js`; OSC to SuperDirt.
 - Example patterns matching the Tidal examples.
 - **Done when:** the same demo patterns play identically from Tidal and Strudel.
+- Implemented: `strudel/examples.js` mirrors all 89 Tidal examples (same ids, muted `_d1:` slots,
+  `setcps(0.575)` = Tidal 1.10's default). `analysis/parity_check.mjs` queries both (ghci
+  `queryArc`, real @strudel packages) and compares every event: 86 identical, 3 random ones
+  (40D–F) alike: the two random generators drift apart after the first values.
 
 ### Stage 9 — VS Code extension (stretch goal)
 - Webview panel reusing `/ui` code; OSC sent from the extension host

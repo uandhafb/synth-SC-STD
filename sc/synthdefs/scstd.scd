@@ -89,8 +89,9 @@ CmdPeriod.add(~scstdMonoCmdPeriod);
 	instrument: \scstd,
 	// Event mode: `sustain` = note length + the longer release, so SuperDirt's dirt_gate does not
 	// cut the tail (CLAUDE.md, Section 5). A pattern `sustain` overrides this.
+	// Strudel sends `.legato(x)` under its own name `clip` (same meaning), so both are read.
 	sustain: {
-		var len = (~delta.value ? 0.25) * (~legato.value ? 1);
+		var len = (~delta.value ? 0.25) * (~legato.value ? ~clip.value ? 1);
 		var rel = max((~erel.value ? state[\erel] ? defErel).clip(0.001, 15),
 			(~arrel.value ? state[\arrel] ? defArrel).clip(0.001, 15));
 		len + rel
@@ -121,7 +122,7 @@ CmdPeriod.add(~scstdMonoCmdPeriod);
 		} {
 			var now = thisThread.seconds;
 			var onTime = now + lat;
-			var len = ((~delta.value ? 0.25) * (~legato.value ? 1)).max(0.005);
+			var len = ((~delta.value ? 0.25) * (~legato.value ? ~clip.value ? 1)).max(0.005);
 			// Legato: the previous note is still held when this one starts -> glide, no retrigger.
 			var legato = v.notNil and: { v[\offTime] > (onTime + 0.002) };
 			var amp = (~amp.value ? 0.4) * ((((~gain.value ? 1).min(2)) + (~overgain.value ? 0)) ** 4);
