@@ -3,6 +3,18 @@
 Dated feedback from listening tests. Newest first.
 Format: date, stage, what was played (exact Tidal/Strudel line), what was heard, action.
 
+## 2026-09-24 — Stage 10, automatic performance test
+- sc/tests/perf_nrt.scd (offline, repeatable): about 1.0–1.2% of one CPU core per voice, default
+  and "everything on" alike (MacBook, Apple Silicon); roughly 80 voices per core.
+- sc/tests/perf_probe.scd (private real-time SuperDirt, 180 s): 4 orbits (chords every 1/16,
+  noise hats, mono glide lead, pads with spring), random params per note, a panel change every
+  100 ms; 8000 events (44/s), 78–98 synths. Live CPU mean 34%, peak max 50%. 0 late messages,
+  no errors, no NaN; afterwards synths back to the idle count, mono voice released, silence.
+  Mix of 4 dense layers peaked at +1.6 dBFS in 0.0009% of samples (gain staging, not the voice).
+- Live CPU % is not linear on Apple Silicon (light loads run on efficiency cores: 1 voice read
+  10%, 32 voices 39%), so the per-voice cost is taken from the offline benchmark.
+- Pending: the user's live session.
+
 ## 2026-09-24 — Stage 8, user test
 - strudel.cc + npx @strudel/osc, setcps(0.575): #1, #22, #32A, #54, #40D, each compared with the
   same example in Tidal. Heard: "everything worked perfectly".
