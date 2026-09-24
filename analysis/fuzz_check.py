@@ -17,9 +17,10 @@ for c in cases:
     if not np.isfinite(s).all():
         bad.append((c["i"], "NaN/inf"))
         continue
-    pk = 20 * np.log10(np.abs(s).max() + 1e-12)
+    # NRT renders have no SuperDirt; in use SuperDirt multiplies by its default amp 0.4 (-8 dB).
+    pk = 20 * np.log10(np.abs(s).max() * 0.4 + 1e-12)
     peaks.append(pk)
     if pk > 0:
         bad.append((c["i"], f"clipping {pk:.1f} dBFS"))
-print(f"{len(cases)} random notes; finite: {len(peaks)}; peak range {min(peaks):.1f} .. {max(peaks):.1f} dBFS")
+print(f"{len(cases)} random notes; finite: {len(peaks)}; peak range after SuperDirt amp {min(peaks):.1f} .. {max(peaks):.1f} dBFS")
 print("problems:", bad or "none")

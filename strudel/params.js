@@ -43,4 +43,6 @@ createParams(
   'eatk', 'edec', 'esus', 'erel', 'ecurve',
   // AR
   'aratk', 'arrel',
+  // Spring reverb
+  'spmix', 'spdecay', 'sptone',
 );

@@ -3,6 +3,20 @@
 Dated feedback from listening tests. Newest first.
 Format: date, stage, what was played (exact Tidal/Strudel line), what was heard, action.
 
+## 2026-09-23 — Stage 6, measurements (before listening)
+- Spring reverb as SuperDirt global effect, off by default (user chose B). First dispersion design
+  (plain one-sample allpasses) spread only ~1 ms: inaudible chirp. Stretched allpasses (11-12
+  samples): ~15 ms per echo (30 ms on a single chain). T60 0.7/1.3/5.1 s for spdecay 0/0.5/1.
+  Through a private real SuperDirt: tail continues after the note (pattern and panel), panel back
+  to 0 switches it off.
+- Calibration (no reference instrument, see docs/references/calibration.md): tuning +-0.3 cents;
+  MoogFF 4-pole slope OK; MoogLadder gentler (-16..-18 dB/oct) kept as character; key tracking 3.7
+  of 4; AR timing OK.
+- Level: scstd was 8-18 dB quieter than SuperDirt's own sounds -> output +8 dB (rms -28.8 vs
+  superpiano -30.5, bd -28.9). Fuzz then found one random patch at +4.3 dBFS -> output softclip
+  (linear below 0.5): loudest random patch now -8.5 dBFS.
+- Pending: user listening (examples 65-70; everything is 8 dB louder than before).
+
 ## 2026-09-23 — Stage 5 done
 - 54 mono glide and 55 same code in both modes: fine (user).
 - Mic reaction "could be a little strong": default ingain 0.5 -> 0.4 (~ -4 dB); added 59B lines

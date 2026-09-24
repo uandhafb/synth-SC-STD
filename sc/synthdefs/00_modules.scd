@@ -64,7 +64,9 @@
 	// ADSR (6.9) and AR (6.10)
 	eatk: [0.001, 10, 0.01], edec: [0.001, 10, 0.3], esus: [0, 1, 0.6],
 	erel: [0.001, 15, 0.4], ecurve: [-8, 8, -4],
-	aratk: [0.001, 10, 0.005], arrel: [0.001, 15, 0.3]
+	aratk: [0.001, 10, 0.005], arrel: [0.001, 15, 0.3],
+	// Spring reverb (6.15): a SuperDirt global effect per orbit (sc/synthdefs/spring.scd). Off by default.
+	spmix: [0, 1, 0], spdecay: [0, 1, 0.5], sptone: [0, 1, 0.5]
 );
 
 // Default of a param (used by the SuperDirt sustain function in sclang).
@@ -342,6 +344,8 @@
 ~scstdLangOnly = [\monomode];
 // Params only the mono synth reads (the event synth ignores them).
 ~scstdMonoOnly = [\glide];
+// Params of the spring reverb, a SuperDirt global effect (not a voice control).
+~scstdFxOnly = [\spmix, \spdecay, \sptone];
 
 // Audio input (6.13): preamp + envelope follower. Computed inside each voice from SoundIn, so a
 // pattern can override ingain/efatk/efrel per note like any other param (a separate persistent
@@ -482,7 +486,13 @@
 		EnvGen.ar(Env([0, 1, 1, 0], [0.002, (sustain - 0.012).max(0), 0.01]), doneAction: 2)
 	} { 1 };
 
-	LeakDC.ar(sig) * life * 0.5
+	// Output level calibrated in Stage 6 against SuperDirt's own sounds (sc/tests/level_probe.scd):
+	// with 0.5 the default note was 8-18 dB quieter than superpiano, supersaw and the bd sample.
+	// 1.25 (+8 dB) puts it at superpiano's level.
+	// Safety: softclip is exactly linear below 0.5 (normal patches peak around 0.25 here, so they are
+	// untouched) and rounds off extreme random patches smoothly towards 1.0 instead of clipping (the
+	// fuzz test found one reaching +4.3 dBFS without it).
+	(LeakDC.ar(sig) * life * 1.25).softclip
 };
 
 "[synth] modules loaded".postln;

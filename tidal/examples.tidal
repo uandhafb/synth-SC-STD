@@ -322,3 +322,30 @@ d1 $ n "0" # s "scstd" # legato 1 # o1lf 1 # o1lfrate 0.75 # o1lvl 0 # shsrc 4 #
 
 hush
 
+-- =============================================================================================
+-- Stage 6 — spring reverb (off by default) and calibration.
+-- Note: the synth is now 8 dB louder than before (matched to SuperDirt's own sounds).
+-- =============================================================================================
+
+-- 65. Spring reverb on/off: first cycle dry, second cycle with the spring. Listen for the metallic
+--     "boing" tail that keeps ringing after each note stops.
+d1 $ n "0 ~ 7 ~" # s "scstd" # legato 0.3 # spmix "<0 0.5>"
+
+-- 66. The classic spring "splash": short, bright plucks with a lot of spring.
+d1 $ n "0 ~ ~ 12 ~ ~ 7 ~" # s "scstd" # legato 0.1 # vcfenv 0.7 # vcfcut 600 # edec 0.15 # esus 0 # spmix 0.8 # sptone 0.8
+
+-- 67. Tail length: short (0), medium (0.5), long (1).
+d1 $ n "0 ~ ~ ~" # s "scstd" # legato 0.2 # spmix 0.6 # spdecay "<0 0.5 1>"
+
+-- 68. Tone: dark (0) vs bright (1).
+d1 $ n "0 ~ 7 ~" # s "scstd" # legato 0.2 # spmix 0.6 # sptone "<0 1>"
+
+-- 69. Reverb from the PANEL: play example 1, then in SuperCollider:
+--     ~scstdSet.(\spmix, 0.4);   and later   ~scstdSet.(\spmix, 0);
+d1 $ n "0 3 7 10" # s "scstd"
+
+-- 70. Spring on the mic (headphones!): your voice through the filter, then the spring.
+d1 $ n "0" # s "scstd" # monomode 1 # legato 1 # o1lvl 0 # o2lvl 0 # inlvl 1 # vcaenv 0 # vcfcut 2500 # spmix 0.6
+
+hush
+

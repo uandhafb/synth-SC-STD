@@ -15,7 +15,7 @@ var desc, argNames, missing;
 desc = SynthDescLib.global[\scstd];
 argNames = desc.msgFunc.def.argNames.asArray;
 missing = ~scstdSpecs.keys.asArray.sort.reject { |k|
-	argNames.includes(k) or: { ~scstdLangOnly.includes(k) or: { ~scstdMonoOnly.includes(k) } }
+	argNames.includes(k) or: { ~scstdLangOnly.includes(k) or: { ~scstdMonoOnly.includes(k) or: { ~scstdFxOnly.includes(k) } } }
 };
 if(missing.isEmpty) {
 	"MSGFUNC OK: all % event-synth params reach the synth through SuperDirt".format(~scstdSpecs.size).postln;
@@ -24,7 +24,7 @@ if(missing.isEmpty) {
 };
 // Mono synth: set directly with n_set, so every param except sclang-only ones must be a control.
 argNames = SynthDescLib.global[\scstd_mono].controlNames.asArray;
-missing = ~scstdSpecs.keys.asArray.sort.reject { |k| argNames.includes(k) or: { ~scstdLangOnly.includes(k) } };
+missing = ~scstdSpecs.keys.asArray.sort.reject { |k| argNames.includes(k) or: { ~scstdLangOnly.includes(k) or: { ~scstdFxOnly.includes(k) } } };
 if(missing.isEmpty) {
 	"MONO OK: the mono synth has a control for every param".postln;
 } {

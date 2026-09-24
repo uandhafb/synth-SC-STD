@@ -78,6 +78,9 @@ through the envelope follower).
 7. **Shared effects, not per-voice.** Voices write to a dedicated FX bus; the
    spring reverb is one persistent synth reading it (or a SuperDirt global
    effect per orbit — decide in Stage 6). Voices never contain the reverb.
+   Decided in Stage 6: a SuperDirt global effect per orbit (`sc/synthdefs/spring.scd`), so it
+   works for event and mono mode and per orbit. Off by default (`spmix` 0, user's choice).
+   `scstd` events always carry the reverb params (pattern value, else panel value).
 
 8. **One source of truth for parameters:** `docs/params.md`. Any new or renamed
    parameter must be updated there, in `tidal/params.hs`, in
@@ -311,6 +314,9 @@ through a one-block LocalIn feedback path. Also added: `o1kbd`..`o3kbd`, `rma`/`
 Implementation: convolution (`PartConv`) with a freely licensed or
 self-recorded spring impulse response, or a dispersive allpass model.
 Runs on the shared FX bus (Architecture decision 7), never per event.
+Implemented (Stage 6): dispersive model, two springs (43/52 ms), 40 stretched allpasses per
+spring, feedback lowpass (sptone), spdecay -> T60 0.7..5 s; default spmix 0 (off).
+Calibration results and unverified items: `docs/references/calibration.md`.
 
 ## 7. Normalling (default routing)
 

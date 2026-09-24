@@ -26,6 +26,9 @@
 ~scstdLoadPreset.("venue_example");                               // next performance: load them back
 ~scstdSavePreset.("my_sound");     // the whole current sound (everything that differs from default)
 
+~scstdSet.(\spmix, 0.4);          // Stage 6: spring reverb on (0 = off)
+~scstdSet.(\spmix, 0);
+
 ~scstdReset.();                    // back to the default sound
 
 // Note: a value written in the Tidal pattern always wins over the panel.

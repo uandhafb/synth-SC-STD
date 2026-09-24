@@ -123,4 +123,8 @@ let o1wave   = pF "o1wave"
 -- AR
     aratk    = pF "aratk"
     arrel    = pF "arrel"
+-- Spring reverb
+    spmix    = pF "spmix"
+    spdecay  = pF "spdecay"
+    sptone   = pF "sptone"
 :}

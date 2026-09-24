@@ -53,5 +53,8 @@ n("0 3 7 10").s("scstd").osc()
 // #54 — Mono glide lead (presets/mono_lead.json)
 // n("0 7 12 7 3 5 3 -2").s("scstd").monomode(1).glide(0.12).legato(1.1).vcfcut(1800).vcfres(0.4).osc()
 
+// #65 — Spring reverb (off by default): second cycle with the spring
+// n("0 ~ 7 ~").s("scstd").legato(0.3).spmix("<0 0.5>").osc()
+
 // #59 — Mic opens the filter (presets/mic_filter.json). Use headphones.
 // n("-12").s("scstd").monomode(1).legato(1).envf_vcf(4).vcfcut(200).vcfres(0.5).vcfenv(0).osc()

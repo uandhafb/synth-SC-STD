@@ -18,7 +18,10 @@ var defErel = ~scstdDefault.(\erel), defArrel = ~scstdDefault.(\arrel);
 var state = ~scstdState ?? { () };
 var unset = ~scstdUnset;
 // Params sent to the mono synth on every note (all except the sclang-only ones).
-var synthParams = ~scstdSpecs.keys.asArray.sort.reject { |k| ~scstdLangOnly.includes(k) };
+var synthParams = ~scstdSpecs.keys.asArray.sort.reject { |k| ~scstdLangOnly.includes(k) or: { ~scstdFxOnly.includes(k) } };
+// Spring reverb params: SuperDirt only wakes a global effect when the event carries its params,
+// so panel values are copied into scstd events that do not set them.
+var fxParams = ~scstdFxOnly;
 // One mono voice per orbit: orbit -> (node, noteId, offTime).
 var voices = IdentityDictionary.new;
 
@@ -68,6 +71,11 @@ CmdPeriod.add(~scstdMonoCmdPeriod);
 		var lat = ~latency.value ? 0;
 		var rel = max((~erel.value ? state[\erel] ? defErel).clip(0.001, 15),
 			(~arrel.value ? state[\arrel] ? defArrel).clip(0.001, 15));
+
+		// Panel reverb: every scstd event carries the reverb params, from the pattern or else from
+		// the panel. Otherwise SuperDirt would keep the orbit's last value (e.g. the panel set back
+		// to 0 would not reach the effect). With spmix 0 the effect pauses itself after 4 s of silence.
+		fxParams.do { |k| if(currentEnvironment[k].isNil) { currentEnvironment[k] = state[k] } };
 
 		if(mono.not) {
 			// Event mode. If this orbit had a mono voice, let it release, then free it.

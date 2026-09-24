@@ -13,7 +13,7 @@ that are already sounding. From SuperCollider: `~scstdSet.(\vcfcut, 500)`, `~scs
 `~scstdLoadPreset.("wind")`.
 Parameters for later stages are listed in CLAUDE.md, Section 6; they move here when built.
 
-## Sound `scstd` — Stages 1–5
+## Sound `scstd` — Stages 1–6
 
 ### VCO 1
 | Param | Range | Default | Description |
@@ -199,6 +199,16 @@ cables are `vcfenv` and `vcaenv` (so there is no `adsr_vcf` / `ar_vca`).
 |---|---|---|---|
 | `aratk` | 0.001–10 s | 0.005 | Attack |
 | `arrel` | 0.001–15 s | 0.3 | Release |
+
+### Spring reverb (Stage 6)
+A SuperDirt global effect, one per orbit (`d1`, `d2`…), like Tidal's `room`. **Off by default.**
+`scstd` notes carry the pattern's value, or else the panel's (`~scstdSet.(\spmix, 0.3)`).
+
+| Param | Range | Default | Description |
+|---|---|---|---|
+| `spmix` | 0–1 | 0 | Amount of spring reverb (0 = off) |
+| `spdecay` | 0–1 | 0.5 | Tail length: about 0.7 s (0) … 1.3 s (0.5) … 5 s (1) |
+| `sptone` | 0–1 | 0.5 | Brightness of the reverb (lowpass inside the spring, 1–9 kHz) |
 
 ## Standard SuperDirt params we rely on
 
