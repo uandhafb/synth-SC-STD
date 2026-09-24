@@ -60,6 +60,11 @@ through the envelope follower).
      that sends `set` messages to the persistent node instead of spawning a
      synth, so Tidal/Strudel code is identical in both modes.
    Build event mode first. Mono mode arrives in Stage 5.
+   Implemented (Stage 5, sc/synthdefs/scstd.scd): the `scstd` sound event has a `play`
+   function; with `monomode` 1 (pattern or panel) it drives one persistent `scstd_mono` synth per
+   orbit (writes to the orbit's dry bus, before SuperDirt's global effects) and returns non-nil;
+   otherwise it returns nil and SuperDirt's normal path runs. Legato = next note starts before
+   the previous gate-off; gate-offs are scheduled in sclang and cancelled by newer notes.
 
 5. **Normalled routing with overrides.** Every module has a default connection
    (see Section 7). Patch parameters override defaults. The synth must make
@@ -266,11 +271,20 @@ Output available as a mod source (6.14).
 
 ### 6.13 Utilities (Stage 5)
 - **Audio input preamp:** `inlvl`, `ingain`. External audio (cello, mic) via
-  `SoundIn`, runs as a persistent synth writing to a bus.
+  `SoundIn` (input 1, the Mac's built-in mic by default).
 - **Envelope follower:** `efatk`, `efrel`. Converts input amplitude to a
   control signal (mod source `envf`).
-- **Electronic switch:** `swrate`, alternates between two sources.
-- **Mixer / inverter:** combine and invert control signals.
+- **Electronic switch:** `swrate`, `swa`, `swb`, `swlvl`: alternates between two audio
+  sources (VCOs, noise, input) into the mixer.
+- **Mixer / inverter:** `mixa`, `mixb`, `mixalvl`, `mixblvl` (-1..1, negative = inverted):
+  combines two sources into the cable source `mix`, also usable as S&H input (`shsrc 4`)
+  and lag input (`lagsrc 1`). Added on the user's request after discussing that cables alone
+  cannot feed a combination into the S&H/lag or reuse one blend.
+- Implementation note (deviation from the architecture diagram): preamp and envelope follower
+  are computed inside each voice from `SoundIn`, not in a separate persistent synth, so
+  patterns can override `ingain`/`efatk`/`efrel` per note like every other param.
+- **VCA initial gain** `vcainit` (0..1, default 1): resting gain when `vcaenv` is 0; 0 closes
+  the VCA so only cables (e.g. `envf_vca`) open it. Added in Stage 5 for instrument gating.
 
 ### 6.14 Modulation routing (the "patch cords")
 Sources: `vco1`, `vco2`, `vco3`, `noise`, `sh`, `adsr`, `ar`, `envf`, `rm`.

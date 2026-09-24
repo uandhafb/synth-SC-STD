@@ -47,3 +47,11 @@ n("0 3 7 10").s("scstd").osc()
 
 // #49 — FM drone (presets/fm_drone.json): VCO 3 off the keyboard, modulating all pitches
 // n("<0 3 7 5>").s("scstd").legato(1).o1lvl(0).o2wave(3).o3kbd(0).o3oct(-1).vco3_pitch(4).vcfcut(4000).vcfenv(0).arrel(1.5).aratk(0.3).osc()
+
+// ---- Stage 5 — mono mode and audio input ----
+
+// #54 — Mono glide lead (presets/mono_lead.json)
+// n("0 7 12 7 3 5 3 -2").s("scstd").monomode(1).glide(0.12).legato(1.1).vcfcut(1800).vcfres(0.4).osc()
+
+// #59 — Mic opens the filter (presets/mic_filter.json). Use headphones.
+// n("-12").s("scstd").monomode(1).legato(1).envf_vcf(4).vcfcut(200).vcfres(0.5).vcfenv(0).osc()

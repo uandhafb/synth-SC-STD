@@ -13,7 +13,7 @@ that are already sounding. From SuperCollider: `~scstdSet.(\vcfcut, 500)`, `~scs
 `~scstdLoadPreset.("wind")`.
 Parameters for later stages are listed in CLAUDE.md, Section 6; they move here when built.
 
-## Sound `scstd` — Stages 1–4
+## Sound `scstd` — Stages 1–5
 
 ### VCO 1
 | Param | Range | Default | Description |
@@ -84,7 +84,7 @@ Parameters for later stages are listed in CLAUDE.md, Section 6; they move here w
 | Param | Range | Default | Description |
 |---|---|---|---|
 | `shrate` | 0.1–50 Hz | 6 | Internal clock: new random value this many times per second |
-| `shsrc` | 0–3 | 0 | Input: 0 noise (random steps), 1 VCO 1, 2 VCO 2, 3 VCO 3 (stepped patterns) |
+| `shsrc` | 0–4 | 0 | Input: 0 noise (random steps), 1 VCO 1, 2 VCO 2, 3 VCO 3 (stepped patterns), 4 mixer/inverter |
 | `shlag` | 0–1 | 0 | Smooths the steps (1 = glides all the way to the next value) |
 
 In event mode each note restarts the S&H: play one long note to hear a sequence.
@@ -93,6 +93,43 @@ In event mode each note restarts the S&H: play one long note to hear a sequence.
 | Param | Range | Default | Description |
 |---|---|---|---|
 | `lagtime` | 0–5 s | 0 | Smooths VCO 1's modulation output (PWM/FM). Turns the saw LFO's jump into a soft curve: smooth PWM pads |
+| `lagsrc` | 0/1 | 0 | Lag processor input: 0 VCO 1 (normalled), 1 the mixer/inverter. The output drives the VCO 1 → PWM/FM paths (`o2pwm`, `o3pwm`, `o2fm`) |
+
+### Mono mode
+| Param | Range | Default | Description |
+|---|---|---|---|
+| `monomode` | 0/1 | 0 | 0 = one synth per note (polyphonic). 1 = one persistent voice per orbit (`d1`, `d2`…): notes glide, overlapping notes don't retrigger, S&H/LFOs keep running. Pattern or panel (`~scstdSet.(\monomode, 1)` switches existing patterns) |
+| `glide` | 0–5 s | 0 | Portamento time in mono mode (constant time for any interval) |
+
+### Audio input (preamp + envelope follower)
+Input 1 of the computer (the Mac's built-in mic by default). **Use headphones when `inlvl` is up**, or the speakers feed back into the mic.
+
+| Param | Range | Default | Description |
+|---|---|---|---|
+| `ingain` | 0–1 | 0.5 | Preamp gain, 1×–100× (0 to +40 dB); 0.5 = 10× |
+| `inlvl` | 0–1 | 0 | The input's own sound into the mixer (e.g. the cello through the synth's filter) |
+| `efatk` | 0.001–1 s | 0.01 | Envelope follower attack: how fast it follows louder playing |
+| `efrel` | 0.01–5 s | 0.3 | Envelope follower release: how fast it lets go when you play softer / stop |
+
+The envelope follower's output is the cable source `envf` (0 = silence … 1 = very loud).
+
+### Electronic switch
+| Param | Range | Default | Description |
+|---|---|---|---|
+| `swrate` | 0.1–50 Hz | 4 | Switching speed |
+| `swa` | 0–4 | 1 | Input A: 0 VCO 1, 1 VCO 2, 2 VCO 3, 3 noise, 4 audio input |
+| `swb` | 0–4 | 2 | Input B (same choices) |
+| `swlvl` | 0–1 | 0 | Switch output into the mixer |
+
+### Mixer / inverter
+Combines two sources into the cable source `mix` (also usable as S&H input `shsrc 4` and lag input `lagsrc 1`).
+
+| Param | Range | Default | Description |
+|---|---|---|---|
+| `mixa` | 0–8 | 0 | Source A: 0 vco1, 1 vco2, 2 vco3, 3 noise, 4 sh, 5 adsr, 6 ar, 7 envf, 8 rm |
+| `mixb` | 0–8 | 4 | Source B (same choices) |
+| `mixalvl` | -1–1 | 1 | Level of A (negative = inverted) |
+| `mixblvl` | -1–1 | 1 | Level of B (negative = inverted) |
 
 ### Patch cables (`<source>_<destination>`)
 Any source into any destination; several cables into one destination add up.
@@ -132,12 +169,21 @@ cables are `vcfenv` and `vcaenv` (so there is no `adsr_vcf` / `ar_vca`).
 | `rm_vcf` | -6–6 | 0 | ring modulator → vcf |
 | `rm_pw` | -1–1 | 0 | ring modulator → pw |
 | `rm_vca` | -1–1 | 0 | ring modulator → vca |
+| `envf_pitch` | -48–48 | 0 | envelope follower (audio input loudness, 0..1) → pitch |
+| `envf_vcf` | -6–6 | 0 | envelope follower → vcf |
+| `envf_pw` | -1–1 | 0 | envelope follower → pw |
+| `envf_vca` | -1–1 | 0 | envelope follower → vca |
+| `mix_pitch` | -48–48 | 0 | mixer/inverter → pitch |
+| `mix_vcf` | -6–6 | 0 | mixer/inverter → vcf |
+| `mix_pw` | -1–1 | 0 | mixer/inverter → pw |
+| `mix_vca` | -1–1 | 0 | mixer/inverter → vca |
 
 ### VCA
 | Param | Range | Default | Description |
 |---|---|---|---|
 | `vcalvl` | 0–1 | 0.8 | Output level |
 | `vcaenv` | 0–1 | 1 | AR envelope amount (0 = always open, a drone for the note's length) |
+| `vcainit` | 0–1 | 1 | Resting gain when the envelope is unplugged (`vcaenv 0`): 1 = open (drone), 0 = closed, so only cables open the VCA (e.g. `envf_vca`: the synth sounds only while you play the instrument) |
 
 ### ADSR envelope (→ VCF)
 | Param | Range | Default | Description |

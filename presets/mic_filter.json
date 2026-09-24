@@ -1,0 +1,14 @@
+{
+  "name": "Mic opens the filter",
+  "sound": "scstd",
+  "stage": 5,
+  "description": "The envelope follower (audio input loudness) opens the filter: louder playing = brighter synth. Use headphones.",
+  "params": {
+    "monomode": 1,
+    "envf_vcf": 4,
+    "vcfcut": 200,
+    "vcfres": 0.5,
+    "vcfenv": 0
+  },
+  "tidal": "d1 $ n \"-12\" # s \"scstd\" # monomode 1 # envf_vcf 4 # vcfcut 200 # vcfres 0.5 # vcfenv 0 # legato 1"
+}

@@ -17,7 +17,13 @@ createParams(
   // Noise, ring mod
   'nzcol', 'nzlvl', 'rmlvl', 'rma', 'rmb',
   // Sample & hold, lag
-  'shrate', 'shsrc', 'shlag', 'lagtime',
+  'shrate', 'shsrc', 'shlag', 'lagtime', 'lagsrc',
+  // Mono mode
+  'monomode', 'glide',
+  // Audio input, electronic switch, mixer/inverter
+  'inlvl', 'ingain', 'efatk', 'efrel',
+  'swrate', 'swa', 'swb', 'swlvl',
+  'mixa', 'mixb', 'mixalvl', 'mixblvl',
   // Patch cables (<source>_<dest>)
   'vco1_pitch', 'vco1_vcf', 'vco1_pw', 'vco1_vca',
   'vco2_pitch', 'vco2_vcf', 'vco2_pw', 'vco2_vca',
@@ -27,10 +33,12 @@ createParams(
   'adsr_pitch', 'adsr_pw', 'adsr_vca',
   'ar_pitch', 'ar_vcf', 'ar_pw',
   'rm_pitch', 'rm_vcf', 'rm_pw', 'rm_vca',
+  'envf_pitch', 'envf_vcf', 'envf_pw', 'envf_vca',
+  'mix_pitch', 'mix_vcf', 'mix_pw', 'mix_vca',
   // VCF
   'vcfcut', 'vcfres', 'vcfenv', 'vcfkey', 'vcfdrive', 'vcfmodel', // vcfmodel: 0 = MoogLadder, 1 = MoogFF
   // VCA
-  'vcalvl', 'vcaenv',
+  'vcalvl', 'vcaenv', 'vcainit',
   // ADSR
   'eatk', 'edec', 'esus', 'erel', 'ecurve',
   // AR

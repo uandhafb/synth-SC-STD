@@ -29,9 +29,8 @@ def from_strudel() -> set[str]:
 
 
 def from_sc() -> set[str]:
-    text = (ROOT / "sc/synthdefs/00_modules.scd").read_text()
+    text = re.sub(r"//.*", "", (ROOT / "sc/synthdefs/00_modules.scd").read_text())
     body = text.split("~scstdSpecs = (")[1].split(");")[0]
-    body = re.sub(r"//.*", "", body)
     return set(re.findall(r"([a-z0-9_]+):\s*\[", body))
 
 

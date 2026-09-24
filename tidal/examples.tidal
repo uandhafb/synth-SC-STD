@@ -261,3 +261,52 @@ d1 $ n "0 3 7 10" # s "scstd" # legato 1
 
 hush
 
+-- =============================================================================================
+-- Stage 5 — mono mode, audio input (mic / cello), electronic switch, mixer/inverter.
+-- =============================================================================================
+
+-- 54. MONO GLIDE: one continuous voice; overlapping notes (legato 1.1) slide into each other.
+--     (PRESET presets/mono_lead.json)
+d1 $ n "0 7 12 7 3 5 3 -2" # s "scstd" # monomode 1 # glide 0.12 # legato 1.1 # vcfcut 1800 # vcfres 0.4
+
+-- 55. SAME CODE, two modes: first cycle normal (separate notes), second cycle mono (gliding).
+d1 $ n "0 7 12 7 3 5 3 -2" # s "scstd" # glide 0.12 # legato 1.1 # monomode "<0 1>"
+
+-- 56. Mono with separated notes (legato 0.5): the envelopes restart on every note, but the pitch
+--     still glides from the previous note.
+d1 $ n "0 12 0 7" # s "scstd" # monomode 1 # glide 0.08 # legato 0.5 # vcfenv 0.6 # vcfcut 400
+
+-- 57. Continuous modulation: the S&H bubbling on the filter keeps its own rhythm across notes in
+--     mono (second cycle); in normal mode (first cycle) it restarts with every note.
+d1 $ n "0 3 5 7" # s "scstd" # legato 1.1 # sh_vcf 2 # shrate 3 # vcfcut 700 # vcfres 0.6 # monomode "<0 1>"
+
+-- 58. Mono from the PANEL: play example 1 again, then in SuperCollider run
+--     ~scstdSet.(\monomode, 1);  (and later ~scstdSet.(\monomode, 0);)
+--     The pattern itself does not change; it just becomes mono.
+d1 $ n "0 3 7 10" # s "scstd" # glide 0.1 # legato 1.05
+
+-- 59-61: AUDIO INPUT. Use HEADPHONES (the Mac mic would pick up the speakers and howl).
+--        Speak, sing, clap or play near the Mac's microphone.
+
+-- 59. Your sound opens the FILTER: louder = brighter. (PRESET presets/mic_filter.json)
+d1 $ n "-12" # s "scstd" # monomode 1 # legato 1 # envf_vcf 4 # vcfcut 200 # vcfres 0.5 # vcfenv 0
+
+-- 60. Your sound GATES the synth: it only sounds while you make sound (VCA closed at rest).
+d1 $ n "<0 5 7 3>" # s "scstd" # monomode 1 # legato 1 # vcaenv 0 # vcainit 0 # envf_vca 1 # vcfcut 2500
+
+-- 61. Your sound THROUGH the synth: the mic goes into the filter (VCOs off), with S&H bubbling.
+d1 $ n "0" # s "scstd" # monomode 1 # legato 1 # o1lvl 0 # o2lvl 0 # inlvl 1 # vcaenv 0 # vcfcut 900 # vcfres 0.8 # sh_vcf 2 # shrate 5
+
+-- 62. ELECTRONIC SWITCH: flips between VCO 2 and VCO 3 (2 semitones up) 8 times per second: a trill.
+d1 $ n "0 ~ 5 ~" # s "scstd" # legato 1 # o1lvl 0 # o2lvl 0 # swlvl 1 # swrate 8 # o3oct 0.1667 # vcfcut 3000
+
+-- 63. MIXER/INVERTER: the ADSR inverted (mixalvl -1) into pitch: each note starts LOW and rises
+--     (the opposite of example 43).
+d1 $ n "-12 ~ -5 ~" # s "scstd" # legato 1 # mixa 5 # mixalvl (-1) # mixblvl 0 # mix_pitch 12 # eatk 0.001 # edec 0.5 # esus 0
+
+-- 64. S&H reading the MIXER: a slow saw (the staircase from 38) plus a little noise, so the
+--     staircase gets small random wobbles.
+d1 $ n "0" # s "scstd" # legato 1 # o1lf 1 # o1lfrate 0.75 # o1lvl 0 # shsrc 4 # mixa 0 # mixb 3 # mixblvl 0.15 # sh_pitch 12 # shrate 6 # vcfcut 3000 # vcfenv 0
+
+hush
+

@@ -16,4 +16,8 @@ confirmed.
 | VCO 1 | Lag processor input | on | — (`lagtime 0` = no effect) | |
 | Sample & hold | mod source | off until routed | `sh_pitch`, `sh_vcf`, `sh_pw`, `sh_vca` | |
 | any source | pitch / vcf / pw / vca | off | patch cables `<source>_<dest>` (docs/params.md) | |
+| Audio input (preamp) | Envelope follower | on | `ingain`, `efatk`, `efrel`; follower output = source `envf` | |
+| Audio input (preamp) | mixer | off | `inlvl` | |
+| VCO 2 / VCO 3 | Electronic switch A / B | on | `swa`, `swb`; into the mixer at `swlvl` | |
+| VCO 1 / S&H | Mixer/inverter A / B | on | `mixa`, `mixb`, levels `mixalvl`, `mixblvl`; output = source `mix` | |
 | VCA output | Spring reverb (FX bus) | Stage 6 | | |

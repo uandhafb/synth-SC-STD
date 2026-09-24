@@ -1,0 +1,13 @@
+{
+  "name": "Mono glide lead",
+  "sound": "scstd",
+  "stage": 5,
+  "description": "One continuous voice: overlapping notes glide into each other, like a monophonic analog lead.",
+  "params": {
+    "monomode": 1,
+    "glide": 0.12,
+    "vcfcut": 1800,
+    "vcfres": 0.4
+  },
+  "tidal": "d1 $ n \"0 7 12 7 3 5 3 -2\" # s \"scstd\" # monomode 1 # glide 0.12 # vcfcut 1800 # vcfres 0.4 # legato 1.1"
+}

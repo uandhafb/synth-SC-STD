@@ -14,6 +14,10 @@
 ~scstdLoadPreset.("ringmod_bell");
 ~scstdLoadPreset.("fm_drone");
 
+~scstdSet.(\monomode, 1);         // Stage 5: the same pattern becomes one gliding mono voice
+~scstdSet.(\glide, 0.2);           // slower glide
+~scstdSet.(\monomode, 0);         // back to normal (polyphonic) mode
+
 ~scstdReset.();                    // back to the default sound
 
 // Note: a value written in the Tidal pattern always wins over the panel.

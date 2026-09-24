@@ -11,13 +11,24 @@ var desc, argNames, missing;
 ~dirt = ~dirt ?? { (numChannels: 2, soundLibrary: (addSynth: { })) };
 (root +/+ "sc/synthdefs/00_modules.scd").load;
 (root +/+ "sc/synthdefs/scstd.scd").load;
+// Event synth: every param except the sclang-only and mono-only ones must be a msgFunc argument.
 desc = SynthDescLib.global[\scstd];
 argNames = desc.msgFunc.def.argNames.asArray;
-missing = ~scstdSpecs.keys.asArray.sort.reject { |k| argNames.includes(k) };
+missing = ~scstdSpecs.keys.asArray.sort.reject { |k|
+	argNames.includes(k) or: { ~scstdLangOnly.includes(k) or: { ~scstdMonoOnly.includes(k) } }
+};
 if(missing.isEmpty) {
-	"MSGFUNC OK: all % params reach the synth through SuperDirt".format(~scstdSpecs.size).postln;
+	"MSGFUNC OK: all % event-synth params reach the synth through SuperDirt".format(~scstdSpecs.size).postln;
 } {
 	"MSGFUNC FAIL: these params would be dropped by SuperDirt: %".format(missing).postln;
+};
+// Mono synth: set directly with n_set, so every param except sclang-only ones must be a control.
+argNames = SynthDescLib.global[\scstd_mono].controlNames.asArray;
+missing = ~scstdSpecs.keys.asArray.sort.reject { |k| argNames.includes(k) or: { ~scstdLangOnly.includes(k) } };
+if(missing.isEmpty) {
+	"MONO OK: the mono synth has a control for every param".postln;
+} {
+	"MONO FAIL: missing controls in scstd_mono: %".format(missing).postln;
 };
 0.exit;
 )

@@ -25,7 +25,17 @@
 	// Noise (6.5), ring mod (6.6)
 	nzcol: [0, 1, 0], nzlvl: [0, 1, 0], rmlvl: [0, 1, 0],
 	// Sample & hold (6.11), lag processor (6.12)
-	shrate: [0.1, 50, 6], shsrc: [0, 3, 0], shlag: [0, 1, 0], lagtime: [0, 5, 0],
+	shrate: [0.1, 50, 6], shsrc: [0, 4, 0], shlag: [0, 1, 0], lagtime: [0, 5, 0],
+	lagsrc: [0, 1, 0],   // lag processor input: 0 VCO 1 (normalled), 1 mixer/inverter
+	// Mono mode (Stage 5): monomode is read by sclang (sc/synthdefs/scstd.scd), glide by the mono synth
+	monomode: [0, 1, 0], glide: [0, 5, 0],
+	// Audio input (6.13): preamp and envelope follower. Input 1 = the Mac's built-in mic.
+	inlvl: [0, 1, 0], ingain: [0, 1, 0.5], efatk: [0.001, 1, 0.01], efrel: [0.01, 5, 0.3],
+	// Electronic switch: alternates between two audio sources (0 VCO 1, 1 VCO 2, 2 VCO 3, 3 noise, 4 input)
+	swrate: [0.1, 50, 4], swa: [0, 4, 1], swb: [0, 4, 2], swlvl: [0, 1, 0],
+	// Mixer/inverter: two sources (0 vco1 1 vco2 2 vco3 3 noise 4 sh 5 adsr 6 ar 7 envf 8 rm),
+	// each -1..1 (negative = inverted); the result is the cable source `mix`
+	mixa: [0, 8, 0], mixb: [0, 8, 4], mixalvl: [-1, 1, 1], mixblvl: [-1, 1, 1],
 	// Keyboard on/off per VCO (1 = follows the notes; 0 = fixed pitch around middle C, for drones
 	// or a fixed modulator, like unplugging the original's keyboard CV)
 	o1kbd: [0, 1, 1], o2kbd: [0, 1, 1], o3kbd: [0, 1, 1],
@@ -42,12 +52,15 @@
 	adsr_pitch: [-48, 48, 0], adsr_pw: [-1, 1, 0], adsr_vca: [-1, 1, 0],
 	ar_pitch: [-48, 48, 0], ar_vcf: [-6, 6, 0], ar_pw: [-1, 1, 0],
 	rm_pitch: [-48, 48, 0], rm_vcf: [-6, 6, 0], rm_pw: [-1, 1, 0], rm_vca: [-1, 1, 0],
+	envf_pitch: [-48, 48, 0], envf_vcf: [-6, 6, 0], envf_pw: [-1, 1, 0], envf_vca: [-1, 1, 0],
+	mix_pitch: [-48, 48, 0], mix_vcf: [-6, 6, 0], mix_pw: [-1, 1, 0], mix_vca: [-1, 1, 0],
 	// VCF (6.7)
 	vcfcut: [20, 18000, 2000], vcfres: [0, 1.1, 0.2], vcfenv: [-1, 1, 0.4],
 	vcfkey: [0, 1, 0.5], vcfdrive: [0, 1, 0.3],
 	vcfmodel: [0, 1, 0],   // filter character: 0 = MoogLadder (default, self-oscillates), 1 = MoogFF
 	// VCA (6.8)
 	vcalvl: [0, 1, 0.8], vcaenv: [0, 1, 1],
+	vcainit: [0, 1, 1],   // resting gain when the envelope is unplugged (vcaenv 0): 1 open, 0 closed
 	// ADSR (6.9) and AR (6.10)
 	eatk: [0.001, 10, 0.01], edec: [0.001, 10, 0.3], esus: [0, 1, 0.6],
 	erel: [0.001, 15, 0.4], ecurve: [-8, 8, -4],
@@ -316,21 +329,47 @@
 };
 
 // ---------------------------------------------------------------------------------------------
-// VCA: level x envelope. vcaenv crossfades between "always open" (0) and "fully enveloped" (1).
+// VCA: level x envelope. vcaenv crossfades between the resting gain `init` (0) and "fully
+// enveloped" (1). init = the original's initial-gain knob: 1 = open (drone while the note lasts),
+// 0 = closed, so only patch cables (e.g. envf_vca: a live instrument) open the VCA.
 // ampMod is the VCA modulation summing point (Stage 4).
-~scstdMods[\vca] = { |in, lvl, envAmt, env, ampMod = 0|
-	var amp = lvl * (((1 - envAmt) + (envAmt * env)) + ampMod).clip(0, 1);
+~scstdMods[\vca] = { |in, lvl, envAmt, env, ampMod = 0, init = 1|
+	var amp = lvl * (((1 - envAmt) * init) + (envAmt * env) + ampMod).clip(0, 1);
 	in * amp
+};
+
+// Params that only sclang reads (never a synth control). Used by the SuperDirt check.
+~scstdLangOnly = [\monomode];
+// Params only the mono synth reads (the event synth ignores them).
+~scstdMonoOnly = [\glide];
+
+// Audio input (6.13): preamp + envelope follower. Computed inside each voice from SoundIn, so a
+// pattern can override ingain/efatk/efrel per note like any other param (a separate persistent
+// utility synth could only use panel values). Input 0 = the Mac's built-in mic / first input.
+// Preamp: 1x..100x gain (0..+40 dB, exponential), then tanh so a loud input cannot explode.
+// Envelope follower: Amplitude with separate attack/release times -> 0..1 control signal.
+~scstdMods[\input] = { |gain, atk, rel|
+	var pre = (SoundIn.ar(0) * gain.linexp(0, 1, 1, 100)).tanh;
+	[pre, Amplitude.kr(pre, atk, rel).clip(0, 1)]
+};
+
+// Electronic switch: alternates between two signals at `rate`. A 1 ms crossfade removes the click
+// of an instant switch while keeping the hard "chopped" character.
+~scstdMods[\switch] = { |a, b, rate|
+	var k = Lag.ar(LFPulse.ar(rate), 0.001);
+	(a * (1 - k)) + (b * k)
 };
 
 // ---------------------------------------------------------------------------------------------
 // The complete normalled voice. Returns a mono signal. `p` is a param lookup (~scstdParams.()),
 // freq the note frequency, sustain the total event length including release.
-~scstdMods[\voice] = { |p, freq, sustain|
+// gateIn: nil in event mode (the gate comes from sustain and the synth frees itself);
+// a gate signal in mono mode (a persistent synth: no lifetime envelope, never frees itself).
+~scstdMods[\voice] = { |p, freq, sustain, gateIn|
 	var m = ~scstdMods;
 	var relMax = max(p.(\erel), p.(\arrel));
 	var gateTime = (sustain - relMax).max(0.005);
-	var gate = m[\gate].(gateTime);
+	var gate = gateIn ?? { m[\gate].(gateTime) };
 	var adsr = m[\adsr].(gate, p.(\eatk), p.(\edec), p.(\esus), p.(\erel), p.(\ecurve));
 	var ar = m[\ar].(gate, p.(\aratk), p.(\arrel));
 
@@ -339,29 +378,41 @@
 	// Noise first: it feeds the mixer and is the normalled S&H input.
 	var nz = m[\noise].(p.(\nzcol));
 
+	// Audio input: preamp output (audio) and envelope follower (control, source `envf`).
+	var input = m[\input].(p.(\ingain), p.(\efatk), p.(\efrel));
+	var pre = input[0], envf = input[1];
+
 	// Feedback path. VCO signals can modulate the VCOs' own pitch and pulse width (e.g.
 	// vco2_pitch, S&H reading VCO 2 while moving pitch): loops, as when patching the original.
 	// A UGen graph cannot contain a direct loop, so these come back through LocalIn/LocalOut with
 	// one block of delay (64 samples = 1.3 ms at 48 kHz). For S&H (<= 50 Hz) that is inaudible;
 	// for audio-rate FM it only shifts the modulator's phase, which does not change the timbre.
-	var fb = LocalIn.ar(4);                      // [VCO 1 mod, VCO 2, VCO 3, ring mod], last block
-	var shIn = Select.ar(p.(\shsrc).round, [nz, fb[0], fb[1], fb[2]]);
+	// The S&H output is fed back too, so the mixer can use it and the S&H can read the mixer.
+	var fb = LocalIn.ar(5);                      // [VCO 1 mod, VCO 2, VCO 3, ring mod, S&H]
+
+	// Mixer/inverter (6.13): two sources, each -1..1 (negative = inverted). Becomes source `mix`,
+	// which can be patched anywhere and fed into the S&H (shsrc 4) and the lag processor (lagsrc 1).
+	var mixSrc = [fb[0], fb[1], fb[2], nz, fb[4], adsr, K2A.ar(ar), K2A.ar(envf), fb[3]];
+	var mix = (Select.ar(p.(\mixa).round, mixSrc) * p.(\mixalvl))
+		+ (Select.ar(p.(\mixb).round, mixSrc) * p.(\mixblvl));
+
+	var shIn = Select.ar(p.(\shsrc).round, [nz, fb[0], fb[1], fb[2], mix]);
 	var sh = m[\sh].(shIn, p.(\shrate), p.(\shlag));
 
 	// Patch cables (6.14): <source>_<dest>. Each destination is a summing point (decision 6).
-	// Sources that come before the VCOs (noise, S&H, envelopes) are used directly; VCO and ring
-	// mod sources use the feedback copies for pitch and pulse width (see above).
-	var early = (noise: nz, sh: sh, adsr: adsr, ar: ar,
+	// Sources computed before the VCOs (noise, S&H, envelopes, envf, mix) are used directly; VCO
+	// and ring mod sources use the feedback copies for pitch and pulse width (see above).
+	var srcNames = [\vco1, \vco2, \vco3, \noise, \sh, \adsr, \ar, \rm, \envf, \mix];
+	var early = (noise: nz, sh: sh, adsr: adsr, ar: ar, envf: envf, mix: mix,
 		vco1: fb[0], vco2: fb[1], vco3: fb[2], rm: fb[3]);
-	var cable = { |srcs, dest, scale = 1|
-		srcs.collect { |src|
+	var cable = { |sigs, dest, scale = 1|
+		srcNames.collect { |src|
 			var name = (src ++ "_" ++ dest).asSymbol;
-			if(~scstdSpecs[name].notNil) { early[src] * p.(name) * scale } { 0 }
+			if(~scstdSpecs[name].notNil) { sigs[src] * p.(name) * scale } { 0 }
 		}.sum
 	};
-	var srcNames = [\vco1, \vco2, \vco3, \noise, \sh, \adsr, \ar, \rm];
-	var pitchMod = cable.(srcNames, \pitch);         // semitones
-	var pwMod = cable.(srcNames, \pw, 0.45);         // -1..1 -> +-0.45 pulse width
+	var pitchMod = cable.(early, \pitch);           // semitones
+	var pwMod = cable.(early, \pw, 0.45);           // -1..1 -> +-0.45 pulse width
 
 	// Keyboard on/off per VCO: 0 = fixed pitch around middle C (drones, fixed modulator).
 	var kbd = { |k| var on = p.(k).round; (freq * on) + (261.6256 * (1 - on)) };
@@ -375,11 +426,11 @@
 	var f1 = (f1kb * (1 - lf)) + (p.(\o1lfrate) * lf);
 	var vco1 = m[\vco1].(f1, p.(\o1wave));
 	var v1 = vco1[0], mod1 = vco1[1];
-	// Lag processor (6.12) on VCO 1's modulation output: smooths the saw's jump into a rounded
-	// "shark fin", so PWM/FM from VCO 1 in LF mode become smooth (the original's way to get a
-	// soft LFO from a saw). Exponential lag, like an RC circuit. lagtime 0 = no smoothing.
-	// Not applied to ring mod, S&H or the patch cables, which use the raw VCO 1.
-	var mod1s = Lag.ar(mod1, p.(\lagtime));
+	// Lag processor (6.12): smooths its input (normalled: VCO 1's mod output; lagsrc 1: the
+	// mixer). Its output drives the VCO 1 -> PWM/FM paths (o2pwm, o3pwm, o2fm), so a saw LFO
+	// becomes a rounded "shark fin" (the original's way to get a soft LFO from a saw).
+	// Exponential lag, like an RC circuit. lagtime 0 = no smoothing.
+	var mod1s = Lag.ar(Select.ar(p.(\lagsrc).round, [mod1, mix]), p.(\lagtime));
 
 	// FM is exponential (the mod signal moves pitch in semitones, like a CV into the original's
 	// FM inputs): depth 1 = +-36 semitones (+-3 octaves). Audio-rate exponential FM gives the
@@ -401,33 +452,35 @@
 	var rmSrc = [mod1, v2, v3, nz];
 	var rm = m[\ringmod].(Select.ar(p.(\rma).round, rmSrc), Select.ar(p.(\rmb).round, rmSrc));
 
-	var fbOut = LocalOut.ar([mod1, v2, v3, rm]);
+	// Electronic switch between two audio sources (0 VCO 1, 1 VCO 2, 2 VCO 3, 3 noise, 4 input).
+	var swSrc = [mod1, v2, v3, nz, pre];
+	var sw = m[\switch].(Select.ar(p.(\swa).round, swSrc), Select.ar(p.(\swb).round, swSrc),
+		p.(\swrate));
+
+	var fbOut = LocalOut.ar([mod1, v2, v3, rm, sh]);
 
 	// Cables into the filter and VCA come after the VCOs, so they use the current signals.
-	var late = (noise: nz, sh: sh, adsr: adsr, ar: ar, vco1: mod1, vco2: v2, vco3: v3, rm: rm);
-	var lateCable = { |dest, scale = 1|
-		srcNames.collect { |src|
-			var name = (src ++ "_" ++ dest).asSymbol;
-			if(~scstdSpecs[name].notNil) { late[src] * p.(name) * scale } { 0 }
-		}.sum
-	};
-	var cutMod = lateCable.(\vcf);                   // octaves
-	var ampMod = lateCable.(\vca);                   // added to the VCA gain (0..1 after clip)
+	var late = (noise: nz, sh: sh, adsr: adsr, ar: ar, envf: envf, mix: mix,
+		vco1: mod1, vco2: v2, vco3: v3, rm: rm);
+	var cutMod = cable.(late, \vcf);                // octaves
+	var ampMod = cable.(late, \vca);                // added to the VCA gain (0..1 after clip)
 
-	var mix = m[\mixer].([v1, v2, v3, nz, rm],
-		[p.(\o1lvl), p.(\o2lvl), p.(\o3lvl), p.(\nzlvl), p.(\rmlvl)]);
+	// Mixer: VCOs, noise, ring mod, electronic switch and the audio input (preamp) -> filter.
+	var mixer = m[\mixer].([v1, v2, v3, nz, rm, sw, pre],
+		[p.(\o1lvl), p.(\o2lvl), p.(\o3lvl), p.(\nzlvl), p.(\rmlvl), p.(\swlvl), p.(\inlvl)]);
 
 	// Keyboard tracking: the cutoff follows the played note, in octaves relative to middle C.
 	// vcfkey 1 = the cutoff moves 1:1 with pitch (same brightness everywhere); 0 = fixed cutoff.
 	var keyTrack = p.(\vcfkey) * (freq / 261.6256).log2;
-	var filt = m[\vcf].(mix, p.(\vcfcut), p.(\vcfres), p.(\vcfenv), adsr, p.(\vcfdrive),
+	var filt = m[\vcf].(mixer, p.(\vcfcut), p.(\vcfres), p.(\vcfenv), adsr, p.(\vcfdrive),
 		p.(\vcfmodel), cutMod + keyTrack);
-	var sig = m[\vca].(filt, p.(\vcalvl), p.(\vcaenv), ar, ampMod);
+	var sig = m[\vca].(filt, p.(\vcalvl), p.(\vcaenv), ar, ampMod, p.(\vcainit));
 
-	// Declick + lifetime: 2 ms fade in, 10 ms fade out at the very end of the event,
-	// then free the synth (SuperDirt convention: every event synth frees itself).
-	var life = EnvGen.ar(Env([0, 1, 1, 0], [0.002, (sustain - 0.012).max(0), 0.01]),
-		doneAction: 2);
+	// Event mode: declick + lifetime (2 ms fade in, 10 ms fade out at the very end of the event),
+	// then free the synth (SuperDirt convention). Mono mode: the synth lives on, no lifetime.
+	var life = if(gateIn.isNil) {
+		EnvGen.ar(Env([0, 1, 1, 0], [0.002, (sustain - 0.012).max(0), 0.01]), doneAction: 2)
+	} { 1 };
 
 	LeakDC.ar(sig) * life * 0.5
 };

@@ -3,6 +3,23 @@
 Dated feedback from listening tests. Newest first.
 Format: date, stage, what was played (exact Tidal/Strudel line), what was heard, action.
 
+## 2026-09-23 — Stage 5, offline and real-SuperDirt measurements (before listening)
+- New: mono mode (monomode, glide), audio input (ingain, inlvl, efatk, efrel, source envf),
+  electronic switch, mixer/inverter (source mix, shsrc 4, lagsrc 1), vcainit. 104 params in sync;
+  event synth and mono synth checks OK (check_msgfunc.scd).
+- Offline with a synthetic "cello" as NRT input (quiet/loud/silent): envf_vcf brightness
+  155/342/131 Hz; envf_vca (vcainit 0) level -39/-25/-240 dB; input through the filter
+  -34/-24/-117 dB; switch alternates +6/0 st every 1/8 s; inverted ADSR -> pitch -9 ... 0 st;
+  S&H from mixer = staircase with jitter.
+- Found: envf_vca could not gate the synth (vcaenv 0 meant "fully open" + envf). Added vcainit
+  (original's initial-gain knob), default 1 = unchanged behaviour.
+- Mono via a private real SuperDirt (sc/tests/mono_probe.scd + analysis/mono_check.py):
+  legato phrase glides (7 -> 9 -> 11 -> 12 st in 50 ms steps) with no level dips; separated
+  notes retrigger (dips to ~-65 dB); an event-mode note frees the mono voice (1 -> 0, node tree clean).
+- Regressions: Stages 1-4 renders unchanged (default -16.4 dBFS, panel/pattern-wins OK);
+  fuzz with all 104 params random: all finite, peaks -50..-0.9 dBFS.
+- Pending: user listening (tidal/examples.tidal 54-64, with headphones for 59-61).
+
 ## 2026-09-23 — Stage 4 done
 - 43-off/on and 48-off/on: cables audible as intended; panel_demo.scd with example 53: works (user).
 - Examples 44-47 and 49-52 not individually commented; treated as OK, user to report issues.
