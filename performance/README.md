@@ -14,8 +14,21 @@ synth project itself is unchanged.
    ```
    Keys (click the terminal first): `t` test quake · `1 2 3` a big real quake · `r` replay the last
    24 h in 4 minutes · `l` live only · `p` pause · `+ -` rupture level · `m` rupture on/off · `q` quit.
-3. **Tidal** (Pulsar or VS Code, started from the `scstd` or `lc` setup; only one Tidal running):
+3. **The projection**: open **http://localhost:8095** in a browser (press `f` for full screen).
+   Left: today's Wikipedia "List of earthquakes in 2026", fetched when the relay starts; its words
+   are moved by the earthquakes. Right: the globe, the P and S wave fronts, the station cities.
+   Below: the score as code, each earthquake and the movements it calls.
+4. **Tidal** (Pulsar or VS Code, started from the `scstd` or `lc` setup; only one Tidal running):
    open `performance/arrival_times.tidal`, run block 0, then the sections in order.
+
+## The choreography
+A small movement vocabulary for the words of a real page (`web/choreo.js`), after Joana Chicau's
+choreographic coding: the page is a stage, its elements are the bodies, code is the score. The
+verbs come from the performer's own MIDI web-choreography sketches:
+`shake`, `wobble`, `float`, `stretch`, `tilt`, `bounce`, plus `breathing` (after Chicau) and `still`.
+The earthquakes call them (magnitude → shake, wobble, stretch; longitude → tilt; depth → the page
+sinks; M ≥ 5.5 → the table rows are thrown), and they can be typed in the browser console of the
+page: `shake("Indonesia", 0.8)`, `bounce("rows", 0.6)`, `still()`.
 
 ## The data
 | In Tidal | Meaning | 0 … 1 |
@@ -35,6 +48,10 @@ The rupture note: bigger = lower, longer, louder, more rumble; deeper = darker
 node performance/test_relay.mjs          # the relay: timing, values, pause, new quakes, offline
 sh performance/tests/rupture_test.sh     # the rupture sound through a private SuperDirt
 sh performance/tests/piece_test.sh       # the real Tidal lines + relay + synth, recorded and checked
+node performance/tests/stage_shots.mjs   # screenshots of the projection (analysis/output/stage_*.png)
 ```
 
-Data: U.S. Geological Survey earthquake feeds (public domain).
+Credits: earthquake data from the U.S. Geological Survey feeds (public domain); coastlines from
+Natural Earth (public domain); the page that dances is Wikipedia's "List of earthquakes in 2026"
+(CC BY-SA 4.0), fetched at start and not stored in this repository; the choreographic approach
+follows Joana Chicau's work (e.g. "A WebPage in Three Acts").

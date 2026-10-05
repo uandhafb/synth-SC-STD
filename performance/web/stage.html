@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Arrival Times</title>
+<link rel="stylesheet" href="stage.css">
+</head>
+<body>
+<main>
+  <!-- Frontstage, left: a real page (today's Wikipedia list of earthquakes); its words are the dancers -->
+  <iframe id="page" src="/wiki" title="The page the earthquakes choreograph"></iframe>
+
+  <!-- Frontstage, right: where on Earth, and how the waves travel -->
+  <section class="earth" id="earth">
+    <canvas id="globe"></canvas>
+    <header>
+      <div class="title">ARRIVAL TIMES</div>
+      <div class="mode" id="mode">waiting for the Earth</div>
+    </header>
+    <aside id="log" aria-label="Earthquake data"></aside>
+    <div class="words" id="words">
+      <div class="where" id="where"></div>
+      <div class="place" id="place"></div>
+      <div class="meta" id="meta"></div>
+    </div>
+    <div class="legend"><span class="key p">P wave</span><span class="key s">S wave</span></div>
+  </section>
+</main>
+
+<!-- Backstage: the score being written. Data on the left, the movements it calls on the right. -->
+<section id="strip" aria-label="The choreography, as code"></section>
+
+<footer>
+  <span>data: U.S. Geological Survey · one day of the planet in four minutes</span>
+  <span>page: Wikipedia, CC BY-SA 4.0 · movement vocabulary after Joana Chicau's choreographic coding</span>
+</footer>
+<script type="module" src="stage.js"></script>
+</body>
+</html>

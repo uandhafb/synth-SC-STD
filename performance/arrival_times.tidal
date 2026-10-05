@@ -12,7 +12,13 @@
 --   qlat, qlon   where it was (south = 0 ... north = 1, west = 0 ... east = 1)
 -- Each "d" has its own orbit (its own spring reverb). The rupture notes come from the relay.
 
--- 0. RUN THIS FIRST (once): tempo and the six data names.
+-- 0. RUN THESE THREE FIRST (once, one at a time): the synth's names, the tempo, the data names.
+-- (The first line has no quotes on purpose: Pulsar's highlighter rewrites quoted text.
+--  On another computer, point it to a file that contains  :script "<path>/tidal/params.hs" .
+--  It must stay alone in its paragraph, with an empty line above and below.)
+
+:script /Users/uandha/tidal-setups/names.hs
+
 setcps 0.5
 
 let qmag = cF 0 "mag"; qdepth = cF 0.5 "depth"; qenergy = cF 0 "energy"; qrate = cF 0 "rate"; qlat = cF 0.5 "lat"; qlon = cF 0.5 "lon"

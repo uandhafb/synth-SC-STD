@@ -1,3 +1,4 @@
 # The freshly downloaded earthquake day (the committed sample_day.json is the fallback)
 data/last_day.json
+data/page.html
 node_modules/

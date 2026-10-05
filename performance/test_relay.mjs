@@ -27,7 +27,10 @@ for (const f of ["sample_day.json", "big.json"]) fs.copyFileSync(path.join(DIR, 
 let hour = { features: [] }, online = true;
 const make = (extra = {}) => new Relay({ scPort: 57951, tidalPort: 57952, dataDir: tmp, log: () => {}, replaySeconds: 3,
   energyFade: 0.4, pollSeconds: 3600,
-  fetchJson: async (url) => { if (!online) throw new Error("offline"); return url.includes("all_hour") ? hour : sample; }, ...extra });
+  fetchJson: async (url) => { if (!online) throw new Error("offline"); return url.includes("all_hour") ? hour : sample; },
+  fetchText: async (url) => { if (!online) throw new Error("offline");
+    return url.includes("load.php") ? "body{color:#111}" : '<!DOCTYPE html><html><head><link rel="stylesheet" href="/w/load.php?a=1&amp;b=2"><script>alert(1)</script></head><body><div id="mw-content-text"><p>Indonesia and Alaska</p></div></body></html>'; },
+  ...extra });
 const plays = () => sc.got.filter((m) => m.address === "/dirt/play");
 const ctrl = (name) => tidal.got.filter((m) => m.address === "/ctrl" && m.args[0] === name);
 const field = (m, k) => m.args[m.args.indexOf(k) + 1];
@@ -76,11 +79,29 @@ r.ruptureOn = false; r.test(); await sleep(100);
 check("rupture off: data still flows, no note", plays().length === atLive + 3 && ctrl("mag").length > n + 3);
 r.stop();
 
+// ---- the projection server ----
+r = make();
+await r.load(); await r.serve(8096);
+const get = (p) => fetch(`http://127.0.0.1:8096${p}`);
+const stage = await (await get("/")).text(), wiki = await (await get("/wiki")).text();
+check("serves the stage page", stage.includes("ARRIVAL TIMES"));
+check("serves the fetched page with the choreography added", wiki.includes("Indonesia and Alaska") && wiki.includes("http://127.0.0.1:8096/choreo.js"));
+check("the page's own scripts are removed and its styles copied in", !wiki.includes("alert(1)") && wiki.includes("body{color:#111}") && !wiki.includes("load.php"));
+check("credit for the page's text is shown", wiki.includes("Wikipedia contributors") && wiki.includes("CC BY-SA"));
+check("files outside web/ are refused", (await get("/..%2fquake-relay.js")).status === 404 && (await get("/%2e%2e/data/big.json")).status === 404);
+const got = [];
+const es = await get("/events"); const reader = es.body.getReader();
+(async () => { for (;;) { const { value, done } = await reader.read(); if (done) break; got.push(new TextDecoder().decode(value)); } })().catch(() => {});
+await sleep(100); r.test(); await sleep(200);
+check("pages receive each earthquake", got.join("").includes('"type":"quake"') && got.join("").includes("a test quake"));
+await reader.cancel().catch(() => {}); r.stop();
+
 // ---- offline ----
-online = false; fs.rmSync(path.join(tmp, "last_day.json"));
+online = false; fs.rmSync(path.join(tmp, "last_day.json")); fs.rmSync(path.join(tmp, "page.html"));
 r = make();
 const src = await r.load();
 check("without internet it uses the sample", src.includes("sample_day.json") && r.day.length > 0, src);
+check("without internet or a saved copy, a plain page is made from the data", r.pageHtml("http://x").includes("<table>") && r.pageHtml("http://x").includes("choreo.js"), r.pageSource);
 r.stop();
 
 // ---- the rupture note ----

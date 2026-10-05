@@ -5,7 +5,7 @@ from pathlib import Path
 root = Path(__file__).resolve().parents[2]
 blocks = [b.strip("\n") for b in re.split(r"\n\s*\n", (root / "performance/arrival_times.tidal").read_text())]
 code = [b for b in blocks if not all(l.startswith("--") or not l.strip() for l in b.split("\n"))]
-code = ["\n".join(l for l in b.split("\n") if not l.startswith("--")) for b in code]
+# Kept whole, comments included: this is what an editor sends when a paragraph is evaluated.
 out = [":set -XOverloadedStrings", "import Sound.Tidal.Context", f':script "{root}/tidal/params.hs"',
        "tidal <- startStream (defaultConfig {cCtrlPort = 6021}) [(superdirtTarget {oPort = 57139, oLatency = 0.1}, [superdirtShape])]",
        "let setcps = streamOnce tidal . cps",

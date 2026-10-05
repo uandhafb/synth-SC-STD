@@ -1,0 +1,56 @@
+/* Arrival Times: the projection. Left: a real page that dances. Right: the globe. Below: the
+   score as code. Sized in viewport units so it works in a wide, short window above the editor. */
+:root {
+  --bg: #07090c; --ink: #e9e6df; --dim: #7d8794; --line: #2a323c;
+  --p: #f2e9c9;      /* P wave: pale, sharp */
+  --s: #ff5a36;      /* S wave: red, heavy */
+  --mono: ui-monospace, "SF Mono", Menlo, monospace;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink); overflow: hidden;
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+body { display: grid; grid-template-rows: minmax(0, 1fr) auto auto; }
+
+main { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); min-height: 0; }
+#page { width: 100%; height: 100%; border: 0; background: #fff; }
+.earth { position: relative; overflow: hidden; min-width: 0; }
+#globe { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+
+header { position: absolute; top: 2.2vh; left: 1.6vw; }
+.title { font-size: 0.85vw; letter-spacing: 0.45em; color: var(--dim); }
+.mode { margin-top: 0.5vh; font: 0.85vw var(--mono); color: var(--s); min-height: 1.2em; }
+
+#log { position: absolute; top: 2.2vh; right: 1.4vw; width: 19vw; font: 0.72vw/1.7 var(--mono); color: var(--dim); }
+#log .row { display: grid; grid-template-columns: 3.4em 3.4em 4em 1fr; gap: 0.5em; white-space: nowrap; overflow: hidden;
+  border-bottom: 1px solid var(--line); will-change: transform; }
+#log .row span:last-child { overflow: hidden; text-overflow: ellipsis; }
+#log .row.new { color: var(--ink); }
+#log .row.live span:first-child, #log .row.big span:first-child { color: var(--s); }
+
+.words { position: absolute; left: 1.6vw; right: 1.6vw; bottom: 9vh; will-change: transform, filter;
+  transition: transform 2.5s cubic-bezier(.2,.7,.2,1), filter 2.5s ease; }
+.where { font: 0.95vw var(--mono); color: var(--dim); min-height: 1.3em; }
+.place { font-weight: 800; line-height: 1.02; letter-spacing: -0.01em; margin: 0.3vh 0 0.6vh; min-height: 1em; }
+.meta { font: 0.95vw var(--mono); color: var(--ink); min-height: 1.3em; }
+.place span, .where span, .meta span { display: inline-block; white-space: pre; will-change: transform; opacity: 0; }
+.place span.on, .where span.on, .meta span.on { opacity: 1; }
+
+.legend { position: absolute; right: 1.4vw; bottom: 2vh; display: flex; gap: 1.6em; font: 0.72vw var(--mono); color: var(--dim); }
+.key::before { content: ""; display: inline-block; width: 2.2em; height: 0; margin-right: 0.6em; vertical-align: middle; }
+.key.p::before { border-top: 1px solid var(--p); }
+.key.s::before { border-top: 3px solid var(--s); }
+
+/* the score */
+#strip { border-top: 1px solid var(--line); padding: 0.9vh 1.6vw; font: 0.95vw/1.5 var(--mono); height: calc(4 * 1.5 * 0.95vw + 1.8vh);
+  overflow: hidden; display: flex; flex-direction: column; justify-content: flex-end; }
+#strip .line { display: flex; gap: 1em; color: var(--dim); opacity: 0.5; }
+#strip .line:last-child { opacity: 1; }
+#strip .data { flex: 0 0 27%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#strip .line:last-child .data { color: var(--ink); }
+#strip .arrow { color: var(--s); }
+#strip .code { display: flex; flex-wrap: wrap; column-gap: 1.1em; min-width: 0; }
+#strip .line:last-child .code { color: var(--p); }
+#strip .code b { font-weight: 400; white-space: nowrap; }
+#strip .code b.fresh { color: #fff; background: var(--s); }
+
+footer { display: flex; justify-content: space-between; gap: 2em; padding: 0.5vh 1.6vw 0.9vh; font: 0.68vw var(--mono); color: var(--dim); }

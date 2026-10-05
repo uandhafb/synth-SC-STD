@@ -3,7 +3,8 @@
 //   1. a "rupture" note on the scstd synth (OSC /dirt/play to SuperDirt, port 57120),
 //   2. control values for TidalCycles (OSC /ctrl to Tidal's control port 6010), read in patterns
 //      with  cF 0 "mag" | "depth" | "energy" | "rate" | "lat" | "lon"   (all 0..1),
-//   3. an event for listeners (projection and phones are added on top of this, see onQuake).
+//   3. an event for the projection page it serves at http://localhost:8095 (web/stage.html),
+//      and for other listeners (the phones are added on top of this, see onQuake).
 //
 // Run:  node performance/quake-relay.js      then press a key:
 //   r  replay the last 24 h (M 2.5+), compressed into REPLAY_MINUTES (default 4), looping
@@ -14,6 +15,7 @@
 // Without internet it uses the day saved last time (data/last_day.json), or the sample.
 
 import dgram from "node:dgram";
+import http from "node:http";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -22,6 +24,9 @@ import { encodeOSC, encodeBundle, int } from "./osc.js";
 const DIR = path.dirname(fileURLToPath(import.meta.url));
 const FEED_DAY = "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/2.5_day.geojson";
 const FEED_HOUR = "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_hour.geojson";
+// The real page whose words the earthquakes choreograph (web/choreo.js), fetched fresh at start.
+const PAGE = "https://en.wikipedia.org/wiki/List_of_earthquakes_in_2026";
+const PAGE_CREDIT = "Text: Wikipedia contributors, “List of earthquakes in 2026”, CC BY-SA 4.0";
 const clamp01 = (x) => Math.min(1, Math.max(0, x));
 
 // ---- data ---------------------------------------------------------------------------------------
@@ -72,7 +77,7 @@ export class Relay {
   constructor(opts = {}) {
     this.o = { scHost: "127.0.0.1", scPort: 57120, tidalHost: "127.0.0.1", tidalPort: 6010,
       replaySeconds: 240, pollSeconds: 60, energyFade: 8, rateWindow: 30, rateFull: 12,
-      dataDir: path.join(DIR, "data"), log: console.log, fetchJson: defaultFetchJson, ...opts };
+      dataDir: path.join(DIR, "data"), log: console.log, fetchJson: defaultFetchJson, fetchText: defaultFetchText, ...opts };
     this.udp = dgram.createSocket("udp4");
     this.mode = "idle";            // idle | replay | live
     this.paused = false;
@@ -85,6 +90,42 @@ export class Relay {
   }
 
   onQuake(fn) { this.listeners.push(fn); }
+
+  // The projection: a small web server for web/ (this computer only) that pushes every
+  // earthquake to the open pages (Server-Sent Events, so no extra library is needed).
+  serve(port = 8095) {
+    const web = path.join(DIR, "web");
+    const types = { ".html": "text/html; charset=utf-8", ".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".png": "image/png", ".svg": "image/svg+xml" };
+    this.clients = new Set();
+    this.http = http.createServer((req, res) => {
+      const url = new URL(req.url, "http://localhost");
+      if (url.pathname === "/events") {
+        res.writeHead(200, { "Content-Type": "text/event-stream", "Cache-Control": "no-cache", Connection: "keep-alive" });
+        res.write(`data: ${JSON.stringify({ type: "mode", mode: this.paused ? "paused" : this.mode })}\n\n`);
+        this.clients.add(res);
+        req.on("close", () => this.clients.delete(res));
+        return;
+      }
+      if (url.pathname === "/wiki") {
+        res.writeHead(200, { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" });
+        res.end(this.pageHtml(`http://${req.headers.host}`));
+        return;
+      }
+      const file = path.normalize(path.join(web, url.pathname === "/" ? "stage.html" : decodeURIComponent(url.pathname)));
+      if (!file.startsWith(web + path.sep) || !fs.existsSync(file) || !fs.statSync(file).isFile()) { res.writeHead(404); res.end("not found"); return; }
+      res.writeHead(200, { "Content-Type": types[path.extname(file)] ?? "application/octet-stream", "Cache-Control": "no-store" });
+      fs.createReadStream(file).pipe(res);
+    });
+    return new Promise((resolve) => this.http.listen(port, "127.0.0.1", resolve));
+  }
+
+  broadcast(obj) {
+    if (!this.clients) return;
+    const data = `data: ${JSON.stringify(obj)}\n\n`;
+    for (const res of this.clients) res.write(data);
+  }
+
+  setMode(mode) { this.mode = mode; this.broadcast({ type: "mode", mode: this.paused ? "paused" : mode }); }
   send(port, host, address, args) { this.udp.send(encodeOSC(address, args), port, host); }
   ctrl(name, value) { this.send(this.o.tidalPort, this.o.tidalHost, "/ctrl", [name, value]); }
 
@@ -105,7 +146,45 @@ export class Relay {
     this.big = JSON.parse(fs.readFileSync(path.join(this.o.dataDir, "big.json"), "utf8")).map(describe);
     try { for (const f of (await this.o.fetchJson(FEED_HOUR)).features) this.seen.add(f.id); } catch { /* offline */ }
     this.o.log(`${this.day.length} earthquakes (M 2.5+, last 24 h) from ${source}`);
+    await this.loadPage();
     return source;
+  }
+
+  // The page that dances: today's Wikipedia list of earthquakes, as it is right now. Its own
+  // scripts are removed and its style sheets are copied in, so the saved copy also works without
+  // internet. Without any copy, a plain page is made from the day's earthquakes.
+  async loadPage() {
+    const saved = path.join(this.o.dataDir, "page.html");
+    try {
+      let html = (await this.o.fetchText(PAGE)).replace(/<script\b[\s\S]*?<\/script>/gi, "");
+      for (const link of html.match(/<link\b[^>]*rel="stylesheet"[^>]*>/gi) ?? []) {
+        const href = /href="([^"]+)"/.exec(link)?.[1];
+        if (!href) continue;
+        try { const cssText = await this.o.fetchText(new URL(href.replace(/&amp;/g, "&"), PAGE).href); html = html.replace(link, () => `<style>${cssText}</style>`); } catch { /* keep the link */ }
+      }
+      html = html.replace(/<head>/i, () => `<head><base href="https://en.wikipedia.org/"><!-- fetched ${new Date().toISOString()} -->`);
+      fs.writeFileSync(saved, html);
+      this.page = html; this.pageSource = "Wikipedia, fetched now";
+    } catch {
+      if (fs.existsSync(saved)) { this.page = fs.readFileSync(saved, "utf8"); this.pageSource = "Wikipedia, saved copy (no internet)"; }
+      else {
+        const rows = this.day.map((q) => `<tr><td>${new Date(q.time).toISOString().slice(11, 16)}</td><td>${q.mag.toFixed(1)}</td><td>${Math.round(q.depth)} km</td><td>${q.place.replace(/[<&]/g, "")}</td></tr>`).join("");
+        this.page = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Earthquakes of the last 24 hours</title><style>body{font:17px/1.5 Georgia,serif;margin:2em;color:#202122}td,th{padding:.25em .9em;border-bottom:1px solid #ccc;text-align:left}</style></head><body><div id="mw-content-text"><h1>Earthquakes of the last 24 hours</h1><p>Magnitude 2.5 and above, from the U.S. Geological Survey.</p><table><tr><th>UTC</th><th>M</th><th>Depth</th><th>Place</th></tr>${rows}</table></div></body></html>`;
+        this.pageSource = "a plain page from the USGS list (no internet, no saved Wikipedia copy)";
+      }
+    }
+    this.o.log(`the page that dances: ${this.pageSource}`);
+  }
+
+  // The fetched page with our additions: reading-friendly layout, the credit, and the choreography.
+  pageHtml(origin) {
+    const wiki = this.pageSource?.startsWith("Wikipedia");
+    const add = `<style>.vector-header-container,.vector-column-start,.vector-column-end,.vector-page-toolbar,.vector-sticky-header-container,
+      .vector-body-before-content,#siteNotice,.mw-footer-container,.mw-editsection,.mw-jump-link,.vector-settings{display:none!important}
+      .mw-page-container{max-width:none!important;padding:0 1.4em!important} .mw-content-container{max-width:none!important} html{font-size:108%}</style>
+      <div style="font:12px/1.4 sans-serif;color:#54595d;padding:1.2em;border-top:1px solid #c8ccd1">${wiki ? `${PAGE_CREDIT}. ${this.pageSource}; the movements are added by Arrival Times.` : "Data: U.S. Geological Survey."}</div>
+      <script type="module" src="${origin}/choreo.js"></script>`;
+    return /<\/body>/i.test(this.page) ? this.page.replace(/<\/body>/i, () => `${add}</body>`) : this.page + add;
   }
 
   // Start the clocks: control values 10 times per second, new-quake check every pollSeconds.
@@ -117,6 +196,7 @@ export class Relay {
 
   stop() {
     clearInterval(this.tick); clearInterval(this.poll); clearTimeout(this.timer);
+    if (this.http) { for (const res of this.clients) res.end(); this.http.close(); }
     this.udp.close();
   }
 
@@ -128,6 +208,7 @@ export class Relay {
     this.recent = this.recent.filter((t) => now - t < this.o.rateWindow * 1000);
     this.ctrl("energy", this.energy);
     this.ctrl("rate", clamp01(this.recent.length / this.o.rateFull));
+    if ((this.ticks = (this.ticks ?? 0) + 1) % 2 === 0) this.broadcast({ type: "activity", energy: this.energy });
   }
 
   fire(q, info = {}) {
@@ -135,6 +216,7 @@ export class Relay {
     this.recent.push(Date.now());
     this.ctrl("mag", q.mag01); this.ctrl("depth", q.depth01); this.ctrl("lat", q.lat01); this.ctrl("lon", q.lon01);
     if (this.ruptureOn) this.udp.send(encodeBundle("/dirt/play", ruptureNote(q, this.level)), this.o.scPort, this.o.scHost);
+    this.broadcast({ type: "quake", q, info });
     for (const fn of this.listeners) fn(q, info);
     this.o.log(`${info.live ? "LIVE " : info.big ? "BIG  " : info.test ? "test " : "     "}M ${q.mag.toFixed(1)}  ${String(Math.round(q.depth)).padStart(3)} km  ${q.place}`);
   }
@@ -142,7 +224,7 @@ export class Relay {
   // ---- replay: the day's quakes in order, 24 h squeezed into replaySeconds, looping ----
   replay() {
     if (!this.day.length) return this.o.log("no earthquakes loaded");
-    this.mode = "replay"; this.paused = false; this.index = 0; this.replayStart = Date.now();
+    this.paused = false; this.index = 0; this.replayStart = Date.now(); this.setMode("replay");
     this.o.log(`REPLAY: ${this.day.length} earthquakes in ${Math.round(this.o.replaySeconds)} s`);
     this.scheduleNext();
   }
@@ -163,11 +245,11 @@ export class Relay {
     this.timer = setTimeout(() => { this.fire(this.day[this.index++]); this.scheduleNext(); }, wait);
   }
 
-  live() { clearTimeout(this.timer); this.mode = "live"; this.paused = false; this.o.log("LIVE: waiting for the Earth"); }
+  live() { clearTimeout(this.timer); this.paused = false; this.setMode("live"); this.o.log("LIVE: waiting for the Earth"); }
 
   pause() {
     if (this.mode !== "replay") return;
-    this.paused = !this.paused;
+    this.paused = !this.paused; this.setMode(this.mode);
     if (this.paused) { this.pausedAt = Date.now(); clearTimeout(this.timer); this.o.log("paused"); }
     else { this.replayStart += Date.now() - this.pausedAt; this.o.log("continue"); this.scheduleNext(); }
   }
@@ -190,6 +272,12 @@ export class Relay {
   fireBig(i) { if (this.big[i]) this.fire({ ...this.big[i], id: `${this.big[i].id}-${Date.now()}` }, { big: true }); }
 }
 
+async function defaultFetchText(url) {
+  const r = await fetch(url, { signal: AbortSignal.timeout(12000), headers: { "User-Agent": "ArrivalTimes/0.1 (student performance; synth-SC-STD)" } });
+  if (!r.ok) throw new Error(`HTTP ${r.status}`);
+  return r.text();
+}
+
 async function defaultFetchJson(url) {
   const r = await fetch(url, { signal: AbortSignal.timeout(8000) });
   if (!r.ok) throw new Error(`HTTP ${r.status}`);
@@ -202,6 +290,9 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   const relay = new Relay({ replaySeconds: Number(process.env.REPLAY_MINUTES ?? 4) * 60 });
   await relay.load();
   relay.start();
+  const port = Number(process.env.STAGE_PORT ?? 8095);
+  await relay.serve(port);
+  console.log(`projection: http://localhost:${port}   (press f in the page for full screen)`);
   console.log("keys:  r replay   l live   p pause   t test quake   1 2 3 big quake   + - level   m rupture on/off   q quit");
   if (process.stdin.isTTY) {
     process.stdin.setRawMode(true); process.stdin.resume(); process.stdin.setEncoding("utf8");
