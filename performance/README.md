@@ -30,6 +30,14 @@ The earthquakes call them (magnitude → shake, wobble, stretch; longitude → t
 sinks; M ≥ 5.5 → the table rows are thrown), and they can be typed in the browser console of the
 page: `shake("Indonesia", 0.8)`, `bounce("rows", 0.6)`, `still()`.
 
+## The ground, live
+`ground.js` receives the continuous signal of a real seismometer from EarthScope's real-time
+server: station **CN.MNTQ in Montréal** (Canadian National Seismograph Network), vertical channel,
+100 samples per second, about 2 s behind the ground (played 7 s late so it is smooth). A city never
+rests, so this is the one source that is always alive. It reaches Tidal as `qground` (0..1: how much
+the ground moves now, compared with the last minute) and the projection as the seismograph line.
+`GROUND=off node performance/quake-relay.js` runs without it; without internet it is simply absent.
+
 ## The data
 | In Tidal | Meaning | 0 … 1 |
 |---|---|---|
@@ -38,6 +46,7 @@ page: `shake("Indonesia", 0.8)`, `bounce("rows", 0.6)`, `still()`.
 | `qenergy` | activity now: jumps with each quake, fades in ~20 s | calm … very active |
 | `qrate` | quakes in the last 30 s | none … 12 or more |
 | `qlat`, `qlon` | where | south/west … north/east |
+| `qground` | the ground under Montréal, live | still … moving a lot |
 
 The rupture note: bigger = lower, longer, louder, more rumble; deeper = darker
 (`ruptureNote` in `quake-relay.js`). Without internet the relay uses the last saved day
@@ -48,10 +57,12 @@ The rupture note: bigger = lower, longer, louder, more rumble; deeper = darker
 node performance/test_relay.mjs          # the relay: timing, values, pause, new quakes, offline
 sh performance/tests/rupture_test.sh     # the rupture sound through a private SuperDirt
 sh performance/tests/piece_test.sh       # the real Tidal lines + relay + synth, recorded and checked
+node performance/tests/ground_test.mjs   # the live-seismometer decoder and signal (no network)
 node performance/tests/stage_shots.mjs   # screenshots of the projection (analysis/output/stage_*.png)
 ```
 
-Credits: earthquake data from the U.S. Geological Survey feeds (public domain); coastlines from
+Credits: earthquake data from the U.S. Geological Survey feeds (public domain); live ground motion
+from the Canadian National Seismograph Network (station CN.MNTQ) through EarthScope; coastlines from
 Natural Earth (public domain); the page that dances is Wikipedia's "List of earthquakes in 2026"
 (CC BY-SA 4.0), fetched at start and not stored in this repository; the choreographic approach
 follows Joana Chicau's work (e.g. "A WebPage in Three Acts").

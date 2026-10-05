@@ -18,6 +18,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 const relay = new Relay({ scPort: 57951, tidalPort: 57952, log: (m) => console.log("relay:", m) });
 await relay.load(); relay.start(); await relay.serve(PORT);
+relay.listen();                                      // the live seismometer (needs internet)
 
 const profile = fs.mkdtempSync(path.join(os.tmpdir(), "stage-chrome-"));
 const chrome = spawn(CHROME, ["--headless=new", "--disable-gpu", `--remote-debugging-port=${DEVTOOLS}`, `--user-data-dir=${profile}`,
@@ -41,7 +42,7 @@ const shot = async (name) => { const r = await send("Page.captureScreenshot", { 
   fs.writeFileSync(path.join(OUT, `stage_${name}.png`), Buffer.from(r.data, "base64")); console.log("saved", `stage_${name}.png`); };
 const js = async (expr) => (await send("Runtime.evaluate", { expression: expr, returnByValue: true, awaitPromise: true })).result?.value;
 
-await sleep(4000);                                   // page + Wikipedia copy + land outlines
+await sleep(13000);                                  // page + Wikipedia copy + land outlines + the first live seconds
 await shot("0_quiet");
 relay.fire(describe({ id: "a", mag: 4.4, depth: 35, lat: -6.2, lon: 130.1, place: "142 km NE of Tual, Indonesia", time: Date.now() - 3600e3 }));
 await sleep(2000); await shot("1_small");

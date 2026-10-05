@@ -113,10 +113,12 @@ function drawGlobe(now) {
     ctx.fillText(st.name, cx + s.x + 7, cy + s.y + 3);
   }
 
-  // the seismograph line: the Earth's activity, with a tremor
-  trace[traceAt] = energy * (0.35 + 0.65 * Math.sin(now * 0.045) * Math.sin(now * 0.0131 + 1.7)) + (Math.random() - 0.5) * 0.02;
-  traceAt = (traceAt + 1) % trace.length;
-  const y0 = H * 0.955, x0 = W * 0.04, x1 = W * 0.72;
+  // the seismograph line: the real ground under the station while its signal arrives (see the
+  // "ground" events below); otherwise a tremor drawn from the earthquakes' activity
+  const real = now - groundAt < 3000;
+  elGround.textContent = real ? groundLabel : "";
+  if (!real) { trace[traceAt] = energy * (0.35 + 0.65 * Math.sin(now * 0.045) * Math.sin(now * 0.0131 + 1.7)) + (Math.random() - 0.5) * 0.02; traceAt = (traceAt + 1) % trace.length; }
+  const y0 = H * 0.925, x0 = W * 0.04, x1 = W * 0.72;
   ctx.strokeStyle = COL.ink; ctx.globalAlpha = 0.7; ctx.lineWidth = 1; ctx.beginPath();
   for (let i = 0; i < trace.length; i++) {
     const v = trace[(traceAt + i) % trace.length], x = x0 + ((x1 - x0) * i) / (trace.length - 1), y = y0 - v * H * 0.035;
@@ -207,6 +209,15 @@ function scatterLog() {
 
 // ---- events from the relay ----------------------------------------------------------------------
 
+// The live seismometer: its waveform replaces the drawn tremor.
+const elGround = document.getElementById("ground");
+let groundAt = -1e9, groundLabel = "";
+function onGround(m) {
+  groundAt = performance.now();
+  groundLabel = `the ground under ${m.name} · live, ${m.delay} s ago`;
+  for (const p of m.points) { trace[traceAt] = Math.max(-1.5, Math.min(1.5, p * 2.2)); traceAt = (traceAt + 1) % trace.length; }
+}
+
 const MODES = { idle: "waiting for the Earth", replay: "REPLAY · the last 24 hours", live: "LIVE · the Earth right now", paused: "paused" };
 
 // The score, as it is written: one line per earthquake, the data and the movements it calls.
@@ -246,6 +257,7 @@ events.onmessage = (e) => {
   if (m.type === "quake") onQuake(m.q, m.info);
   else if (m.type === "mode") elMode.textContent = MODES[m.mode] ?? m.mode;
   else if (m.type === "activity") energy = m.energy;
+  else if (m.type === "ground") onGround(m);
 };
 
 // For looking at the page without the relay: stage.html?demo fires earthquakes by itself.

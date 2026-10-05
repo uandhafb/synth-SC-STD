@@ -2,7 +2,8 @@
 // Arrival Times: the quake relay. Reads real earthquakes (USGS) and turns each one into
 //   1. a "rupture" note on the scstd synth (OSC /dirt/play to SuperDirt, port 57120),
 //   2. control values for TidalCycles (OSC /ctrl to Tidal's control port 6010), read in patterns
-//      with  cF 0 "mag" | "depth" | "energy" | "rate" | "lat" | "lon"   (all 0..1),
+//      with  cF 0 "mag" | "depth" | "energy" | "rate" | "lat" | "lon" | "ground"   (all 0..1),
+//      where "ground" is the live movement of the ground under Montréal (ground.js),
 //   3. an event for the projection page it serves at http://localhost:8095 (web/stage.html),
 //      and for other listeners (the phones are added on top of this, see onQuake).
 //
@@ -20,6 +21,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { encodeOSC, encodeBundle, int } from "./osc.js";
+import { Ground } from "./ground.js";
 
 const DIR = path.dirname(fileURLToPath(import.meta.url));
 const FEED_DAY = "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/2.5_day.geojson";
@@ -116,13 +118,23 @@ export class Relay {
       res.writeHead(200, { "Content-Type": types[path.extname(file)] ?? "application/octet-stream", "Cache-Control": "no-store" });
       fs.createReadStream(file).pipe(res);
     });
-    return new Promise((resolve) => this.http.listen(port, "127.0.0.1", resolve));
+    return new Promise((resolve, reject) => { this.http.once("error", reject); this.http.listen(port, "127.0.0.1", resolve); });
   }
 
   broadcast(obj) {
     if (!this.clients) return;
     const data = `data: ${JSON.stringify(obj)}\n\n`;
     for (const res of this.clients) res.write(data);
+  }
+
+  // The live seismometer (ground.js): its value goes to Tidal 20 times per second as "ground",
+  // its waveform to the projection's seismograph line.
+  listen(opts = {}) {
+    let points = [];
+    this.ground = new Ground({ log: this.o.log, ...opts,
+      onValue: (v) => { this.ctrl("ground", v); this.groundValue = v; },
+      onTrace: (t) => { points.push(...t); if (points.length >= 5) { this.broadcast({ type: "ground", points, value: this.groundValue ?? 0, name: this.ground.o.name, delay: this.ground.o.delay }); points = []; } } });
+    this.ground.start();
   }
 
   setMode(mode) { this.mode = mode; this.broadcast({ type: "mode", mode: this.paused ? "paused" : mode }); }
@@ -189,13 +201,14 @@ export class Relay {
 
   // Start the clocks: control values 10 times per second, new-quake check every pollSeconds.
   start() {
-    for (const k of ["mag", "depth", "lat", "lon", "energy", "rate"]) this.ctrl(k, 0);
+    for (const k of ["mag", "depth", "lat", "lon", "energy", "rate", "ground"]) this.ctrl(k, 0);
     this.tick = setInterval(() => this.sendActivity(), 100);
     this.poll = setInterval(() => this.checkNew(), this.o.pollSeconds * 1000);
   }
 
   stop() {
     clearInterval(this.tick); clearInterval(this.poll); clearTimeout(this.timer);
+    this.ground?.stop();
     if (this.http) { for (const res of this.clients) res.end(); this.http.close(); }
     this.udp.close();
   }
@@ -287,11 +300,16 @@ async function defaultFetchJson(url) {
 // ---- command line -------------------------------------------------------------------------------
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  const relay = new Relay({ replaySeconds: Number(process.env.REPLAY_MINUTES ?? 4) * 60 });
+  const relay = new Relay({ replaySeconds: Number(process.env.REPLAY_MINUTES ?? 4) * 60,
+    scPort: Number(process.env.SC_PORT ?? 57120), tidalPort: Number(process.env.TIDAL_PORT ?? 6010) });
+  const port = Number(process.env.STAGE_PORT ?? 8095);
+  try { await relay.serve(port); } catch (e) {
+    console.log(e.code === "EADDRINUSE" ? `The relay is already running in another window (port ${port} is taken).\nUse that one, or stop it there with q and start again.` : `Could not start: ${e.message}`);
+    process.exit(1);
+  }
   await relay.load();
   relay.start();
-  const port = Number(process.env.STAGE_PORT ?? 8095);
-  await relay.serve(port);
+  if (process.env.GROUND !== "off") relay.listen();
   console.log(`projection: http://localhost:${port}   (press f in the page for full screen)`);
   console.log("keys:  r replay   l live   p pause   t test quake   1 2 3 big quake   + - level   m rupture on/off   q quit");
   if (process.stdin.isTTY) {

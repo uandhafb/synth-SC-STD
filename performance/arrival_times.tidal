@@ -10,6 +10,8 @@
 --   qenergy  how active the Earth is right now: jumps with each quake, fades in ~20 s
 --   qrate    how many quakes in the last 30 seconds
 --   qlat, qlon   where it was (south = 0 ... north = 1, west = 0 ... east = 1)
+--   qground  LIVE: how much the ground under Montréal is moving right now (a real seismometer,
+--            station CN.MNTQ, about 7 seconds ago). Never still: the city itself shakes it.
 -- Each "d" has its own orbit (its own spring reverb). The rupture notes come from the relay.
 
 -- 0. RUN THESE THREE FIRST (once, one at a time): the synth's names, the tempo, the data names.
@@ -21,7 +23,7 @@
 
 setcps 0.5
 
-let qmag = cF 0 "mag"; qdepth = cF 0.5 "depth"; qenergy = cF 0 "energy"; qrate = cF 0 "rate"; qlat = cF 0.5 "lat"; qlon = cF 0.5 "lon"
+let qmag = cF 0 "mag"; qdepth = cF 0.5 "depth"; qenergy = cF 0 "energy"; qrate = cF 0 "rate"; qlat = cF 0.5 "lat"; qlon = cF 0.5 "lon"; qground = cF 0 "ground"
 
 -- =============================================================================================
 -- 0:00  JOIN. The QR code is on the screen, phones join. The Earth hums (the "microseism").
@@ -86,6 +88,12 @@ d5 $ n "0 ~ ~ 5 ~ ~ 7 ~" # s "scstd" # o1oct 0.485 # o1lvl 0 # o2wave 3 # o2lvl 
 -- Take the layers away one by one (run a line, wait, run the next). Only the hum stays,
 -- and maybe a real earthquake arrives.
 -- =============================================================================================
+
+-- The hum now follows the ground under Montréal, live (the city's own tremor opens the filter).
+d1 $ n "-22*8" # s "scstd" # monomode 1 # legato 1.05
+   # o1lvl 0.4 # o2lvl 0.3 # o2wave 2 # o3lvl 0.7 # nzlvl (range 0.1 0.5 qground) # nzcol 0.9 # drift 0.6
+   # vcfcut (range 100 1800 qground) # vcfres 0.6 # vcfenv 0 # vcfkey 0
+   # vcalvl 0.6 # spmix 0.4 # spdecay 0.9
 
 d4 silence
 

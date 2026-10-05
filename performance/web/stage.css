@@ -27,7 +27,7 @@ header { position: absolute; top: 2.2vh; left: 1.6vw; }
 #log .row.new { color: var(--ink); }
 #log .row.live span:first-child, #log .row.big span:first-child { color: var(--s); }
 
-.words { position: absolute; left: 1.6vw; right: 1.6vw; bottom: 9vh; will-change: transform, filter;
+.words { position: absolute; left: 1.6vw; right: 1.6vw; bottom: 12vh; will-change: transform, filter;
   transition: transform 2.5s cubic-bezier(.2,.7,.2,1), filter 2.5s ease; }
 .where { font: 0.95vw var(--mono); color: var(--dim); min-height: 1.3em; }
 .place { font-weight: 800; line-height: 1.02; letter-spacing: -0.01em; margin: 0.3vh 0 0.6vh; min-height: 1em; }
@@ -35,6 +35,7 @@ header { position: absolute; top: 2.2vh; left: 1.6vw; }
 .place span, .where span, .meta span { display: inline-block; white-space: pre; will-change: transform; opacity: 0; }
 .place span.on, .where span.on, .meta span.on { opacity: 1; }
 
+.ground { position: absolute; left: 1.6vw; bottom: 1.2vh; font: 0.72vw var(--mono); color: var(--p); }
 .legend { position: absolute; right: 1.4vw; bottom: 2vh; display: flex; gap: 1.6em; font: 0.72vw var(--mono); color: var(--dim); }
 .key::before { content: ""; display: inline-block; width: 2.2em; height: 0; margin-right: 0.6em; vertical-align: middle; }
 .key.p::before { border-top: 1px solid var(--p); }
