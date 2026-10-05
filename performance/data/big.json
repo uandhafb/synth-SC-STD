@@ -1,0 +1,5 @@
+[
+  { "id": "us6000txpi", "mag": 6.6, "place": "80 km ENE of Tadine, New Caledonia", "lon": 168.61, "lat": -21.2982, "depth": 10, "time": 1790371383309 },
+  { "id": "us7000ti1p", "mag": 6.5, "place": "177 km W of Nikolski, Alaska", "lon": -171.5033, "lat": 52.9564, "depth": 98, "time": 1789654792472 },
+  { "id": "us7000tgrk", "mag": 6.5, "place": "121 km NNE of Teluknaga, Indonesia", "lon": 106.8682, "lat": -5.0271, "depth": 372, "time": 1789161835815 }
+]

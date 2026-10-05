@@ -1,0 +1,103 @@
+-- ARRIVAL TIMES: a piece for earthquakes, the scstd synth, TidalCycles and a room of phones.
+--
+-- Before: SuperCollider running sc/startup.scd, the relay running (node performance/quake-relay.js),
+-- Tidal started from the "scstd" or "lc" setup (NOT "score": it uses the same port as the data).
+-- Run a block: put the cursor in it, Cmd+Enter (Pulsar) / Shift+Enter (VS Code).
+--
+-- The relay sends six numbers, always between 0 and 1. A pattern reads them like this:
+--   qmag     how strong the last earthquake was        (M 2 = 0 ... M 7 = 1)
+--   qdepth   how deep it was                           (surface = 0 ... 700 km = 1)
+--   qenergy  how active the Earth is right now: jumps with each quake, fades in ~20 s
+--   qrate    how many quakes in the last 30 seconds
+--   qlat, qlon   where it was (south = 0 ... north = 1, west = 0 ... east = 1)
+-- Each "d" has its own orbit (its own spring reverb). The rupture notes come from the relay.
+
+-- 0. RUN THIS FIRST (once): tempo and the six data names.
+setcps 0.5
+
+let qmag = cF 0 "mag"; qdepth = cF 0.5 "depth"; qenergy = cF 0 "energy"; qrate = cF 0 "rate"; qlat = cF 0.5 "lat"; qlon = cF 0.5 "lon"
+
+-- =============================================================================================
+-- 0:00  JOIN. The QR code is on the screen, phones join. The Earth hums (the "microseism").
+-- Shows: oscillators + noise through the filter, sample & hold moving the filter slowly, mono mode.
+-- Listen for: a low, breathing drone. It opens up by itself whenever the Earth gets active.
+-- =============================================================================================
+
+d1 $ n "-22*4" # s "scstd" # monomode 1 # legato 1.05
+   # o1lvl 0.4 # o2lvl 0.3 # o2wave 2 # o3lvl 0.7 # nzlvl 0.25 # nzcol 0.9 # drift 0.6
+   # vcfcut (range 120 900 qenergy) # vcfres 0.55 # vcfenv 0 # vcfkey 0
+   # sh_vcf 0.4 # shrate 0.7 # shlag 1
+   # vcalvl 0.6 # spmix 0.35 # spdecay 0.8
+
+-- =============================================================================================
+-- 0:45  REPLAY STARTS. In the relay window press  r : the last 24 hours begin to arrive.
+-- Shows: the filter envelope (pluck), pulse wave. The DATA writes the melody:
+--   a deeper earthquake moves the phrase lower, a stronger one makes it brighter,
+--   and the sound sits left or right depending on where on Earth it was.
+-- =============================================================================================
+
+d2 $ n (toScale [0,2,3,5,7,8,10] ("0 [2 4] 7 4" + (floor <$> range 6 (-1) qdepth)) - 12)
+   # s "scstd" # legato 0.6 # o1lvl 0.5 # o2wave 1 # o2pw 0.3
+   # vcfcut (range 400 3500 qmag) # vcfres 0.5 # vcfenv 0.5 # edec 0.2 # esus 0.1 # arrel 0.3
+   # pan qlon # spmix 0.25 # gain 0.9
+
+-- A pulse of noise (like a seismograph needle). More quakes in the last 30 s = more ticks.
+-- Shows: the noise generator as percussion.
+d3 $ degradeBy (range 0.92 0.25 qrate) $ n "0*16" # s "scstd" # o1lvl 0 # o2lvl 0 # nzlvl 1 # nzcol 0.1
+   # aratk 0.001 # arrel 0.04 # erel 0.04 # legato 0.05
+   # vcfcut (range 3000 9000 qenergy) # vcfenv 0 # vcfmodel 1 # pan (fast 4 sine) # gain 0.8
+
+-- =============================================================================================
+-- 2:30  SWARM. Push the instability. Shows: sample & hold on pitch (the 1970s "computer" sound),
+-- patch cables written in code. More energy = wilder jumps; more quakes = faster clock.
+-- Try changing live: the numbers after "range", the rhythm "0(3,8,<0 2>)", shlag 0 -> 0.5.
+-- =============================================================================================
+
+d4 $ n "0(3,8,<0 2>)" # s "scstd" # legato 1 # o1lvl 0 # o2wave 1 # o2pw 0.3
+   # sh_pitch (range 2 14 qenergy) # shrate (range 4 16 qrate) # shlag 0
+   # sh_vcf (range 0 3 qenergy) # vcfcut 1500 # vcfres 0.6 # vcfenv 0 # arrel 0.15
+   # spmix 0.3 # gain 0.85
+
+-- Variation for the melody: the ring modulator adds a metallic edge as the energy rises.
+d2 $ n (toScale [0,2,3,5,7,8,10] ("0 [2 4] 7 4 . 9 7 [4 2] 0" + (floor <$> range 6 (-1) qdepth)) - 12)
+   # s "scstd" # legato 0.6 # o1lvl 0.5 # o2wave 1 # o2pw 0.3 # rmlvl (range 0 0.7 qenergy)
+   # vcfcut (range 400 3500 qmag) # vcfres 0.6 # vcfenv 0.5 # edec 0.2 # esus 0.1 # arrel 0.3
+   # pan qlon # spmix 0.3 # gain 0.9
+
+-- =============================================================================================
+-- 3:30  RUPTURE. In the relay window press  1 , 2  or  3 : a big real earthquake
+--   (1 = New Caledonia M 6.6, shallow;  2 = Alaska M 6.5;  3 = Indonesia M 6.5, very deep).
+-- Run this block just before or just after: bells ring out, with a lot of spring reverb.
+-- Shows: ring modulator bells + the spring reverb.
+-- =============================================================================================
+
+d5 $ n "0 ~ ~ 5 ~ ~ 7 ~" # s "scstd" # o1oct 0.485 # o1lvl 0 # o2wave 3 # o2lvl 0.25 # rmlvl 1 # vcalvl 1
+   # aratk 0.001 # eatk 0.001 # esus 0 # vcfkey 1 # vcfdrive 0 # drift 0.05 # vspread 0 # legato 0.05
+   # arrel 3.5 # erel 3.5 # edec 1.8 # vcfcut 900 # vcfenv 0.45 # spmix 0.6 # spdecay 0.9 # gain 0.85
+
+-- =============================================================================================
+-- 4:15  LIVE. In the relay window press  l : "this is the Earth right now".
+-- Take the layers away one by one (run a line, wait, run the next). Only the hum stays,
+-- and maybe a real earthquake arrives.
+-- =============================================================================================
+
+d4 silence
+
+d3 silence
+
+d2 silence
+
+d5 silence
+
+-- =============================================================================================
+-- 5:00  END. The hum goes dark (run the first block), rings out in the spring, then silence.
+-- =============================================================================================
+
+d1 $ n "-22*4" # s "scstd" # monomode 1 # legato 1.05
+   # o1lvl 0.4 # o2lvl 0.3 # o2wave 2 # o3lvl 0.7 # nzlvl 0.15 # nzcol 0.9 # drift 0.6
+   # vcfcut 90 # vcfres 0.3 # vcfenv 0 # vcfkey 0 # vcalvl 0.4 # spmix 0.5 # spdecay 1
+
+d1 silence
+
+-- If anything goes wrong: this stops all the patterns (the relay keeps running).
+hush

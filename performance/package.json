@@ -1,0 +1,7 @@
+{
+  "name": "arrival-times",
+  "private": true,
+  "type": "module",
+  "description": "Arrival Times: earthquake data -> synth-SC-STD, TidalCycles, a projection and the audience's phones.",
+  "scripts": { "start": "node quake-relay.js", "test": "node test_relay.mjs" }
+}
