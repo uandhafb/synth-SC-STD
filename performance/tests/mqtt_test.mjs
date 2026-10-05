@@ -1,0 +1,32 @@
+// Tests docs/quakes/lib/mqtt-lite.js against the public broker (needs internet):  node performance/tests/mqtt_test.mjs
+import { connectMqtt, BROKER, topicsFor } from "../../docs/quakes/lib/mqtt-lite.js";
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+let pass = 0, total = 0;
+const check = (name, ok, info = "") => { total++; if (ok) pass++; console.log(`${ok ? "PASS" : "FAIL"}  ${name}${info !== "" ? "  (" + info + ")" : ""}`); };
+const room = "test" + Math.random().toString(36).slice(2, 8), t = topicsFor(room);
+const got = { a: [], b: [] };
+const a = connectMqtt(BROKER, { clientId: `at-test-a-${room}`, onMessage: (topic, payload, f) => got.a.push({ topic, payload, ...f }) });
+const b = connectMqtt(BROKER, { clientId: `at-test-b-${room}`, onMessage: (topic, payload, f) => got.b.push({ topic, payload, ...f }) });
+for (let i = 0; i < 80 && !(a.connected && b.connected); i++) await sleep(100);
+check("two clients connect to the broker", a.connected && b.connected);
+b.subscribe(t.quake); a.subscribe(t.assign("a"));
+await sleep(700);
+const t0 = Date.now();
+a.publish(t.quake, { id: "q1", mag: 6.6, place: "80 km ENE of Tadine, New Calédonia" });
+for (let i = 0; i < 50 && !got.b.length; i++) await sleep(50);
+check("a message from one reaches the other", got.b.length === 1 && JSON.parse(got.b[0].payload).mag === 6.6, `${Date.now() - t0} ms`);
+check("accents survive", got.b[0]?.payload.includes("Calédonia"));
+check("the sender does not receive what it did not subscribe to", got.a.length === 0);
+b.publish(t.assign("a"), "3"); for (let i = 0; i < 40 && !got.a.length; i++) await sleep(50);
+check("a private reply arrives", got.a[0]?.payload === "3");
+for (let i = 0; i < 30; i++) a.publish(t.quake, { n: i, pad: "x".repeat(300) });
+await sleep(1500);
+check("a burst of 30 messages arrives complete and in order", got.b.length === 31 && got.b.slice(1).every((m, i) => JSON.parse(m.payload).n === i), `${got.b.length - 1} received`);
+a.publish(t.state, { on: true, level: 0.8 }, { retain: true }); await sleep(500);
+const late = []; const c = connectMqtt(BROKER, { clientId: `at-test-c-${room}`, onMessage: (topic, payload, f) => late.push({ payload, ...f }) });
+c.subscribe(t.state); for (let i = 0; i < 80 && !late.length; i++) await sleep(100);
+check("a late phone gets the kept (retained) state", late[0]?.retained === true && JSON.parse(late[0].payload).level === 0.8);
+a.publish(t.state, "", { retain: true });        // clear the retained test message
+await sleep(300); a.close(); b.close(); c.close();
+console.log(`\n${pass}/${total} checks passed`);
+process.exit(pass === total ? 0 : 1);

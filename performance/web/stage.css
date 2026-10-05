@@ -55,3 +55,15 @@ header { position: absolute; top: 2.2vh; left: 1.6vw; }
 #strip .code b.fresh { color: #fff; background: var(--s); }
 
 footer { display: flex; justify-content: space-between; gap: 2em; padding: 0.5vh 1.6vw 0.9vh; font: 0.68vw var(--mono); color: var(--dim); }
+
+.room { margin-top: 0.5vh; font: 0.78vw var(--mono); color: var(--dim); }
+.room b { color: var(--ink); font-weight: 400; }
+
+/* the invitation */
+#qr { position: fixed; inset: 0; z-index: 10; background: rgba(7, 9, 12, 0.94); display: grid; place-items: center; }
+#qr[hidden] { display: none; }
+.qr-box { text-align: center; }
+.qr-title { font-size: 3vw; font-weight: 800; margin-bottom: 2.5vh; }
+#qrCode svg { width: min(52vh, 34vw); height: auto; background: #fff; padding: 1.2vh; border-radius: 1vh; display: block; margin: 0 auto; }
+.qr-url { font: 1.25vw var(--mono); color: var(--dim); margin-top: 2.2vh; }
+.qr-count { font: 1.6vw var(--mono); color: var(--s); margin-top: 1.2vh; min-height: 1.3em; }

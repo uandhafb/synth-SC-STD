@@ -7,7 +7,7 @@
 //   M >= 5.5  -> everything on the page scatters, then gathers again
 // Events come from the quake relay (Server-Sent Events on /events).
 
-import { STATIONS, destination, distanceDeg, project, frontDeg, arrivals, SECONDS_PER_MINUTE } from "./geo.js";
+import { STATIONS, destination, distanceDeg, project, frontDeg, arrivals, SECONDS_PER_MINUTE } from "/quakes/lib/geo.js";
 
 const canvas = document.getElementById("globe"), ctx = canvas.getContext("2d");
 const css = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
@@ -21,7 +21,7 @@ let energy = 0, lastQuakeAt = 0;
 const trace = new Float32Array(600);   // the seismograph line at the bottom
 let traceAt = 0;
 
-fetch("data/land.json").then((r) => r.json()).then((d) => { land = d; });
+fetch("/quakes/data/land.json").then((r) => r.json()).then((d) => { land = d; });
 
 function resize() {
   dpr = window.devicePixelRatio || 1;
@@ -103,15 +103,19 @@ function drawGlobe(now) {
 
   // stations
   ctx.font = `${Math.max(10, W * 0.014)}px ui-monospace, Menlo, monospace`;
-  for (const st of STATIONS) {
+  // The stations in the room (the phones) are named; the others are small dots. Before anyone
+  // has joined, the first dozen are named so the globe is not empty.
+  STATIONS.forEach((st, i) => {
     const s = project(st, view, R);
-    if (!s) continue;
+    if (!s) return;
+    const here = room.stations.includes(i), named = here || (room.phones === 0 && i < 12);
     const gl = glow.get(st.name), lit = gl ? Math.max(0, 1 - (now - gl.t) / (gl.wave === "s" ? 2200 : 700)) * gl.k : 0;
-    ctx.fillStyle = lit > 0 ? (gl.wave === "s" ? COL.s : COL.p) : COL.dim;
-    ctx.beginPath(); ctx.arc(cx + s.x, cy + s.y, 2 + 9 * lit, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = lit > 0.05 ? COL.ink : "rgba(125,135,148,0.75)";
+    ctx.fillStyle = lit > 0 ? (gl.wave === "s" ? COL.s : COL.p) : here ? COL.ink : COL.dim;
+    ctx.beginPath(); ctx.arc(cx + s.x, cy + s.y, (here ? 3 : 1.6) + 9 * lit, 0, Math.PI * 2); ctx.fill();
+    if (!named && lit < 0.05) return;
+    ctx.fillStyle = lit > 0.05 || here ? COL.ink : "rgba(125,135,148,0.75)";
     ctx.fillText(st.name, cx + s.x + 7, cy + s.y + 3);
-  }
+  });
 
   // the seismograph line: the real ground under the station while its signal arrives (see the
   // "ground" events below); otherwise a tremor drawn from the earthquakes' activity
@@ -218,6 +222,22 @@ function onGround(m) {
   for (const p of m.points) { trace[traceAt] = Math.max(-1.5, Math.min(1.5, p * 2.2)); traceAt = (traceAt + 1) % trace.length; }
 }
 
+// The room: how many phones are stations, and the invitation (QR code).
+let room = { phones: 0, stations: [], url: "" };
+const elRoom = document.getElementById("room"), elQr = document.getElementById("qr");
+function onRoom(m) {
+  const first = m.url !== room.url;
+  room = m;
+  elRoom.innerHTML = m.phones ? `<b>${m.phones}</b> phone${m.phones === 1 ? "" : "s"} · <b>${m.stations.length}</b> station${m.stations.length === 1 ? "" : "s"}${m.on ? "" : " · resting"}` : (m.broker ? `room ${m.room} · press c for the QR code` : "phones: connecting…");
+  document.getElementById("qrCount").textContent = m.phones ? `${m.phones} station${m.phones === 1 ? "" : "s"} in the room` : "";
+  if (first && m.url) {
+    const qr = window.qrcode(0, "M"); qr.addData(m.url); qr.make();
+    document.getElementById("qrCode").innerHTML = qr.createSvgTag({ cellSize: 8, margin: 2, scalable: true });
+    document.getElementById("qrUrl").textContent = m.url.replace(/^https?:\/\//, "");
+  }
+}
+const toggleQr = () => { elQr.hidden = !elQr.hidden; };
+
 const MODES = { idle: "waiting for the Earth", replay: "REPLAY · the last 24 hours", live: "LIVE · the Earth right now", paused: "paused" };
 
 // The score, as it is written: one line per earthquake, the data and the movements it calls.
@@ -258,6 +278,8 @@ events.onmessage = (e) => {
   else if (m.type === "mode") elMode.textContent = MODES[m.mode] ?? m.mode;
   else if (m.type === "activity") energy = m.energy;
   else if (m.type === "ground") onGround(m);
+  else if (m.type === "room") onRoom(m);
+  else if (m.type === "qr") toggleQr();
 };
 
 // For looking at the page without the relay: stage.html?demo fires earthquakes by itself.
@@ -280,4 +302,4 @@ function frame(now) {
 }
 requestAnimationFrame(frame);
 
-document.addEventListener("keydown", (e) => { if (e.key === "f") document.documentElement.requestFullscreen?.(); });
+document.addEventListener("keydown", (e) => { if (e.key === "f") document.documentElement.requestFullscreen?.(); if (e.key === "c") toggleQr(); });

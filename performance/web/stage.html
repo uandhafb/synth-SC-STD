@@ -17,6 +17,7 @@
     <header>
       <div class="title">ARRIVAL TIMES</div>
       <div class="mode" id="mode">waiting for the Earth</div>
+      <div class="room" id="room"></div>
     </header>
     <aside id="log" aria-label="Earthquake data"></aside>
     <div class="words" id="words">
@@ -36,6 +37,16 @@
   <span>data: U.S. Geological Survey · one day of the planet in four minutes</span>
   <span>page: Wikipedia, CC BY-SA 4.0 · movement vocabulary after Joana Chicau's choreographic coding</span>
 </footer>
+<!-- The invitation: scan to become a station (key c, or c in the relay's window) -->
+<section id="qr" hidden>
+  <div class="qr-box">
+    <div class="qr-title">Your phone is a seismic station</div>
+    <div id="qrCode"></div>
+    <div class="qr-url" id="qrUrl"></div>
+    <div class="qr-count" id="qrCount"></div>
+  </div>
+</section>
+<script src="vendor/qrcode.js"></script>
 <script type="module" src="stage.js"></script>
 </body>
 </html>

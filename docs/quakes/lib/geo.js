@@ -1,18 +1,46 @@
-// Arrival Times: the geography and seismology shared by the projection and the phones.
+// Arrival Times: the geography and seismology shared by the projection, the relay and the phones.
 
-// The stations: each phone in the room becomes one of these cities.
+// The stations: each phone in the room becomes one of these real seismic stations. All of them
+// stream their ground motion live through EarthScope's real-time server (checked 2026-10-05);
+// `id` is the stream of the vertical channel. Most belong to the Global Seismographic Network
+// (IU, II); Montréal is the Canadian National Seismograph Network (CN). The order spreads the
+// first phones around the globe.
 export const STATIONS = [
-  { name: "Montréal", lat: 45.50, lon: -73.57 }, { name: "Tokyo", lat: 35.68, lon: 139.69 },
-  { name: "Santiago", lat: -33.45, lon: -70.67 }, { name: "Reykjavík", lat: 64.15, lon: -21.94 },
-  { name: "Jakarta", lat: -6.21, lon: 106.85 }, { name: "Nairobi", lat: -1.29, lon: 36.82 },
-  { name: "Mexico City", lat: 19.43, lon: -99.13 }, { name: "São Paulo", lat: -23.55, lon: -46.63 },
-  { name: "Lisbon", lat: 38.72, lon: -9.14 }, { name: "Istanbul", lat: 41.01, lon: 28.98 },
-  { name: "Delhi", lat: 28.61, lon: 77.21 }, { name: "Beijing", lat: 39.90, lon: 116.41 },
-  { name: "Sydney", lat: -33.87, lon: 151.21 }, { name: "Auckland", lat: -36.85, lon: 174.76 },
-  { name: "Honolulu", lat: 21.31, lon: -157.86 }, { name: "Anchorage", lat: 61.22, lon: -149.90 },
-  { name: "Los Angeles", lat: 34.05, lon: -118.24 }, { name: "Cape Town", lat: -33.92, lon: 18.42 },
-  { name: "Lagos", lat: 6.52, lon: 3.38 }, { name: "Tehran", lat: 35.69, lon: 51.39 },
-];
+  ["CN.MNTQ", "Montréal", "Canada", 45.50, -73.62, "CN_MNTQ__H_H_Z"],
+  ["IU.MAJO", "Matsushiro", "Japan", 36.55, 138.20, "IU_MAJO_00_B_H_Z"],
+  ["IU.LCO", "Las Campanas", "Chile", -29.01, -70.70, "IU_LCO_00_B_H_Z"],
+  ["IU.KMBO", "Kilima Mbogo", "Kenya", -1.13, 37.25, "IU_KMBO_00_B_H_Z"],
+  ["IU.CTAO", "Charters Towers", "Australia", -20.09, 146.25, "IU_CTAO_00_B_H_Z"],
+  ["II.BORG", "Borgarfjörður", "Iceland", 64.75, -21.33, "II_BORG_00_B_H_Z"],
+  ["IU.COLA", "College", "Alaska", 64.87, -147.86, "IU_COLA_00_B_H_Z"],
+  ["II.PALK", "Pallekele", "Sri Lanka", 7.27, 80.70, "II_PALK_00_B_H_Z"],
+  ["IU.PAB", "San Pablo", "Spain", 39.54, -4.35, "IU_PAB_00_B_H_Z"],
+  ["IU.SNZO", "South Karori", "New Zealand", -41.31, 174.70, "IU_SNZO_00_B_H_Z"],
+  ["IU.TEIG", "Tepich", "Mexico", 20.23, -88.28, "IU_TEIG_00_B_H_Z"],
+  ["II.SUR", "Sutherland", "South Africa", -32.38, 20.81, "II_SUR_00_B_H_Z"],
+  ["IU.CHTO", "Chiang Mai", "Thailand", 18.81, 98.94, "IU_CHTO_00_B_H_Z"],
+  ["IU.RCBR", "Riachuelo", "Brazil", -5.83, -35.90, "IU_RCBR_00_B_H_Z"],
+  ["IU.ANTO", "Ankara", "Turkey", 39.87, 32.79, "IU_ANTO_00_B_H_Z"],
+  ["IU.GUMO", "Guam", "Mariana Islands", 13.59, 144.87, "IU_GUMO_00_B_H_Z"],
+  ["IU.PMSA", "Palmer Station", "Antarctica", -64.77, -64.05, "IU_PMSA_00_B_H_Z"],
+  ["IU.YAK", "Yakutsk", "Russia", 62.03, 129.68, "IU_YAK_00_B_H_Z"],
+  ["II.NNA", "Ñaña", "Peru", -11.99, -76.84, "II_NNA_00_B_H_Z"],
+  ["IU.KONO", "Kongsberg", "Norway", 59.65, 9.60, "IU_KONO_00_B_H_Z"],
+  ["IU.RAR", "Rarotonga", "Cook Islands", -21.21, -159.77, "IU_RAR_00_B_H_Z"],
+  ["IU.TSUM", "Tsumeb", "Namibia", -19.20, 17.58, "IU_TSUM_00_B_H_Z"],
+  ["II.AAK", "Ala Archa", "Kyrgyzstan", 42.64, 74.49, "II_AAK_00_B_H_Z"],
+  ["IU.ANMO", "Albuquerque", "New Mexico", 34.95, -106.46, "IU_ANMO_00_B_H_Z"],
+  ["IU.DAV", "Davao", "Philippines", 7.07, 125.58, "IU_DAV_00_B_H_Z"],
+  ["II.ASCN", "Ascension Island", "South Atlantic", -7.93, -14.36, "II_ASCN_00_B_H_Z"],
+  ["IU.ULN", "Ulaanbaatar", "Mongolia", 47.87, 107.05, "IU_ULN_00_B_H_Z"],
+  ["IU.OTAV", "Otavalo", "Ecuador", 0.24, -78.45, "IU_OTAV_00_B_H_Z"],
+  ["II.MSEY", "Mahé", "Seychelles", -4.67, 55.48, "II_MSEY_10_B_H_Z"],
+  ["II.KDAK", "Kodiak Island", "Alaska", 57.78, -152.58, "II_KDAK_00_B_H_Z"],
+  ["IU.KEV", "Kevo", "Finland", 69.76, 27.00, "IU_KEV_00_B_H_Z"],
+  ["IU.PTCN", "Pitcairn Island", "South Pacific", -25.07, -130.10, "IU_PTCN_00_B_H_Z"],
+  ["II.EFI", "Mount Kent", "Falkland Islands", -51.68, -58.06, "II_EFI_00_B_H_Z"],
+  ["IU.HRV", "Harvard", "Massachusetts", 42.51, -71.56, "IU_HRV_00_B_H_Z"],
+].map(([code, name, region, lat, lon, id]) => ({ code, name, region, lat, lon, match: `FDSN:${id}/MSEED` }));
 
 const RAD = Math.PI / 180;
 

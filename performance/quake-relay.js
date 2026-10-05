@@ -12,6 +12,7 @@
 //   l  live: only earthquakes that are reported from now on
 //   p  pause / continue        t  a test quake        1 2 3  a big prepared quake
 //   + / -  rupture louder / quieter        m  rupture notes on / off        q  quit
+//   o  phones on / off        [ ]  phones quieter / louder        c  show / hide the QR code on the projection
 // New real earthquakes are checked every 60 s in every mode and play as soon as they appear.
 // Without internet it uses the day saved last time (data/last_day.json), or the sample.
 
@@ -22,12 +23,16 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { encodeOSC, encodeBundle, int } from "./osc.js";
 import { Ground } from "./ground.js";
+import { connectMqtt, BROKER, topicsFor } from "../docs/quakes/lib/mqtt-lite.js";
+import { STATIONS } from "../docs/quakes/lib/geo.js";
 
 const DIR = path.dirname(fileURLToPath(import.meta.url));
 const FEED_DAY = "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/2.5_day.geojson";
 const FEED_HOUR = "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_hour.geojson";
 // The real page whose words the earthquakes choreograph (web/choreo.js), fetched fresh at start.
 const PAGE = "https://en.wikipedia.org/wiki/List_of_earthquakes_in_2026";
+// Where the audience's phones open their page (docs/quakes, published with GitHub Pages).
+const PHONE_URL = "https://uandhafb.github.io/synth-SC-STD/quakes/";
 const PAGE_CREDIT = "Text: Wikipedia contributors, “List of earthquakes in 2026”, CC BY-SA 4.0";
 const clamp01 = (x) => Math.min(1, Math.max(0, x));
 
@@ -96,7 +101,7 @@ export class Relay {
   // The projection: a small web server for web/ (this computer only) that pushes every
   // earthquake to the open pages (Server-Sent Events, so no extra library is needed).
   serve(port = 8095) {
-    const web = path.join(DIR, "web");
+    const web = path.join(DIR, "web"), phones = path.join(DIR, "..", "docs", "quakes");
     const types = { ".html": "text/html; charset=utf-8", ".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".png": "image/png", ".svg": "image/svg+xml" };
     this.clients = new Set();
     this.http = http.createServer((req, res) => {
@@ -105,6 +110,7 @@ export class Relay {
         res.writeHead(200, { "Content-Type": "text/event-stream", "Cache-Control": "no-cache", Connection: "keep-alive" });
         res.write(`data: ${JSON.stringify({ type: "mode", mode: this.paused ? "paused" : this.mode })}\n\n`);
         this.clients.add(res);
+        this.sendRoom();
         req.on("close", () => this.clients.delete(res));
         return;
       }
@@ -113,8 +119,12 @@ export class Relay {
         res.end(this.pageHtml(`http://${req.headers.host}`));
         return;
       }
-      const file = path.normalize(path.join(web, url.pathname === "/" ? "stage.html" : decodeURIComponent(url.pathname)));
-      if (!file.startsWith(web + path.sep) || !fs.existsSync(file) || !fs.statSync(file).isFile()) { res.writeHead(404); res.end("not found"); return; }
+      // /quakes/... is the phone page and the code it shares with the stage (docs/quakes, the folder
+      // GitHub Pages publishes); everything else is web/.
+      const pathname = decodeURIComponent(url.pathname);
+      const [base, rel] = pathname.startsWith("/quakes/") ? [phones, pathname.slice(8) || "index.html"] : [web, pathname === "/" ? "stage.html" : pathname];
+      const file = path.normalize(path.join(base, rel));
+      if (!file.startsWith(base + path.sep) || !fs.existsSync(file) || !fs.statSync(file).isFile()) { res.writeHead(404); res.end("not found"); return; }
       res.writeHead(200, { "Content-Type": types[path.extname(file)] ?? "application/octet-stream", "Cache-Control": "no-store" });
       fs.createReadStream(file).pipe(res);
     });
@@ -133,8 +143,62 @@ export class Relay {
     let points = [];
     this.ground = new Ground({ log: this.o.log, ...opts,
       onValue: (v) => { this.ctrl("ground", v); this.groundValue = v; },
-      onTrace: (t) => { points.push(...t); if (points.length >= 5) { this.broadcast({ type: "ground", points, value: this.groundValue ?? 0, name: this.ground.o.name, delay: this.ground.o.delay }); points = []; } } });
+      onTrace: (t) => { points.push(...t); if (points.length >= 5) { this.broadcast({ type: "ground", points, value: this.groundValue ?? 0, name: this.ground.o.name, delay: Math.round(this.ground.delay ?? this.ground.o.delay) }); points = []; } } });
     this.ground.start();
+  }
+
+  // The phones: every earthquake is published to a public MQTT broker; each phone (docs/quakes)
+  // is one seismic station and works out by itself when the waves reach it. The relay deals the
+  // stations (the least used one first, so the first phones are spread around the globe), keeps a
+  // list of who is there, and tells the phones whether to sound and how loud.
+  phones(opts = {}) {
+    const room = opts.room ?? this.roomCode(), broker = opts.broker ?? BROKER, t = topicsFor(room);
+    this.room = room; this.roster = new Map();          // phone id -> { station, seen }
+    this.phoneState = { on: true, level: 1 };
+    this.phoneUrl = `${opts.url ?? PHONE_URL}?room=${room}${broker === BROKER ? "" : `&broker=${encodeURIComponent(broker)}`}`;
+    const sendState = () => this.mq.publish(t.state, this.phoneState, { retain: true });
+    this.setPhones = (change) => { Object.assign(this.phoneState, change); sendState(); this.sendRoom(); };
+    this.mq = connectMqtt(broker, { clientId: `at-relay-${room}-${Math.random().toString(36).slice(2, 7)}`,
+      onState: (ok) => { this.broker = ok; this.sendRoom(); this.o.log(ok ? `phones: connected to the broker, room ${room}` : "phones: broker connection lost, retrying"); },
+      onConnect: sendState,
+      onMessage: (topic, payload) => {
+        let m; try { m = JSON.parse(payload); } catch { return; }
+        if (typeof m.id !== "string" || m.id.length > 24) return;
+        let r = this.roster.get(m.id);
+        if (!r) {
+          const want = Number.isInteger(m.want ?? m.station) ? ((m.want ?? m.station) % STATIONS.length + STATIONS.length) % STATIONS.length : null;
+          r = { station: want ?? this.freeStation() }; this.roster.set(m.id, r);
+          this.o.log(`phones: ${this.roster.size} (new: ${STATIONS[r.station].name}, ${STATIONS[r.station].region})`);
+        }
+        r.seen = Date.now();
+        if (topic === t.join) this.mq.publish(t.assign(m.id), { station: r.station });
+        this.sendRoom();
+      } });
+    this.mq.subscribe(t.join); this.mq.subscribe(t.here);
+    this.onQuake((q, info) => { if (this.phoneState.on) this.mq.publish(t.quake, { id: q.id, mag: q.mag, depth: q.depth, lat: q.lat, lon: q.lon, place: q.place, mag01: q.mag01, depth01: q.depth01, live: !!info.live, big: !!info.big }); });
+    this.rosterTimer = setInterval(() => { let gone = 0; for (const [id, r] of this.roster) if (Date.now() - r.seen > 35000) { this.roster.delete(id); gone++; } if (gone) this.sendRoom(); }, 5000);
+    return this.phoneUrl;
+  }
+
+  freeStation() {
+    const used = new Array(STATIONS.length).fill(0);
+    for (const r of this.roster.values()) used[r.station]++;
+    return used.indexOf(Math.min(...used));
+  }
+
+  // The room code stays the same between runs (so a QR code shown once keeps working).
+  roomCode() {
+    const file = path.join(this.o.dataDir, "room.txt");
+    if (fs.existsSync(file)) return fs.readFileSync(file, "utf8").trim();
+    const code = Array.from({ length: 4 }, () => "ABCDEFGHJKMNPQRSTUVWXYZ"[Math.floor(Math.random() * 23)]).join("");
+    fs.writeFileSync(file, code);
+    return code;
+  }
+
+  sendRoom() {
+    if (!this.phoneUrl) return;
+    this.broadcast({ type: "room", url: this.phoneUrl, room: this.room, broker: !!this.broker, on: this.phoneState.on, level: this.phoneState.level,
+      phones: this.roster.size, stations: [...new Set([...this.roster.values()].map((r) => r.station))] });
   }
 
   setMode(mode) { this.mode = mode; this.broadcast({ type: "mode", mode: this.paused ? "paused" : mode }); }
@@ -208,7 +272,7 @@ export class Relay {
 
   stop() {
     clearInterval(this.tick); clearInterval(this.poll); clearTimeout(this.timer);
-    this.ground?.stop();
+    this.ground?.stop(); clearInterval(this.rosterTimer); this.mq?.close();
     if (this.http) { for (const res of this.clients) res.end(); this.http.close(); }
     this.udp.close();
   }
@@ -310,8 +374,9 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   await relay.load();
   relay.start();
   if (process.env.GROUND !== "off") relay.listen();
+  if (process.env.PHONES !== "off") console.log(`phones: ${relay.phones({ room: process.env.ROOM, url: process.env.PHONE_URL, broker: process.env.BROKER })}`);
   console.log(`projection: http://localhost:${port}   (press f in the page for full screen)`);
-  console.log("keys:  r replay   l live   p pause   t test quake   1 2 3 big quake   + - level   m rupture on/off   q quit");
+  console.log("keys:  r replay   l live   p pause   t test quake   1 2 3 big quake   + - level   m rupture on/off\n       o phones on/off   [ ] phones level   c QR code on the projection   q quit");
   if (process.stdin.isTTY) {
     process.stdin.setRawMode(true); process.stdin.resume(); process.stdin.setEncoding("utf8");
     process.stdin.on("data", (k) => {
@@ -323,6 +388,9 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
       else if ("123".includes(k)) relay.fireBig(Number(k) - 1);
       else if (k === "+" || k === "=") { relay.level = Math.min(1.5, relay.level + 0.1); console.log(`rupture level ${relay.level.toFixed(1)}`); }
       else if (k === "-") { relay.level = Math.max(0, relay.level - 0.1); console.log(`rupture level ${relay.level.toFixed(1)}`); }
+      else if (k === "o" && relay.setPhones) { relay.setPhones({ on: !relay.phoneState.on }); console.log(`phones ${relay.phoneState.on ? "on" : "off"}`); }
+      else if ((k === "[" || k === "]") && relay.setPhones) { relay.setPhones({ level: Math.round(Math.min(1, Math.max(0.1, relay.phoneState.level + (k === "]" ? 0.1 : -0.1))) * 10) / 10 }); console.log(`phones level ${relay.phoneState.level}`); }
+      else if (k === "c") relay.broadcast({ type: "qr" });
       else if (k === "m") { relay.ruptureOn = !relay.ruptureOn; console.log(`rupture notes ${relay.ruptureOn ? "on" : "off"}`); }
     });
   }
