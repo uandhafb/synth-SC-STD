@@ -71,6 +71,9 @@ check("every third phone plays an octave higher (station 3 = F: 175 Hz or its oc
 const start = (kind) => js(`T.render(4, (ctx) => { const a = ${A}.makeAudio(ctx); a.setKind(${kind}); a.sWave(0.5, 0.5, 0.3, 0.9, ${A}.noteOf(1).freq, 0.9); }).then((d) => T.rms(d, 22050, 22050 + 6615))`);
 const heavy = await start(0), softer = await start(1);
 check("three kinds take turns: heavy, soft, high; the soft one has no thump (a gentler start)", softer < heavy * 0.7 && (await js(`[0,1,2,3,4,5].map((i) => ${A}.noteOf(i).kind).join('')`)) === "012012", `first 150 ms: heavy ${db(heavy)}, soft ${db(softer)}`);
+const hiss = (v) => js(`T.render(4, (ctx) => { const a = ${A}.makeAudio(ctx); a.groundLevel(${v}); }).then((d) => T.rms(d, 44100 * 2, 44100 * 4))`);
+const calm = await hiss(0.15), moving = await hiss(0.6);
+check("the live ground is heard, grows when the ground moves, and stays under a big hit", calm > 0.004 && moving > calm * 1.5 && moving < big.tone, `calm ${db(calm)}, moving ${db(moving)}, big hit ${db(big.tone)} rms`);
 const notes = await js(`Array.from({ length: 34 }, (_, i) => ${A}.noteOf(i)).map((n) => n.name + Math.round(n.freq))`);
 check("every station's note is in D minor pentatonic (played three octaves below these)", notes.every((n) => /^[DFGAC]\d/.test(n)), [...new Set(notes)].join(" "));
 
