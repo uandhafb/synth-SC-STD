@@ -157,21 +157,40 @@ async function start(withCamera) {
 $("startBtn").addEventListener("click", () => start(true));
 $("startNoCam").addEventListener("click", () => start(false));
 
-// ---- the Earth: the relay's live messages (only when the page is opened through the relay) ----------------------
+// ---- the Earth ------------------------------------------------------------------------------------
+// The visuals feel two things: the ground under Montréal, live, and the earthquakes the laptop plays.
+//   From the relay (localhost): both arrive on its /events stream.
+//   Published (GitHub Pages): there is no relay, so the page listens by itself, the way the phones
+//   do: the seismometer straight from EarthScope, and the earthquakes from the room's channel.
 
-try {
-  const events = new EventSource("/events");
-  events.onmessage = (e) => {
-    let m; try { m = JSON.parse(e.data); } catch { return; }
-    if (m.type === "ground") L.ground += (clamp(m.value * 1.6) - L.ground) * 0.15;       // smoothed: a tremor, not a flicker
-    else if (m.type === "quake") L.pulse = Math.max(L.pulse, 0.4 + 0.6 * (m.q?.mag01 ?? 0.5));
-    else if (m.type === "room" && m.url && window.qrcode && $("qrCode")) {
-      const qr = window.qrcode(0, "M"); qr.addData(m.url); qr.make();
-      $("qrCode").innerHTML = qr.createSvgTag({ cellSize: 6, margin: 0, scalable: true });
-      $("qrUrl").textContent = m.url.replace(/^https?:\/\//, "");
-    }
-  };
-  events.onerror = () => { L.ground *= 0.5; };
-} catch { /* opened as a file: no live ground, the rest works */ }
+const feel = (v) => { L.ground += (clamp(v * 1.6) - L.ground) * 0.15; };          // smoothed: a tremor, not a flicker
+const hit = (q) => { L.pulse = Math.max(L.pulse, 0.4 + 0.6 * (q?.mag01 ?? 0.5)); };
+let source = "none";
 
-window.presentation = { go, next, back, L, get at() { return at; }, get hands() { return hands; } };   // for tests and the console
+async function listenAlone() {
+  if (source !== "none") return;
+  source = "direct";
+  try {
+    const [{ Ground }, { STATIONS }, { connectMqtt, BROKER, topicsFor }] = await Promise.all([import("../quakes/lib/ground.js"), import("../quakes/lib/geo.js"), import("../quakes/lib/mqtt-lite.js")]);
+    new Ground({ match: STATIONS[0].match, name: STATIONS[0].name, delay: 9, log: () => {}, onValue: feel }).start();
+    const room = (new URLSearchParams(location.search).get("room") || "EAST398498").replace(/[^A-Za-z0-9]/g, "").slice(0, 12), topic = topicsFor(room).quake;
+    const mq = connectMqtt(BROKER, { clientId: `at-talk-${Math.random().toString(36).slice(2, 10)}`,
+      onMessage: (t, payload) => { if (t === topic) { try { hit(JSON.parse(payload)); } catch { /* not an earthquake */ } } } });
+    mq.subscribe(topic);
+  } catch (err) { console.warn("no live ground:", err); }
+}
+
+if (/^(localhost|127\.0\.0\.1)$/.test(location.hostname)) {
+  try {
+    const events = new EventSource("/events");
+    events.onopen = () => { source = "relay"; };
+    events.onmessage = (e) => {
+      let m; try { m = JSON.parse(e.data); } catch { return; }
+      if (m.type === "ground") feel(m.value);
+      else if (m.type === "quake") hit(m.q);
+    };
+    events.onerror = () => { if (source === "none") { events.close(); listenAlone(); } };     // no relay behind this page
+  } catch { listenAlone(); }
+} else listenAlone();
+
+window.presentation = { go, next, back, L, get source() { return source; }, get at() { return at; }, get hands() { return hands; } };   // for tests and the console

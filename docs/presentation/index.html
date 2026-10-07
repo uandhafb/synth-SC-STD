@@ -8,8 +8,9 @@
 </head>
 <body>
 <!-- The presentation: Hydra behind, one block of text at a time on top, turned by hand.
-     Open it through the relay (it needs localhost for the camera, and the relay for the live ground):
-       http://localhost:8095/presentation/index.html
+     Two ways to open it (the camera needs https or localhost):
+       https://uandhafb.github.io/synth-SC-STD/presentation/     published (needs internet)
+       http://localhost:8095/presentation/index.html             from the relay (works without internet)
      The words are in content.js. -->
 <canvas id="hydra"></canvas>
 
@@ -47,7 +48,7 @@
 <div id="note" hidden></div>
 
 <script src="vendor/hydra-synth.js"></script>
-<script src="../vendor/qrcode.js"></script>
+<script src="vendor/qrcode.js"></script>
 <script type="module" src="main.js"></script>
 </body>
 </html>
