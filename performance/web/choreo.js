@@ -3,7 +3,10 @@
 // A small movement vocabulary for the words of a page, in the spirit of Joana Chicau's
 // choreographic coding (the web page as a stage, its elements as bodies, code as the score).
 // The verbs are the performer's own, from her MIDI web-choreography sketches:
-//     shake  wobble  float  stretch  tilt  bounce  fall  incline  + breathing (after Chicau)  + still
+//     shake  wobble  float  stretch  tilt  bounce  fall  incline  crack  restore
+//     + breathing (after Chicau)  + still
+// The damage stays: fallen letters lie where they fell and cracked images stay cracked, so the page
+// wears down as the earthquakes pass. restore() (and every new replay) rebuilds it.
 // Here the earthquakes call them (see score()); they can also be typed in the browser console:
 //     shake("Indonesia", 0.8)     bounce("rows", 0.6)     tilt("page", -8)     still()
 //
@@ -52,7 +55,7 @@ const inView = (el, margin = 0.5) => { const r = el.getBoundingClientRect(); ret
 // A handful of the words that are on screen right now (each wrapped once, then reused).
 function someWords(n) {
   const blocks = [...content().querySelectorAll("td, th, p, li, h2, h3, caption, figcaption")].filter((el) => inView(el, 0) && el.textContent.trim().length > 3);
-  const out = [...content().querySelectorAll(".choreo-w")].filter((el) => inView(el, 0));
+  const out = [...content().querySelectorAll(".choreo-w")].filter((el) => inView(el, 0) && !el.dataset.fallen);
   for (let tries = 0; out.length < n && tries < n * 4 && blocks.length; tries++) {
     const block = blocks[Math.floor(Math.random() * blocks.length)];
     const walker = document.createTreeWalker(block, NodeFilter.SHOW_TEXT, { acceptNode: (t) => (/[\p{L}]{4,}/u.test(t.nodeValue) && !t.parentElement.closest(".choreo-w, script, style, sup") ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT) });
@@ -184,22 +187,71 @@ export function bounce(what, amount = 0.5) {
   light(els, 1600 + 5000 * a);
 }
 
-// fall: the letters let go, drop down the page tumbling, lie there, and climb back to their places.
+// fall: the letters let go, drop down the page tumbling, and STAY where they land, piling up at the
+// bottom of the screen. The words keep their holes until restore().
 export function fall(what, amount = 0.5) {
   say("fall", what, amount);
-  const a = clamp(amount), els = bodies(what, Math.round(6 + 44 * a)).filter((el) => el.classList?.contains("choreo-w"));
-  const ms = 3500 + 4500 * a;
+  const a = clamp(amount), els = bodies(what, Math.round(2 + 7 * a * a)).filter((el) => el.classList?.contains("choreo-w") && !el.dataset.fallen);   // few at a time: one day of earthquakes takes about half the words on screen
   for (const el of els) {
-    const room = Math.max(40, innerHeight - el.getBoundingClientRect().top - 10);       // how far down the screen goes
+    el.dataset.fallen = "1"; el.classList.add("choreo-fallen");
+    const room = Math.max(40, innerHeight - el.getBoundingClientRect().top - 14);       // down to the bottom of the screen
     for (const l of letters(el)) {
-      const down = room * rand(0.55, 1) * (0.5 + 0.5 * a), side = rand(-40, 40) * a, turn = rand(-160, 160);
-      const there = `translate(${side.toFixed(0)}px, ${down.toFixed(0)}px) rotate(${turn.toFixed(0)}deg)`;
-      animate(l, [{ transform: "translate(0, 0) rotate(0deg)", easing: "cubic-bezier(.55,0,1,.45)" },                 // gravity
-        { transform: there, offset: 0.28, easing: "linear" }, { transform: there, offset: 0.62, easing: "cubic-bezier(.2,.7,.2,1)" },
-        { transform: "translate(0, 0) rotate(0deg)" }], { duration: ms, delay: rand(0, 700), composite: "replace" });
+      const there = `translate(${rand(-60, 60).toFixed(0)}px, ${(room * rand(0.9, 1)).toFixed(0)}px) rotate(${rand(-170, 170).toFixed(0)}deg)`;
+      const fallAnim = animate(l, [{ transform: "translate(0, 0) rotate(0deg)" }, { transform: there }],
+        { duration: rand(700, 1500), delay: rand(0, 700), easing: "cubic-bezier(.55,0,1,.45)", fill: "forwards", composite: "replace" });   // gravity
+      fallAnim.finished.then(() => { l.style.transform = there; fallAnim.cancel(); }).catch(() => {});
     }
   }
-  light(els, ms, "choreo-fall");
+}
+
+// crack: an image breaks in two along a fault line and the halves slide apart. Every crack adds to
+// the last one; nothing heals until restore(). crack("Indonesia") breaks the images beside that
+// name (its flag); crack("images", amount) breaks some of the images on screen.
+export function crack(what = "images", amount = 0.5) {
+  say("crack", what, amount);
+  const a = clamp(amount);
+  const onScreen = (img) => inView(img, 0) && !img.classList.contains("choreo-half") && img.getBoundingClientRect().width >= 12;
+  let imgs;
+  if (what === "images") imgs = [...content().querySelectorAll("img")].filter(onScreen).sort(() => Math.random() - 0.5).slice(0, Math.round(1 + 3 * a));
+  else imgs = findWord(what).filter((el) => inView(el, 0)).flatMap((el) => [...(el.closest("td, th, li, p, figure") ?? el.parentElement).querySelectorAll("img")]).filter(onScreen);
+  for (const img of new Set(imgs)) {
+    let wrap = img.closest(".choreo-crack");
+    if (!wrap) {
+      wrap = document.createElement("span"); wrap.className = "choreo-crack";
+      wrap.style.cssText = `display:inline-block;position:relative;line-height:0;vertical-align:${getComputedStyle(img).verticalAlign}`;
+      img.replaceWith(wrap); wrap.appendChild(img);
+      const x1 = rand(25, 75), x2 = clamp(x1 + rand(-35, 35), 5, 95);                 // the fault: from x1% at the top to x2% at the bottom
+      for (const clip of [`polygon(0 0, ${x1}% 0, ${x2}% 100%, 0 100%)`, `polygon(${x1}% 0, 100% 0, 100% 100%, ${x2}% 100%)`]) {
+        const half = img.cloneNode(); half.removeAttribute("id"); half.classList.add("choreo-half");
+        half.style.cssText += `;position:absolute;left:0;top:0;margin:0;clip-path:${clip};transition:transform 1.1s cubic-bezier(.2,.8,.2,1)`;
+        wrap.appendChild(half);
+      }
+      img.style.visibility = "hidden"; wrap.dataset.d = "0";
+    }
+    const size = img.getBoundingClientRect().height || 16;
+    const d = Math.min(Number(wrap.dataset.d) + size * (0.03 + 0.12 * a), size * 0.6);   // each crack adds a little; up to 60% of the image by the end of the day
+    wrap.dataset.d = String(d);
+    const [one, two] = wrap.querySelectorAll(".choreo-half");
+    one.style.transform = `translate(${(-d * 0.35).toFixed(1)}px, ${d.toFixed(1)}px) rotate(${(-d * 0.25).toFixed(1)}deg)`;
+    two.style.transform = `translate(${(d * 0.35).toFixed(1)}px, ${(-d * 0.6).toFixed(1)}px) rotate(${(d * 0.2).toFixed(1)}deg)`;
+  }
+}
+
+// restore: the page is rebuilt. Fallen letters climb back into their words and the cracks close.
+export function restore() {
+  const down = [...document.querySelectorAll(".choreo-w[data-fallen]")], cracked = [...document.querySelectorAll(".choreo-crack")].filter((w) => Number(w.dataset.d) > 0);
+  if (!down.length && !cracked.length) return;
+  say("restore");
+  for (const el of down) {
+    delete el.dataset.fallen;
+    for (const l of el.children) {
+      const from = l.style.transform; if (!from) continue;
+      l.style.transform = "";
+      animate(l, [{ transform: from }, { transform: "translate(0, 0) rotate(0deg)" }], { duration: rand(1500, 3200), delay: rand(0, 1200), easing: "cubic-bezier(.2,.7,.2,1)", composite: "replace", fill: "backwards" });
+    }
+    setTimeout(() => el.classList.remove("choreo-fallen"), 4500);
+  }
+  for (const wrap of cracked) { wrap.dataset.d = "0"; for (const half of wrap.querySelectorAll(".choreo-half")) half.style.transform = "none"; }
 }
 
 // incline: the text leans over to an angle and STAYS there, its lines running diagonally. With
@@ -243,23 +295,22 @@ export function placeWords(place) {
 // side of the map where the last earthquake was, and comes back to level as things calm down.
 const LEAN = 9;                        // degrees at full agitation
 let energy = 0, side = -1;
-let breathTimer = null;
 
-// Only the text moves: the page itself, its tables and its layout stay where they are.
+// Only the text and the images move; the page itself, its tables and its layout stay where they are.
+// The breathing never stops (the Earth never does). Fallen letters and cracks accumulate.
 export function score(q) {
   side = q.lon >= 0 ? -1 : 1;                               // quake in the east: the text leans to the left
   energy = Math.min(1, energy + 0.2 + 0.8 * q.mag01);
   incline("text", Math.round(side * energy * LEAN * 10) / 10);
-  // The text keeps breathing through small earthquakes; only a big one (M 5+) interrupts it.
-  clearTimeout(breathTimer);
-  if (q.mag >= 5) { breath?.cancel(); breath = null; breathTimer = setTimeout(breathing, 9000 + 6000 * q.mag01); }
-  else if (!breath) breathing();
+  if (!breath) breathing();
   // The place's name, where it is written on screen; otherwise a handful of the words on screen.
   const word = placeWords(q.place).find((w) => findWord(w).some((el) => inView(el, 0)));
   shake(word ?? "words", q.mag01);
   setTimeout(() => shake("headings", Math.round(q.mag01 * 80) / 100), 150);                       // the titles on screen tremble too
+  if (word) setTimeout(() => crack(word, q.mag01), 250);                                           // its flag breaks
   if (word && q.mag01 > 0.45) wobble(word, Math.round(q.mag01 * 80) / 100);
-  if (q.mag01 > 0.35) setTimeout(() => fall("words", Math.round(q.mag01 * 100) / 100), 500);        // stronger: letters fall
+  if (q.mag01 > 0.2) setTimeout(() => fall("words", Math.round(q.mag01 * 100) / 100), 500);         // letters fall, and stay down
+  if (q.mag01 > 0.4) setTimeout(() => crack("images", Math.round(q.mag01 * 100) / 100), 700);       // images break, and stay broken
   if (q.mag >= 5) setTimeout(() => bounce("words", Math.round(q.mag01 * 100) / 100), 300);          // big: the words are thrown
   if (q.mag >= 5.5) setTimeout(() => stretch("headings", Math.round(q.mag01 * 60) / 100), 900);     // very big: the titles are pulled wide
 }
@@ -274,15 +325,16 @@ style.textContent = `
   /* only the text on (or near) the screen leans and breathes: the page is very long */
   .choreo-t.choreo-near { rotate: var(--choreo-lean, 0deg); transition: rotate 1.4s cubic-bezier(.3,.7,.2,1); }
   .choreo-breathing .choreo-t.choreo-near { animation: choreo-breath 5s ease-in-out infinite; }
-  @keyframes choreo-breath { 0%, 100% { opacity: 1; } 50% { opacity: 0.22; } }
-  .choreo-w.choreo-fall { background: transparent !important; }
-  .choreo-w.choreo-fall, .choreo-w.choreo-fall a, .choreo-w.choreo-fall .choreo-l { color: #e8431f !important; font-weight: 700; }
+  /* how far the text fades at the bottom of each breath: set from the live ground (see below) */
+  @keyframes choreo-breath { 0%, 100% { opacity: 1; } 50% { opacity: var(--choreo-breath, 0.22); } }
+  .choreo-w.choreo-fallen { background: transparent !important; }
+  .choreo-w.choreo-fallen, .choreo-w.choreo-fallen a, .choreo-w.choreo-fallen .choreo-l { color: #e8431f !important; font-weight: 700; }
   .choreo-w.choreo-on { background: #ff5a36; color: #fff !important; }
   .choreo-w.choreo-on a { color: #fff !important; }
   html { overflow-x: hidden; }`;
 document.head.appendChild(style);
 
-Object.assign(window, { shake, wobble, float, stretch, tilt, bounce, fall, incline, breathing, still });       // for the console
+Object.assign(window, { shake, wobble, float, stretch, tilt, bounce, fall, incline, crack, restore, breathing, still });       // for the console
 // Begin at the first table that lists earthquakes by country (a screen full of place names);
 // you can scroll by hand to any part of the page you like.
 // The text of every cell, paragraph, list item and title gets its own wrapper, so it can lean and
@@ -308,9 +360,17 @@ centre();
 document.addEventListener("click", (e) => { if (e.target.closest("a")) e.preventDefault(); }, true);   // links stay still
 
 const events = new EventSource(`${ORIGIN}/events`);
+let groundNow = 0.35;
 events.onmessage = (e) => {
   const m = JSON.parse(e.data);
   if (m.type === "quake") score(m.q);
   else if (m.type === "activity") { energy = m.energy; incline("text", energy < 0.02 ? 0 : side * energy * LEAN, true); }   // easing back, silently
+  else if (m.type === "mode" && m.mode === "replay") restore();                // every new replay starts from a whole page
+  else if (m.type === "ground") {
+    // The breath follows the live ground under Montréal: still ground = a shallow breath (the text
+    // fades to 55%), moving ground = a deep one (down to 8%).
+    groundNow += (m.value - groundNow) * 0.08;
+    document.documentElement.style.setProperty("--choreo-breath", (0.55 - 0.47 * clamp(groundNow * 1.6)).toFixed(2));
+  }
 };
 breathing();

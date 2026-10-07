@@ -51,8 +51,17 @@ console.log("after a small quake: breathing still running:", await js(`document.
 await sleep(3500); await shot("2_small_later");
 relay.fireBig(2);                                    // Indonesia, M 6.5, 372 km deep
 await sleep(2300); await shot("3_big");
-console.log("after a big quake: breathing paused:", await js(`!document.getElementById('page').contentDocument.getAnimations().some(a => a.effect.getComputedTiming().iterations === Infinity)`));
+const doc = `document.getElementById('page').contentDocument`;
+const damage = async (when) => console.log(when + ": breathing running:", await js(`${doc}.getAnimations().some(a => a.effect.getComputedTiming().iterations === Infinity && a.playState === 'running')`),
+  "| fallen words:", await js(`${doc}.querySelectorAll('.choreo-w[data-fallen]').length`),
+  "| cracked images:", await js(`[...${doc}.querySelectorAll('.choreo-crack')].filter(w => Number(w.dataset.d) > 0).length`),
+  "| breath depth:", await js(`${doc}.documentElement.style.getPropertyValue('--choreo-breath')`));
+await damage("after a big quake");
 await sleep(2500); await shot("4_big_later");
+relay.fireBig(0); await sleep(4000); relay.fireBig(1); await sleep(5000); await shot("5_worn");
+await damage("after three big quakes (damage must have grown)");
+relay.setMode("replay"); await sleep(5500); await shot("6_restored");
+await damage("after a new replay starts (damage must be 0)");
 console.log("strip:", await js(`[...document.querySelectorAll('#strip .line')].map(l => l.textContent).join(' || ')`));
 console.log("words on the page that can move:", await js(`document.getElementById('page').contentDocument.querySelectorAll('.choreo-w').length`));
 console.log("page title:", await js(`document.getElementById('page').contentDocument.title`));
