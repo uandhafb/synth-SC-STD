@@ -36,7 +36,7 @@ export const BLOCKS = [
       "{TidalCycles|tidalcycles.org} [sound] a live coding environment for algorithmic patterns, written in Haskell. Free and open source; it inspired the Uzulangs, including the web-based Strudel.",
       "{Strudel|strudel.cc} [sound] the official port of the TidalCycles pattern language to JavaScript. Free, web-based and open source.",
       "{Hydra|hydra.ojack.xyz} [visuals] a live coding environment for visuals in the web browser, created by Olivia Jack and inspired by analog modular video synthesizers. Free and open source.",
-      "{JavaScript|developer.mozilla.org/docs/Web/JavaScript} [web choreography] the programming language of web pages. I use it to make a page move.",
+      "{JavaScript|developer.mozilla.org/docs/Web/JavaScript} [web choreography] the programming language of web pages, and it can be used for web choreography.",
     ],
   },
   {
