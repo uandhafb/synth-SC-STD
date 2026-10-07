@@ -16,7 +16,7 @@ export const BLOCKS = [
     lines: ["a SuperCollider · Tidal · Strudel synthesizer, the Earth's movement data, and a room full of phones", "Uandha Fernandes Barbosa, BMus and BSc Eng"],
   },
   {
-    id: "me", kicker: "who", title: "Uandha Fernandes Barbosa", scene: "figure", photo: "me.jpg",
+    id: "me", kicker: "who", title: "", scene: "figure", photo: "me.jpg",
     lines: [
       "BMus and BSc Eng · [YOUR PROGRAMME] · Concordia University, Montréal",
       "I research **live coding** and **embodied interaction**: how a body, an acoustic instrument and code can perform together in real time.",

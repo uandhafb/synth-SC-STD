@@ -32,6 +32,7 @@ b, strong { color: var(--accent); font-weight: 700; }
 .block.has-photo { grid-template-columns: 1fr minmax(160px, 26%); }
 .block.has-photo > .kicker, .block.has-photo > h1 { grid-column: 1 / -1; }
 .block h1 { margin: 0; font-weight: 800; line-height: 1.02; font-size: clamp(30px, 5.2vw, 92px); letter-spacing: -0.02em; text-wrap: balance; }
+.block h1:empty { display: none; }          /* a block may have no big title */
 .block .text { display: grid; gap: clamp(6px, 0.9vw, 14px); align-content: start; }
 .block p { margin: 0; font-size: clamp(14px, 1.55vw, 26px); line-height: 1.45; }
 .block .extra { grid-column: 1 / -1; }
