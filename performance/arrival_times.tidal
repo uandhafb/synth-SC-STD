@@ -29,6 +29,10 @@ let -- NUCLEO · o que gira no escuro e nunca para            (mono: osciladores
       # o1lvl 0.4 # o2lvl 0.3 # o2wave 2 # o3lvl 0.7 # nzlvl 0.2 # nzcol 0.9 # drift 0.6
       # vcfcut 300 # vcfres 0.55 # vcfenv 0 # vcfkey 0 # sh_vcf 0.4 # shrate 0.7 # shlag 1
       # vcalvl 0.8 # spmix 0.35 # spdecay 0.8
+    -- CHAO · o chão daqui, agora                              (AO VIVO: o sismômetro de Montréal abre o filtro e o volume)
+    chao = n "9*16" # s "scstd" # monomode 1 # legato 1.05 # orbit 6
+      # o1lvl 0 # o2lvl 0.7 # o2wave 3 # o3lvl 0 # nzlvl 1 # nzcol 0.3 # vcfdrive 0.8
+      # vcfcut (range 150 5000 qground) # vcfres 0.85 # vcfenv 0 # vcfkey 0 # vcalvl (range 0.15 1 qground) # spmix 0.3
     -- MANTO · pedra que escorre devagar, por séculos        (acordes com PWM)
     manto = n "<[2,5,9] [0,4,7] [-2,2,5] [-3,0,4]>/2" # s "scstd" # legato 1 # orbit 3
       # o1lf 1 # o1lfrate 0.8 # o1lvl 0 # o2wave 1 # o2pwm 0.8 # o3lvl 0.6 # o3wave 1 # o3pwm 0.6 # o3oct 0 # o3fine (-0.08)
@@ -53,9 +57,9 @@ let -- NUCLEO · o que gira no escuro e nunca para            (mono: osciladores
     cascalho = n "~ -14 ~ [-14 ~ ~ -14]" # s "scstd" # legato 0.1 # orbit 0
       # o1lvl 0 # o2lvl 0.9 # o2wave 2 # nzlvl 1 # aratk 0.001 # arrel 0.15 # erel 0.15
       # vcfcut 4000 # vcfenv 0 # vcfdrive 0.9 # vcalvl 1 # spmix 0
-    -- SISMOGRAFO · a agulha que escreve o que ninguém sentiu (sample & hold na afinação)
-    sismografo = n "2(3,8,<0 2>)" # s "scstd" # legato 1 # orbit 5
-      # o1lvl 0 # o2lvl 1 # o2wave 1 # o2pw 0.3 # sh_pitch 12 # shrate 8 # vcfcut 2500 # vcfres 0.5 # vcfenv 0 # vcfdrive 0.7 # vcalvl 1
+    -- SISMOGRAFO · a agulha que escreve o que ninguém sentiu (notas no tom; o sample & hold treme o filtro)
+    sismografo = n "2 [~ 9] 5 <12 14> [2 2] ~ 9 <5 7>" # s "scstd" # legato 0.8 # orbit 5
+      # o1lvl 0 # o2lvl 1 # o2wave 1 # o2pw 0.3 # sh_vcf 2 # shrate 8 # vcfcut 900 # vcfres 0.7 # vcfenv 0 # vcfdrive 0.7 # vcalvl 1
       # arrel 0.1 # erel 0.1 # spmix 0.25
     -- TREMOR · o copo d'água sabe primeiro                   (chave eletrônica: trinado)
     tremor = n "<2 9 5 0>" # s "scstd" # legato 1 # orbit 5
@@ -107,7 +111,8 @@ let -- NUCLEO · o que gira no escuro e nunca para            (mono: osciladores
 d1 $ stack [silence
   -- ---- o chão respira ---------------------------------------------------------------
   -- , nucleo # vcfcut (range 120 900 qground) # nzlvl (range 0.1 0.5 qground)
-  -- , vento # gain 0.85
+  -- , chao # gain 1.1
+  -- , slow 2 $ vento # gain 0.85 # pan (slow 8 sine)
   -- , degradeBy 0.4 $ sombra # gain 0.75
   -- ---- a falha ----------------------------------------------------------------------
   -- , falha # gain 1.15
@@ -116,7 +121,7 @@ d1 $ stack [silence
   -- , whenmod 8 6 (hurry 2) $ placas # pan (slow 3 sine) # gain 0.85
   -- , cascalho # gain 1.15
   -- ---- o enxame ---------------------------------------------------------------------
-  -- , every 3 (jux rev) $ sismografo # sh_pitch (range 2 24 qenergy) # shrate (range 4 16 qrate) # gain 1
+  -- , every 3 (jux rev) $ sismografo # sh_vcf (range 0.5 3.5 qenergy) # shrate (range 4 16 qrate) # gain 1
   -- , sometimesBy 0.3 (# crush 5) $ fenda # gain 0.7 # pan (fast 2 sine)
   -- , ondaP # pan rand # gain 1
   -- , tremor # swrate (range 6 24 qenergy) # gain 0.7
@@ -139,7 +144,8 @@ d1 $ stack [silence
 let arranjo = seqPLoop
       -- o chão respira (0-16)
       [ (0, 152, nucleo # vcfcut (range 120 1100 qenergy) # nzlvl (range 0.1 0.5 qground))
-      , (0, 24, vento # gain 0.85)
+      , (0, 24, slow 2 $ vento # gain 0.85 # pan (slow 8 sine))
+      , (2, 16, chao # gain 1)
       , (4, 20, degradeBy 0.4 $ sombra # gain 0.75)
       -- a falha (16-48)
       , (16, 80, falha # gain 1.15)
@@ -148,7 +154,7 @@ let arranjo = seqPLoop
       , (32, 80, whenmod 8 6 (hurry 2) $ placas # pan (slow 3 sine) # gain 0.85)
       , (40, 80, cascalho # gain 1.15)
       -- o enxame (48-80)
-      , (48, 80, every 3 (jux rev) $ sismografo # sh_pitch (range 2 24 qenergy) # shrate (range 4 16 qrate) # gain 1)
+      , (48, 80, every 3 (jux rev) $ sismografo # sh_vcf (range 0.5 3.5 qenergy) # shrate (range 4 16 qrate) # gain 1)
       , (56, 80, sometimesBy 0.3 (# crush 5) $ fenda # gain 0.7 # pan (fast 2 sine))
       , (64, 80, ondaP # pan rand # gain 1)
       , (72, 80, tremor # swrate (range 6 24 qenergy) # gain 0.7)
@@ -163,10 +169,11 @@ let arranjo = seqPLoop
       , (100, 128, cascalho # gain 1.15)
       , (100, 128, ondaS # o1lfrate (range 3 12 qenergy) # gain 0.9)
       , (104, 128, every 4 (off 0.125 (|+ n 12)) $ magma # vcfcut (range 300 3500 qmag) # crush (range 16 5 qenergy))
-      , (108, 128, every 2 (jux rev) $ sismografo # sh_pitch (range 2 24 qenergy) # gain 1)
+      , (108, 128, every 2 (jux rev) $ sismografo # sh_vcf (range 0.5 3.5 qenergy) # gain 1)
       , (116, 128, tremor # swrate (range 6 24 qenergy) # gain 0.7)
-      -- agora (128-152): só o chão de Montréal, a sombra e um sinal
-      , (128, 152, manto # gain (range 0.5 0.9 qground))
+      -- agora (128-152): o chão de Montréal ao vivo (chao), a sombra e um sinal
+      , (126, 152, chao # gain 1.15)
+      , (128, 152, manto # gain 0.8)
       , (130, 150, degradeBy 0.3 $ sombra # gain 0.7)
       , (136, 150, degradeBy 0.5 $ sinal # pan rand # gain 0.6)
       ]
