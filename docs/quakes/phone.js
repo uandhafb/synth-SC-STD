@@ -27,7 +27,8 @@ const clamp01 = (x) => Math.min(1, Math.max(0, x));
 const store = { get: (k) => { try { return sessionStorage.getItem(k); } catch { return null; } }, set: (k, v) => { try { sessionStorage.setItem(k, v); } catch { /* private mode */ } } };
 const ID = store.get("at-id") || (() => { const id = Math.random().toString(36).slice(2, 10); store.set("at-id", id); return id; })();
 
-$("roomTxt").textContent = `room ${ROOM}`;
+const VERSION = 3;                        // shown on the page, to tell a fresh copy from one the phone kept (change it with ?v= in index.html)
+$("roomTxt").textContent = `room ${ROOM} · v${VERSION}`;
 let station = null, mq = null, audio = null, ground = null;
 let state = { on: true, level: 1 };       // set by the laptop (phones on/off, overall level)
 let land = [];
