@@ -143,6 +143,10 @@ let -- NUCLEO · o que gira no escuro e nunca para            (mono: osciladores
     -- SOPRO · tua voz abrindo a pedra                         (MICROFONE: o volume da voz abre o filtro; a voz não passa)
     sopro = n "-10" # s "scstd" # monomode 1 # legato 1 # orbit 11
       # envf_vcf 4 # vcfcut 200 # vcfres 0.5 # vcfenv 0 # spmix 0.3
+    -- PEGADAS · cada tecla, um passo no chão                  (MICROFONE: o estalo de digitar abre a nota e o filtro)
+    pegadas = n "<9 14 12 17>" # s "scstd" # legato 1 # orbit 5
+      # o1lvl 0.4 # o2wave 1 # o2pw 0.3 # vcaenv 0 # vcainit 0 # envf_vca 1 # envf_vcf 3 # vcfcut 400 # vcfres 0.7 # vcfenv 0
+      # efatk 0.002 # efrel 0.12 # ingain 0.55 # spmix 0.25
     -- SINAL · alguém, em algum lugar, tentando avisar        (bipes que "falam")
     sinal = degradeBy 0.35 $ n (segment 16 $ (0.37 <~ irand 24) + 12) # s "scstd" # orbit 5
       # o1lf 1 # o1lvl 0 # o2wave 3 # o2lvl 1 # vcalvl 1 # aratk 0.003 # arrel 0.03 # erel 0.03
@@ -192,6 +196,7 @@ d1 $ stack [silence
   -- , geiser # gain 0.85
   -- , estratos # o1lfrate (range 0.3 1.5 qenergy) # gain 0.75
   -- ---- a voz (MICROFONE: com caixas de som, volume baixo, senão apita) ---------------
+  -- , pegadas # gain 1
   -- , sopro # gain 0.9
   -- , voz # gain 0.8
   ]
