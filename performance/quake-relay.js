@@ -402,6 +402,7 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   if (process.stdin.isTTY) {
     process.stdin.setRawMode(true); process.stdin.resume(); process.stdin.setEncoding("utf8");
     process.stdin.on("data", (k) => {
+      k = k.toLowerCase();                                   // Caps Lock on: R, L, P still work
       if (k === "q" || k === "\u0003") { relay.stop(); process.exit(0); }
       else if (k === "r") relay.replay();
       else if (k === "l") relay.live();
