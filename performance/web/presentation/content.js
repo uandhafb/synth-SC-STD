@@ -21,7 +21,7 @@ export const BLOCKS = [
       "Master of Arts and Technology candidate · Concordia University, Montréal",
       "I research **live coding**, **human-computer interaction**, **embodiment** and **machine learning**.",
       "What is live coding? It is the practice of creating music, visuals or web choreography with the code on screen for everyone to see.",
-      "This presentation is part of it: the blocks change when I raise my hand.",
+      "This presentation is an example: made with **Hydra** and JavaScript, and turned by my hands through the camera.",
     ],
   },
   {
