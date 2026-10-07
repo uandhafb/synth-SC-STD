@@ -52,7 +52,7 @@ export const BLOCKS = [
     lines: ["**107 parameters**: the code sets them note by note; the panel sets the rest."],
   },
   {
-    id: "code", kicker: "inside the code", title: "one line, one voice", scene: "feed", extra: "code",
+    id: "code", kicker: "inside the code", title: "", scene: "feed", extra: "code",
     lines: ["Now in the editor: the synth's definition in SuperCollider, and this line in Tidal."],
   },
   {

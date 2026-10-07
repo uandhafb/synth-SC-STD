@@ -54,14 +54,14 @@ b, strong { color: var(--accent); font-weight: 700; }
 #deck .block[data-id="title"] h1, #deck .block[data-id="codeshake"] h1 { font-size: clamp(48px, 10vw, 180px); letter-spacing: 0.02em; }
 
 /* the architecture: four lanes of boxes joined by arrows, lighting up in the order a note travels */
-.arch { display: grid; gap: 0.8em; font-size: clamp(10px, 1.55vw, 42px); }
+.arch { display: grid; gap: 0.8em; font-size: clamp(10px, 1.42vw, 40px); }
 .arch .lab { color: var(--accent); letter-spacing: 0.12em; text-transform: uppercase; font-size: 0.78em; margin-bottom: 0.35em; }
 .arch .file { color: var(--muted); letter-spacing: 0; text-transform: none; margin-left: 1em; }
 .arch .row { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4em 0; }
 .arch .row.gap { gap: 0.4em 0.7em; }
 .arch .node { border: 1px solid var(--line); padding: 0.4em 0.65em; background: rgba(0, 0, 0, 0.55); animation: light 9s infinite; animation-delay: calc(var(--i) * 0.9s); }
 .arch .node small { display: block; color: var(--muted); font-size: 0.74em; }
-.arch .arrow { flex: 0 0 auto; padding: 0 0.4em; color: var(--accent); }
+.arch .arrow { flex: 0 0 auto; padding: 0 0.3em; color: var(--accent); }
 .arch .arrow.osc { color: var(--accent-2); font-weight: 700; }
 .arch .side { border-color: rgba(255, 79, 216, 0.55); animation-name: light-side; }
 @keyframes light { 0%, 12%, 100% { border-color: var(--line); color: var(--ink); box-shadow: none; } 4% { border-color: var(--accent); color: var(--accent); box-shadow: 0 0 18px rgba(212, 255, 58, 0.5); } }
