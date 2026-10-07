@@ -41,6 +41,10 @@ b, strong { color: var(--accent); font-weight: 700; }
 .block.dense p { font-size: clamp(15px, 1.75vw, 48px); }
 .block a.ref { color: var(--accent-2); text-decoration: none; white-space: nowrap; font-size: 0.82em; }
 .block a.ref:hover { text-decoration: underline; }
+/* a name that can be clicked: lime like the other names, with a small arrow at its top right */
+.block a.name { color: var(--accent); font-weight: 700; text-decoration: none; border-bottom: 2px solid transparent; }
+.block a.name:hover { border-bottom-color: var(--accent); }
+.block a.name sup { color: var(--accent-2); font-size: 0.7em; margin-left: 0.1em; }
 .pic { margin: 0; display: grid; gap: 0.4em; }
 .pic figcaption { font-size: clamp(10px, 1vw, 22px); color: var(--muted); text-align: right; }
 /* the photo whole, in its own shape and colours */

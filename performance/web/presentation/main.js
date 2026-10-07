@@ -11,7 +11,7 @@ const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
 // Text from content.js to HTML: **strong**, `code`, [anything in square brackets] in pink.
 // Everything else is escaped.
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
-const rich = (s) => esc(s).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>").replace(/`(.+?)`/g, "<code>$1</code>").replace(/\[([^\[\]]{2,})\]/g, '<span class="placeholder">[$1]</span>')
+const rich = (s) => esc(s).replace(/\{([^{}|]+)\|([^{}|\s]+)\}/g, '<a class="name" href="https://$2" target="_blank" rel="noopener">$1<sup>↗</sup></a>').replace(/\*\*(.+?)\*\*/g, "<b>$1</b>").replace(/`(.+?)`/g, "<code>$1</code>").replace(/\[([^\[\]]{2,})\]/g, '<span class="placeholder">[$1]</span>')
   .replace(/→ ((?:[a-z0-9-]+\.)+[a-z]{2,}(?:\/[^\s<]*)?)/g, '<a class="ref" href="https://$1" target="_blank" rel="noopener">→ $1</a>');
 
 const node = (label, small, i, cls = "") => `<div class="node ${cls}" style="--i:${i}">${label}${small ? `<small>${small}</small>` : ""}</div>`;

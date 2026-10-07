@@ -8,7 +8,8 @@
 //   photo   a picture file in the folder  presentation/photos/  (for example "me.jpg"); null = none
 //   credit  the line under the photo (who took it)
 //   dense   true = slightly smaller text, for a block with many lines
-//   "→ strudel.cc" at the end of a line becomes a link to that page
+//   {Strudel|strudel.cc} is a name you can click: it opens that page, and gets a small arrow ↗
+//   "→ strudel.cc" in a line also becomes a link to that page
 //   scene   which Hydra visual plays behind it (the names are in scenes.js)
 //   extra   a built-in piece: "schematic", "code", "mapping", "qr", "sections" (or nothing)
 // Text in [square brackets] is shown in pink, with its brackets. In CAPITALS it is a placeholder,
@@ -31,11 +32,11 @@ export const BLOCKS = [
   {
     id: "tools", kicker: "the languages", title: "the languages I know best", scene: "three", dense: true,
     lines: [
-      "**SuperCollider** [sound] a language for building sound from its simplest parts. The synthesizer is written in it. → supercollider.github.io",
-      "**TidalCycles** [sound] a language for patterns of rhythm and melody, made for live coding. → tidalcycles.org",
-      "**Strudel** [sound] Tidal's patterns in the web browser, written in JavaScript. → strudel.cc",
-      "**Hydra** [visuals] a language for live visuals in the browser, modelled on analog video synthesizers. → hydra.ojack.xyz",
-      "**JavaScript** [web choreography] the language of web pages: I use it to make a page move. → developer.mozilla.org/docs/Web/JavaScript",
+      "{SuperCollider|supercollider.github.io} [sound] a language for building sound from its simplest parts. The synthesizer is written in it.",
+      "{TidalCycles|tidalcycles.org} [sound] a language for patterns of rhythm and melody, made for live coding.",
+      "{Strudel|strudel.cc} [sound] Tidal's patterns in the web browser, written in JavaScript.",
+      "{Hydra|hydra.ojack.xyz} [visuals] a language for live visuals in the browser, modelled on analog video synthesizers.",
+      "{JavaScript|developer.mozilla.org/docs/Web/JavaScript} [web choreography] the language of web pages: I use it to make a page move.",
     ],
   },
   {
