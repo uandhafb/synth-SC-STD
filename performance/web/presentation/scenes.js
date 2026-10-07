@@ -20,12 +20,23 @@ const tremor = (h, n, grain = 22, speed = 0.5) => h.noise(Math.max(1.2, grain / 
 // How far the lines are pushed: always enough to draw long curves (that is the look), a little
 // more with the real ground, and wider for a moment on an earthquake or a change of block.
 const shake = (L, rest, ground = 0.05, hit = 0.12) => () => Math.max(0.05, rest * 6) + 0.5 * ground * L.ground + 0.35 * hit * L.pulse;
-// The camera as a mirror, in grey: what bends the lines into the presenter's figure.
+// The camera as a mirror, in grey.
 const cam = (h) => h.src(h.s0).scale(1, -1, 1).saturate(0).contrast(1.5);
+// What bends the lines into the presenter's figure: the camera, SOFTENED. A sharp camera image
+// (edges, hair, the grain of a dark room) breaks the thin lines into dots and dashes, the same way
+// grainy noise does. So the camera is first blurred into its own buffer (o1): every frame it is
+// mixed with its own previous frame, nudged a little in the four directions, which spreads the
+// image out in space and in time. The lines then bend around a soft body, not around its details.
+export function prepare(h) {
+  const past = () => h.src(h.o1);
+  cam(h).blend(past().add(past().scrollX(0.007), 1).add(past().scrollX(-0.007), 1).add(past().scrollY(0.007), 1).add(past().scrollY(-0.007), 1)
+    .mult(h.solid(0.2, 0.2, 0.2)), 0.82).out(h.o1);
+}
+const soft = (h) => h.src(h.o1);
 // Bend the traces with the camera, add a faint ghost of the image so the figure is easy to find,
 // and dim everything so the text on top stays readable.
 const finish = (h, L, chain, { figure = 0.05, ghost = 0.16, tint = pink, dim = 0.7 } = {}) =>
-  chain.modulateScrollY(cam(h), () => (L.cam ? figure : 0))
+  chain.modulateScrollY(soft(h), () => (L.cam ? figure * 1.6 : 0))
     .add(cam(h).thresh(0.5, 0.3).color(...tint), () => (L.cam ? ghost : 0))
     .mult(h.solid(dim, dim, dim));
 
@@ -34,10 +45,14 @@ export const SCENES = {
   paper: (h, L) => finish(h, L,
     lines(h, 26).color(...lime).modulateScrollY(tremor(h, 26), shake(L, 0.006))),
 
-  // the presenter: the camera is the signal; few, strong lines
-  figure: (h, L) => finish(h, L,
-    lines(h, 34, 0.95).color(...paper).modulateScrollY(tremor(h, 34, 30), shake(L, 0.004, 0.03, 0.06)),
-    { figure: 0.11, ghost: 0.28, tint: pink, dim: 0.75 }),
+  // the presenter: the paper turned on its side. Vertical pale lines, like a curtain or rain,
+  // pushed sideways by the (softened) camera, so the figure stands in them; pink ghost behind.
+  figure: (h, L) =>
+    h.osc(30 * TAU, 0, 0).thresh(0.955, 0.012).color(...paper)
+      .modulateScrollX(tremor(h, 30, 14, 0.4), shake(L, 0.004, 0.03, 0.05))
+      .modulateScrollX(soft(h), () => (L.cam ? 0.07 : 0))
+      .add(cam(h).thresh(0.5, 0.3).color(...pink), () => (L.cam ? 0.3 : 0))
+      .mult(h.solid(0.72, 0.72, 0.72)),
 
   // three traces: three languages, each with its own hand
   three: (h, L) => finish(h, L,

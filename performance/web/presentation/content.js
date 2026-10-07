@@ -21,7 +21,7 @@ export const BLOCKS = [
     lines: [
       "Master of Arts and Technology candidate · Concordia University, Montréal",
       "I research **live coding**, **human-computer interaction**, **embodiment** and **machine learning**.",
-      "What is live coding? It is the practice of creating music, visuals or web choreography with the code on screen for everyone to see.",
+      "[What is live coding?] It is the practice of creating music, visuals or web choreography with the code on screen for everyone to see.",
       "This presentation is an example: made with **Hydra** and JavaScript, and turned by my hands through the camera.",
     ],
   },
@@ -37,10 +37,9 @@ export const BLOCKS = [
   {
     id: "began", kicker: "where it began", title: "a 1970s synthesizer, rebuilt in code", scene: "old",
     lines: [
-      "The ARP 2600 (1971) is **semi-modular**: it makes sound with no cables at all, and every internal connection can be replaced with a patch cord.",
-      "This project recreates that architecture in software, for live coding: three oscillators, noise, ring modulator, filter, envelopes, sample & hold, envelope follower, spring reverb.",
-      "It models what each module **does**, tuned by ear and by measurement. It is not a simulation of the circuit, and it is not a copy of the panel.",
-      "[HOW THE PROJECT BEGAN FOR YOU: WHY THIS SYNTH, WHAT YOU WANTED TO DO WITH IT]",
+      "The ARP 2600 (1971) is **semi-modular**: it plays with no cables at all, and every connection inside can be replaced with a patch cord.",
+      "This project rebuilds that architecture in software, for live coding. It models what each module **does**, tuned by ear and by measurement: not the circuit, and not the panel.",
+      "[HOW THE PROJECT BEGAN FOR YOU]",
     ],
   },
   {

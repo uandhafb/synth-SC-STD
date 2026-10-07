@@ -1,7 +1,7 @@
 // The presentation: builds the blocks from content.js, runs Hydra behind them, turns them with
 // the keyboard or with the hands (hands.js), and lets the visuals feel the live ground (the relay).
 import { BLOCKS, QA } from "./content.js";
-import { SCENES } from "./scenes.js";
+import { SCENES, prepare } from "./scenes.js";
 
 const $ = (id) => document.getElementById(id);
 const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
@@ -135,7 +135,7 @@ async function start(withCamera) {
     const { startHands } = await import("./hands.js");
     hands = await startHands({ video: $("video"), view: $("camView"), onState: onHandState,
       onStep: (dir) => { if (qaOpen()) return; if (dir === "next") next(); else back(); } });
-    if (h) { h.s0.init({ src: $("video") }); L.cam = true; runScene(BLOCKS[at].scene); }
+    if (h) { h.s0.init({ src: $("video") }); prepare(h); L.cam = true; runScene(BLOCKS[at].scene); }
   } catch (err) {
     $("cam").hidden = true;
     note(`no camera or no hand tracking (${err?.message ?? err}). Use the arrow keys.`, 9000);
