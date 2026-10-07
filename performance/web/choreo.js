@@ -212,7 +212,8 @@ export function incline(what, degrees = 5, quiet = false) {
   for (const el of bodies(what)) { el.style.transition = "rotate 1.6s cubic-bezier(.3,.7,.2,1)"; el.style.rotate = deg; }
 }
 
-// breathing: the resting state. The text softly fades and returns; nothing changes size or place.
+// breathing: the resting state. The text fades almost away and returns, every 5 seconds; nothing
+// changes size or place.
 export function breathing() {
   say("breathing");
   document.documentElement.classList.add("choreo-breathing");
@@ -269,9 +270,11 @@ const style = document.createElement("style");
 style.textContent = `
   .choreo-w { display: inline-block; white-space: pre; transition: background-color .6s, color .6s; border-radius: 2px; }
   .choreo-l { display: inline-block; white-space: pre; position: relative; z-index: 5; }
-  .choreo-t { display: inline-block; max-width: 100%; rotate: var(--choreo-lean, 0deg); transition: rotate 1.4s cubic-bezier(.3,.7,.2,1); }
-  .choreo-breathing .choreo-t { animation: choreo-breath 6.5s ease-in-out infinite; }
-  @keyframes choreo-breath { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
+  .choreo-t { display: inline-block; max-width: 100%; }
+  /* only the text on (or near) the screen leans and breathes: the page is very long */
+  .choreo-t.choreo-near { rotate: var(--choreo-lean, 0deg); transition: rotate 1.4s cubic-bezier(.3,.7,.2,1); }
+  .choreo-breathing .choreo-t.choreo-near { animation: choreo-breath 5s ease-in-out infinite; }
+  @keyframes choreo-breath { 0%, 100% { opacity: 1; } 50% { opacity: 0.22; } }
   .choreo-w.choreo-fall { background: transparent !important; }
   .choreo-w.choreo-fall, .choreo-w.choreo-fall a, .choreo-w.choreo-fall .choreo-l { color: #e8431f !important; font-weight: 700; }
   .choreo-w.choreo-on { background: #ff5a36; color: #fff !important; }
@@ -290,6 +293,9 @@ for (const el of content().querySelectorAll("td, th, p, li, dd, dt, h1, h2, h3, 
   while (el.firstChild) t.appendChild(el.firstChild);
   el.appendChild(t);
 }
+
+const near = new IntersectionObserver((entries) => { for (const e of entries) e.target.classList.toggle("choreo-near", e.isIntersecting); }, { rootMargin: "60% 0px" });
+for (const t of content().querySelectorAll(".choreo-t")) near.observe(t);
 
 // Everything turns, leans and swells around the middle of what is on screen (the page is very
 // tall: turning it around its own middle would slide the visible part out of the frame).
