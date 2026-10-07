@@ -30,13 +30,13 @@ export const BLOCKS = [
     ],
   },
   {
-    id: "tools", kicker: "the languages", title: "the languages I know best", scene: "three", dense: true,
+    id: "tools", kicker: "the languages", title: "", scene: "three", dense: true,
     lines: [
-      "{SuperCollider|supercollider.github.io} [sound] a language for building sound from its simplest parts. The synthesizer is written in it.",
-      "{TidalCycles|tidalcycles.org} [sound] a language for patterns of rhythm and melody, made for live coding.",
-      "{Strudel|strudel.cc} [sound] Tidal's patterns in the web browser, written in JavaScript.",
-      "{Hydra|hydra.ojack.xyz} [visuals] a language for live visuals in the browser, modelled on analog video synthesizers.",
-      "{JavaScript|developer.mozilla.org/docs/Web/JavaScript} [web choreography] the language of web pages: I use it to make a page move.",
+      "{SuperCollider|supercollider.github.io} [sound] a language for sound synthesis, developed by James McCartney and released in 1996. Free and open source.",
+      "{TidalCycles|tidalcycles.org} [sound] a live coding environment for algorithmic patterns, written in Haskell. Free and open source; it inspired the Uzulangs, including the web-based Strudel.",
+      "{Strudel|strudel.cc} [sound] the official port of the TidalCycles pattern language to JavaScript. Free, web-based and open source.",
+      "{Hydra|hydra.ojack.xyz} [visuals] a live coding environment for visuals in the web browser, created by Olivia Jack and inspired by analog modular video synthesizers. Free and open source.",
+      "{JavaScript|developer.mozilla.org/docs/Web/JavaScript} [web choreography] the programming language of web pages. I use it to make a page move.",
     ],
   },
   {
