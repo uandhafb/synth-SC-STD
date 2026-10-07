@@ -27,7 +27,7 @@ const clamp01 = (x) => Math.min(1, Math.max(0, x));
 const store = { get: (k) => { try { return sessionStorage.getItem(k); } catch { return null; } }, set: (k, v) => { try { sessionStorage.setItem(k, v); } catch { /* private mode */ } } };
 const ID = store.get("at-id") || (() => { const id = Math.random().toString(36).slice(2, 10); store.set("at-id", id); return id; })();
 
-const VERSION = 3;                        // shown on the page, to tell a fresh copy from one the phone kept (change it with ?v= in index.html)
+const VERSION = 5;                        // shown on the page, to tell a fresh copy from one the phone kept (change it with ?v= in index.html)
 $("roomTxt").textContent = `room ${ROOM} · v${VERSION}`;
 let station = null, mq = null, audio = null, ground = null;
 let state = { on: true, level: 1 };       // set by the laptop (phones on/off, overall level)
@@ -37,8 +37,8 @@ const waves = [];                         // for the map: { q, t0 }
 
 // ---- sound --------------------------------------------------------------------------------------
 
-// Each station's note: D minor pentatonic (D F G A C) over two octaves from D5. Phone speakers play
-// nothing below about 300 Hz, so the phones are the high, bright layer over the synth's low one.
+// Each station's note: D minor pentatonic (D F G A C) over two octaves. The sounds play it three
+// octaves down (see hit), so the phones are small copies of the synth's earthquake, not bells.
 // The order makes the first phones in the room a wide chord (D A F C D' G …), not a cluster.
 const SCALE = [0, 7, 3, 10, 12, 5, 15, 19, 17, 22, 24];
 const NAMES = ["D", "E♭", "E", "F", "F♯", "G", "A♭", "A", "B♭", "B", "C", "C♯"];
@@ -70,66 +70,73 @@ function makeAudio(ctx = new (window.AudioContext || window.webkitAudioContext)(
   const crowd = (at, len) => { for (let i = sounding.length - 1; i >= 0; i--) if (sounding[i] < ctx.currentTime) sounding.splice(i, 1);
     const n = sounding.filter((end) => end > at).length; if (n < 12) sounding.push(at + len); return n >= 12 ? 0 : n >= 6 ? 0.5 : 1; };
 
-  // A small "spring" shared by all the sounds, after the synth's spring reverb: two short delays
-  // (43 and 52 ms, the synth's two springs) feeding back through a lowpass.
-  const spring = ctx.createGain(), back = ctx.createGain(), tone = ctx.createBiquadFilter(), wet = ctx.createGain();
-  tone.type = "lowpass"; tone.frequency.value = 2600; wet.gain.value = 0.6;
-  back.gain.value = 0.3;                  // two delays share the loop: 2 x 0.3 = 0.6 around, so it always dies away
-  for (const t of [0.043, 0.052]) { const dl = ctx.createDelay(0.2); dl.delayTime.value = t; spring.connect(dl); back.connect(dl); dl.connect(tone); }
-  tone.connect(back); tone.connect(wet).connect(master);
+  // The reverb shared by all the sounds: it is what lets a hit sustain. A convolution with a made
+  // impulse: 6 seconds of noise dying away slowly, getting darker as it dies (a one-pole lowpass that
+  // closes), after two early echoes at 43 and 52 ms (the synth's two springs).
+  const spring = ctx.createGain(), room = ctx.createConvolver(), wet = ctx.createGain();
+  { const sr = ctx.sampleRate, ir = ctx.createBuffer(1, Math.floor(sr * 6), sr), x = ir.getChannelData(0); let lp = 0;
+    for (let i = 0; i < x.length; i++) { const t = i / sr, k = 0.04 + 0.3 * Math.exp(-t * 1.2); lp += k * ((Math.random() * 2 - 1) - lp); x[i] = lp * Math.exp(-t * 0.8) * Math.min(1, t / 0.02) * Math.min(1, (6 - t) / 0.5); }
+    for (const t of [0.043, 0.052]) x[Math.floor(t * sr)] += 0.5;
+    room.buffer = ir; }
+  wet.gain.value = 2.2; spring.connect(room).connect(wet).connect(master);
   const drive = new Float32Array(1025); for (let i = 0; i < drive.length; i++) drive[i] = Math.tanh((i / 512 - 1) * 2.2);
 
-  // The hit: the phone's version of the note the synth plays for an earthquake (ruptureNote in the
-  // relay), on the station's own note. The same recipe, scaled for a phone speaker:
-  //   a saw and a triangle whose pitch FALLS into the note (the "thud": 10..24 semitones, like adsr_pitch)
-  //   + dark noise, more for bigger earthquakes (nzlvl), all driven (vcfdrive)
-  //   through a resonant lowpass that closes fast (vcfenv, edec); deep or far = darker
-  //   and a send to the spring (spmix), more for bigger earthquakes.
+  // The hit: the phone's version of the note the synth plays for an earthquake (keys 1 2 3;
+  // ruptureNote in the relay). The same recipe:
+  //   two saws, slightly apart (o1/o2 + drift), LOW: the station's note three octaves down (73..294 Hz).
+  //     A phone speaker cannot play that fundamental, but it plays the saw's harmonics, and the
+  //     ear hears the low note from them;
+  //   their pitch FALLS into the note (the "thud": 10..24 semitones, like adsr_pitch);
+  //   dark noise, more for bigger earthquakes (nzlvl); everything driven (vcfdrive);
+  //   a resonant lowpass that opens a little and closes (vcfenv, edec); deep or far = darker.
+  //     It never opens above 3 kHz: no bright zap at the start;
+  //   a long release for big earthquakes (erel), and a send to the spring (spmix).
   // m = size (0..1), len = seconds until it has died away.
   function hit(at, amp, freq, m, depth01, bright, len) {
-    const fall = 0.04 + 0.14 * m, dec = Math.min(len, 0.2 + 1.3 * m);
+    const fall = 0.05 + 0.16 * m, dec = Math.min(len * 0.7, 0.25 + 1.5 * m);
     const o1 = ctx.createOscillator(), o2 = ctx.createOscillator(), og = ctx.createGain(), n = noise(), nf = ctx.createBiquadFilter(), ng = ctx.createGain();
-    o1.type = "sawtooth"; o2.type = "triangle"; og.gain.value = 0.5;
-    for (const [o, f] of [[o1, freq], [o2, freq * 2]]) { o.frequency.setValueAtTime(f * 2 ** ((10 + 14 * m) / 12), at); o.frequency.exponentialRampToValueAtTime(f, at + fall); }
-    nf.type = "lowpass"; nf.frequency.value = 1800; ng.gain.value = 0.3 + 1.6 * m;
+    o1.type = "sawtooth"; o2.type = "sawtooth"; og.gain.value = 0.7;
+    for (const [o, f] of [[o1, freq], [o2, freq * 1.007]]) { o.frequency.setValueAtTime(f * 2 ** ((10 + 14 * m) / 12), at); o.frequency.exponentialRampToValueAtTime(f, at + fall); }
+    nf.type = "lowpass"; nf.frequency.value = 900; ng.gain.value = 0.4 + 2.2 * m;
     const sh = ctx.createWaveShaper(); sh.curve = drive;
-    const cut = Math.max(freq * 1.3, (500 + 2400 * (1 - depth01)) * (0.35 + 0.65 * bright));
-    const f = ctx.createBiquadFilter(); f.type = "lowpass"; f.Q.value = 3.5;
-    f.frequency.setValueAtTime(Math.min(9000, cut * (2 + 4 * bright)), at); f.frequency.exponentialRampToValueAtTime(cut, at + dec);
+    const cut = (380 + 1100 * (1 - depth01)) * (0.5 + 0.5 * bright);
+    const f = ctx.createBiquadFilter(); f.type = "lowpass"; f.Q.value = 3;
+    f.frequency.setValueAtTime(Math.min(3000, cut * 2.2), at); f.frequency.exponentialRampToValueAtTime(cut, at + dec);
     const g = ctx.createGain(), send = ctx.createGain();
-    g.gain.setValueAtTime(0, at); g.gain.linearRampToValueAtTime(amp * 0.3, at + 0.003); g.gain.exponentialRampToValueAtTime(0.0008, at + len);
-    send.gain.value = 0.2 + 0.5 * m;
+    g.gain.setValueAtTime(0, at); g.gain.linearRampToValueAtTime(amp * 0.3, at + 0.004); g.gain.exponentialRampToValueAtTime(0.0008, at + len);
+    send.gain.value = 0.5 + 0.5 * m;
     o1.connect(sh); o2.connect(og).connect(sh); n.connect(nf).connect(ng).connect(sh); sh.connect(f).connect(g); g.connect(master); g.connect(send).connect(spring);
     for (const x of [o1, o2, n]) { x.start(at); x.stop(at + len + 0.05); }
   }
 
-  // P wave: the first, smaller hit: a dry knock on the station's note.
+  // P wave: the first, smaller arrival: the same low hit, short and dry.
   function pWave(at, amp, depth01, freq = 1174.66, bright = 1, mag01 = 0.5) {
-    const len = 0.25 + 0.45 * mag01;
+    const len = 0.35 + 0.9 * mag01;
     amp *= crowd(at, len); if (!amp) return;
-    hit(at, amp * 1.6, freq, 0.1 + 0.3 * mag01, depth01, bright, len);   // short, so it needs more level to be heard
+    hit(at, amp * 1.2, freq / 8, 0.15 + 0.35 * mag01, depth01, bright * 0.7, len);
   }
 
-  // S wave: the big hit, an octave lower, and then the sea it leaves behind: a wash of noise that
-  // rolls in slowly, with the station's note trembling quietly inside it.
-  //   magnitude: bigger = a heavier hit, a longer wash, a stronger tremor
+  // S wave: the big hit, as long as the synth's (0.7 s small .. 5 s big), and the sea it leaves
+  // behind: a wash of noise that rolls in slowly, with the station's note trembling quietly in it.
+  //   magnitude: bigger = a heavier, longer hit, a longer wash, a stronger tremor
   function sWave(at, amp, depth01, mag01, freq = 1174.66, bright = 1) {
-    const len = 0.7 + 3.6 * mag01, f2 = freq / 2;
+    const len = 0.7 + 4.4 * mag01, f2 = freq / 8;
     amp *= crowd(at, len); if (!amp) return len;
-    hit(at, amp, f2, mag01, depth01, bright, Math.min(len, 0.5 + 2.2 * mag01));
+    hit(at, amp * 1.3, f2, mag01, depth01, bright, len);
     const g = ctx.createGain();
     g.gain.setValueAtTime(0, at); g.gain.linearRampToValueAtTime(amp * 0.5, at + Math.min(0.5, len * 0.3)); g.gain.exponentialRampToValueAtTime(0.0008, at + len);
     // the wash: noise through a bandpass that rises and falls slowly, like a wave on a beach
     const n = noise(), nf = ctx.createBiquadFilter(), ng = ctx.createGain(), sweep = ctx.createOscillator(), sg = ctx.createGain();
-    nf.type = "bandpass"; nf.Q.value = 0.7; nf.frequency.value = 700 + 900 * bright; ng.gain.value = 0.45;
-    sweep.frequency.value = 0.45 + 0.3 * Math.random(); sg.gain.value = 350 + 400 * bright; sweep.connect(sg).connect(nf.frequency);
+    nf.type = "bandpass"; nf.Q.value = 0.7; nf.frequency.value = 500 + 600 * bright; ng.gain.value = 0.45;
+    sweep.frequency.value = 0.45 + 0.3 * Math.random(); sg.gain.value = 200 + 250 * bright; sweep.connect(sg).connect(nf.frequency);
     // the note inside it, with the tremor as its own gain stage (1 +- depth), so it never turns the
     // tone inside out (which would detune it)
     const o1 = ctx.createOscillator(), o2 = ctx.createOscillator(), og = ctx.createGain(), lfo = ctx.createOscillator(), lg = ctx.createGain(), trem = ctx.createGain();
-    o1.type = "triangle"; o1.frequency.value = f2; o2.frequency.value = f2 * 1.004; og.gain.value = 0.6;
+    o1.type = "triangle"; o1.frequency.value = f2 * 4; o2.frequency.value = f2 * 4.016; og.gain.value = 0.4;   // the note itself two octaves above the hit, where a phone can sing
     lfo.frequency.value = 6 + 7 * mag01 + 2 * Math.random(); lg.gain.value = 0.2 + 0.5 * mag01; lfo.connect(lg).connect(trem.gain);
-    const lp = ctx.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = Math.max(f2 * 1.5, (500 + 5000 * bright * bright) * (1 - 0.4 * depth01));
-    n.connect(nf).connect(ng).connect(g); o1.connect(og); o2.connect(og); og.connect(trem).connect(g); g.connect(lp).connect(master);
+    const lp = ctx.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = Math.max(f2 * 6, (500 + 5000 * bright * bright) * (1 - 0.4 * depth01));
+    const wsend = ctx.createGain(); wsend.gain.value = 0.5;
+    n.connect(nf).connect(ng).connect(g); o1.connect(og); o2.connect(og); og.connect(trem).connect(g); g.connect(lp).connect(master); lp.connect(wsend).connect(spring);
     for (const x of [n, sweep, o1, o2, lfo]) { x.start(at); x.stop(at + len + 0.1); }
     return len;
   }

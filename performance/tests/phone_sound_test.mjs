@@ -53,22 +53,25 @@ const raw = await js(`T.render(3, (ctx) => { const o = ctx.createOscillator(), g
 check("even a signal 50 times too loud stays under the ceiling", raw <= ceiling + 0.001, `peak ${raw.toFixed(3)}`);
 
 // 2. one big and one small earthquake, as the page plays them (amplitudes from onQuake)
-const one = (mag01, strength) => { const loud = Math.min(1, strength * (0.3 + 0.7 * mag01)); return `T.render(6, (ctx) => { const a = ${A}.makeAudio(ctx), f = ${A}.noteOf(1).freq, b = ${Math.max(0, Math.min(1, (strength - 0.2) / 0.8))}; a.pWave(0.2, ${0.5 * loud + 0.05}, 0.3, f, b, ${mag01}); a.sWave(1.5, ${0.6 * loud + 0.05}, 0.3, ${mag01}, f, b); })`; };
-const big = await js(`${one(0.9, 0.9)}.then((d) => ({ peak: T.peak(d), p: T.pitch(d, 500, 1500, 0.3, 0.6), s: T.pitch(d, 250, 900, 2.0, 3.5), bell: T.rms(d, 8820, 22050), tone: T.rms(d, 70560, 132300), high: T.highShare(d.subarray(8820, 22050)) }))`);
+const db = (x) => (20 * Math.log10(x)).toFixed(1) + " dB";
+const one = (mag01, strength) => { const loud = Math.min(1, strength * (0.3 + 0.7 * mag01)); return `T.render(10, (ctx) => { const a = ${A}.makeAudio(ctx), f = ${A}.noteOf(1).freq, b = ${Math.max(0, Math.min(1, (strength - 0.2) / 0.8))}; a.pWave(0.2, ${0.5 * loud + 0.05}, 0.3, f, b, ${mag01}); a.sWave(1.5, ${0.6 * loud + 0.05}, 0.3, ${mag01}, f, b); })`; };
+const big = await js(`${one(0.9, 0.9)}.then((d) => ({ peak: T.peak(d), p: T.pitch(d, 60, 200, 0.45, 0.9), s: T.pitch(d, 60, 200, 2.2, 4.0), bell: T.rms(d, 8820, 22050), tone: T.rms(d, 70560, 132300), high: T.highShare(d.subarray(8820, 22050)) }))`);
+// the dry S hit of this earthquake ends 6.2 s into the render; what is heard after that is the reverb
+const tail = await js(`${one(0.9, 0.9).replace("T.render(10", "T.render(13")}.then((d) => ({ dry: T.rms(d, 44100 * 3, 44100 * 4), after1: T.rms(d, 44100 * 7, 44100 * 8), after5: T.rms(d, 44100 * 11, 44100 * 12) }))`);
+check("the reverb sustains a big hit after it ends, then dies away", tail.after1 > 0.003 && tail.after5 < tail.after1 / 5, `during ${db(tail.dry)}, 1 s after ${db(tail.after1)}, 5 s after ${db(tail.after5)}`);
 const small = await js(`${one(0.2, 0.9)}.then((d) => ({ peak: T.peak(d) }))`);
 const far = await js(`${one(0.9, 0.42)}.then((d) => ({ peak: T.peak(d), high: T.highShare(d.subarray(8820, 22050)) }))`);
-const db = (x) => (20 * Math.log10(x)).toFixed(1) + " dB";
-check("P knock lands on the station's note (station 2 = A, 880 Hz)", Math.abs(big.p - 880) <= 6, `${big.p} Hz`);
-check("S hit and its tone are the same note an octave lower (440 Hz)", Math.abs(big.s - 440) <= 4, `${big.s} Hz`);
+check("P hit lands on the station's note, low (station 2 = A, 110 Hz)", Math.abs(big.p - 110) <= 4, `${big.p} Hz`);
+check("S hit lands on the same note (110 Hz)", Math.abs(big.s - 110) <= 2, `${big.s} Hz`);
 check("a big earthquake is clearly heard but not at the ceiling", big.peak > 0.12 && big.peak < ceiling * 0.95, `peak ${db(big.peak)}; knock ${db(big.bell)} rms, wash ${db(big.tone)} rms`);
 check("a small earthquake is quieter than a big one", small.peak < big.peak * 0.75, `small ${db(small.peak)}, big ${db(big.peak)}`);
 check("a far station is quieter and duller than a near one", far.peak < big.peak && far.high < big.high, `high share ${(far.high * 100).toFixed(1)}% vs ${(big.high * 100).toFixed(1)}%`);
 const notes = await js(`Array.from({ length: 34 }, (_, i) => ${A}.noteOf(i)).map((n) => n.name + Math.round(n.freq))`);
-check("every station's note is in D minor pentatonic, 587 to 2349 Hz", notes.every((n) => /^[DFGAC]\d/.test(n)), [...new Set(notes)].join(" "));
+check("every station's note is in D minor pentatonic (played three octaves below these)", notes.every((n) => /^[DFGAC]\d/.test(n)), [...new Set(notes)].join(" "));
 
 // 3. the room: eight phones (stations 0..7) for the Indonesian M 6.5, mixed, saved as a wav
 const b64 = await js(`(async () => { const geo = await import('./lib/geo.js'); const q = { lat: -5, lon: 106.9, mag01: 0.9, depth01: 0.52 };
-  const d = await T.render(22, (ctx) => { for (let i = 0; i < 8; i++) { const st = geo.STATIONS[i], a = ${A}.makeAudio(ctx), arr = geo.arrivals(geo.distanceDeg(q, st)); if (arr.zone === 'shadow') continue;
+  const d = await T.render(26, (ctx) => { for (let i = 0; i < 8; i++) { const st = geo.STATIONS[i], a = ${A}.makeAudio(ctx), arr = geo.arrivals(geo.distanceDeg(q, st)); if (arr.zone === 'shadow') continue;
     const loud = Math.min(1, arr.strength * (0.3 + 0.7 * q.mag01)), n = ${A}.noteOf(i), b = Math.max(0, Math.min(1, (arr.strength - 0.2) / 0.8));
     a.pWave(1 + arr.p * geo.SECONDS_PER_MINUTE, 0.5 * loud + 0.05, q.depth01, n.freq, b, q.mag01);
     if (arr.s !== null) a.sWave(1 + arr.s * geo.SECONDS_PER_MINUTE, 0.6 * loud + 0.05, q.depth01, q.mag01, n.freq, b); } });
