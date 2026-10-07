@@ -7,6 +7,8 @@
 //           **two stars** make a word stand out.
 //   photo   a picture file in the folder  presentation/photos/  (for example "me.jpg"); null = none
 //   credit  the line under the photo (who took it)
+//   dense   true = slightly smaller text, for a block with many lines
+//   "→ strudel.cc" at the end of a line becomes a link to that page
 //   scene   which Hydra visual plays behind it (the names are in scenes.js)
 //   extra   a built-in piece: "schematic", "code", "mapping", "qr", "sections" (or nothing)
 // Text in [square brackets] is shown in pink, with its brackets. In CAPITALS it is a placeholder,
@@ -27,12 +29,13 @@ export const BLOCKS = [
     ],
   },
   {
-    id: "tools", kicker: "the tools", title: "three languages, one instrument", scene: "three",
+    id: "tools", kicker: "the languages", title: "the languages I know best", scene: "three", dense: true,
     lines: [
-      "**SuperCollider** · the sound engine. The synthesizer is written and runs here.",
-      "**TidalCycles** · a language for patterns. I type rhythm and melody; it sends them, note by note, to SuperCollider.",
-      "**Strudel** · Tidal's sibling in the web browser. The same patterns play from both.",
-      "Between them: **SuperDirt**, which receives each note as a message and starts a voice of the synth.",
+      "**SuperCollider** [sound] a language for building sound from its simplest parts. The synthesizer is written in it. → supercollider.github.io",
+      "**TidalCycles** [sound] a language for patterns of rhythm and melody, made for live coding. → tidalcycles.org",
+      "**Strudel** [sound] Tidal's patterns in the web browser, written in JavaScript. → strudel.cc",
+      "**Hydra** [visuals] a language for live visuals in the browser, modelled on analog video synthesizers. → hydra.ojack.xyz",
+      "**JavaScript** [web choreography] the language of web pages: I use it to make a page move. → developer.mozilla.org/docs/Web/JavaScript",
     ],
   },
   {
