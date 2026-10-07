@@ -7,7 +7,6 @@
 // first phones around the globe.
 export const STATIONS = [
   ["CN.MNTQ", "Montréal", "Canada", 45.50, -73.62, "CN_MNTQ__H_H_Z"],
-  ["IU.MAJO", "Matsushiro", "Japan", 36.55, 138.20, "IU_MAJO_00_B_H_Z"],
   ["IU.LCO", "Las Campanas", "Chile", -29.01, -70.70, "IU_LCO_00_B_H_Z"],
   ["IU.KMBO", "Kilima Mbogo", "Kenya", -1.13, 37.25, "IU_KMBO_00_B_H_Z"],
   ["IU.CTAO", "Charters Towers", "Australia", -20.09, 146.25, "IU_CTAO_00_B_H_Z"],
@@ -22,7 +21,6 @@ export const STATIONS = [
   ["IU.RCBR", "Riachuelo", "Brazil", -5.83, -35.90, "IU_RCBR_00_B_H_Z"],
   ["IU.ANTO", "Ankara", "Turkey", 39.87, 32.79, "IU_ANTO_00_B_H_Z"],
   ["IU.GUMO", "Guam", "Mariana Islands", 13.59, 144.87, "IU_GUMO_00_B_H_Z"],
-  ["IU.PMSA", "Palmer Station", "Antarctica", -64.77, -64.05, "IU_PMSA_00_B_H_Z"],
   ["IU.YAK", "Yakutsk", "Russia", 62.03, 129.68, "IU_YAK_00_B_H_Z"],
   ["II.NNA", "Ñaña", "Peru", -11.99, -76.84, "II_NNA_00_B_H_Z"],
   ["IU.KONO", "Kongsberg", "Norway", 59.65, 9.60, "IU_KONO_00_B_H_Z"],
@@ -34,12 +32,16 @@ export const STATIONS = [
   ["II.ASCN", "Ascension Island", "South Atlantic", -7.93, -14.36, "II_ASCN_00_B_H_Z"],
   ["IU.ULN", "Ulaanbaatar", "Mongolia", 47.87, 107.05, "IU_ULN_00_B_H_Z"],
   ["IU.OTAV", "Otavalo", "Ecuador", 0.24, -78.45, "IU_OTAV_00_B_H_Z"],
-  ["II.MSEY", "Mahé", "Seychelles", -4.67, 55.48, "II_MSEY_10_B_H_Z"],
   ["II.KDAK", "Kodiak Island", "Alaska", 57.78, -152.58, "II_KDAK_00_B_H_Z"],
   ["IU.KEV", "Kevo", "Finland", 69.76, 27.00, "IU_KEV_00_B_H_Z"],
   ["IU.PTCN", "Pitcairn Island", "South Pacific", -25.07, -130.10, "IU_PTCN_00_B_H_Z"],
   ["II.EFI", "Mount Kent", "Falkland Islands", -51.68, -58.06, "II_EFI_00_B_H_Z"],
   ["IU.HRV", "Harvard", "Massachusetts", 42.51, -71.56, "IU_HRV_00_B_H_Z"],
+  // not sending live data on 2026-10-07 (checked all 34 for 50 s): kept last, so they are only dealt
+  // when more than 31 phones are in the room
+  ["IU.MAJO", "Matsushiro", "Japan", 36.55, 138.20, "IU_MAJO_00_B_H_Z"],
+  ["IU.PMSA", "Palmer Station", "Antarctica", -64.77, -64.05, "IU_PMSA_00_B_H_Z"],
+  ["II.MSEY", "Mahé", "Seychelles", -4.67, 55.48, "II_MSEY_10_B_H_Z"],
 ].map(([code, name, region, lat, lon, id]) => ({ code, name, region, lat, lon, match: `FDSN:${id}/MSEED` }));
 
 const RAD = Math.PI / 180;

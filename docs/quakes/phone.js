@@ -15,7 +15,7 @@
 // Messages come through a public MQTT broker (the approach of Gabriel Vigliensoni's phase-study
 // ensemble); the page itself is static.
 
-import { STATIONS, distanceDeg, arrivals, SECONDS_PER_MINUTE } from "./lib/geo.js";
+import { STATIONS, distanceDeg, arrivals, SECONDS_PER_MINUTE } from "./lib/geo.js?v=14";
 import { connectMqtt, BROKER, topicsFor } from "./lib/mqtt-lite.js";
 import { Ground } from "./lib/ground.js";
 
@@ -27,7 +27,7 @@ const clamp01 = (x) => Math.min(1, Math.max(0, x));
 const store = { get: (k) => { try { return sessionStorage.getItem(k); } catch { return null; } }, set: (k, v) => { try { sessionStorage.setItem(k, v); } catch { /* private mode */ } } };
 const ID = store.get("at-id") || (() => { const id = Math.random().toString(36).slice(2, 10); store.set("at-id", id); return id; })();
 
-const VERSION = 13;                        // shown on the page, to tell a fresh copy from one the phone kept (change it with ?v= in index.html)
+const VERSION = 14;                        // shown on the page, to tell a fresh copy from one the phone kept (change it with ?v= in index.html)
 $("roomTxt").textContent = `room ${ROOM} · v${VERSION}`;
 let station = null, mq = null, audio = null, ground = null;
 let state = { on: true, level: 1 };       // set by the laptop (phones on/off, overall level)
@@ -237,9 +237,10 @@ function draw(now) {
     if (map.width !== Math.round(r.width * dpr)) { map.width = Math.round(r.width * dpr); map.height = Math.round(r.height * dpr); }
     const c = map.getContext("2d"), W = r.width, H = r.height;
     c.setTransform(dpr, 0, 0, dpr, 0, 0); c.clearRect(0, 0, W, H);
-    const X = (lon) => ((lon + 180) / 360) * W, Y = (lat) => ((90 - lat) / 180) * H;
+    const mh = Math.min(H, W / 2), y0 = (H - mh) / 2;     // the map keeps its shape (2:1), centred
+    const X = (lon) => ((lon + 180) / 360) * W, Y = (lat) => y0 + ((90 - lat) / 180) * mh;
     c.strokeStyle = "rgba(233,230,223,0.4)"; c.lineWidth = 0.7;
-    for (const ring of land) { c.beginPath(); ring.forEach(([lon, lat], i) => { if (i && Math.abs(lon - ring[i - 1][0]) < 90) c.lineTo(X(lon), Y(lat)); else c.moveTo(X(lon), Y(lat)); }); c.stroke(); }
+    for (const ring of land) { c.beginPath(); ring.forEach(([lon, lat], i) => { if (i && Math.abs(lon - ring[i - 1][0]) < 90 && lat > -85.5 && ring[i - 1][1] > -85.5) c.lineTo(X(lon), Y(lat)); else c.moveTo(X(lon), Y(lat)); }); c.stroke(); }
     for (let i = waves.length - 1; i >= 0; i--) {              // the epicentres, fading
       const w = waves[i], age = (now - w.t0) / 1000, fade = 1 - age / 14;
       if (fade <= 0) { waves.splice(i, 1); continue; }

@@ -20,7 +20,7 @@ h1 { margin: 0; font-weight: 800; line-height: 1.04; letter-spacing: -0.01em; }
 .region { font: 15px var(--mono); color: var(--dim); margin-top: -6px; }
 .dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: var(--s); margin-right: 8px; vertical-align: baseline; }
 .dot.ok { background: #6fd39b; }
-#map { width: 100%; flex: 1 1 0; min-height: 0; border: 1px solid var(--line); border-radius: 10px; }
+#map { width: 100%; aspect-ratio: 2 / 1; flex: 0 0 auto;   /* the world map is twice as wide as tall: never stretched */ border: 1px solid var(--line); border-radius: 10px; }
 .arrival { min-height: 4.2em; font: 15px/1.4 var(--mono); color: var(--ink); }
 .arrival b { font-weight: 400; color: var(--p); }
 .arrival b.s { color: var(--s); }
