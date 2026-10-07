@@ -43,8 +43,8 @@ export const BLOCKS = [
     id: "began", kicker: "where it began", title: "a 1970s synthesizer that inspired my coded synth", scene: "old",
     photo: "synth.jpg", credit: "Dalhousie University, 2024 fall term",
     lines: [
-      "The ARP 2600 is a legendary semi-modular analog synthesizer, introduced in 1971 by Alan R. Pearlman's company, ARP Instruments.",
-      "My project tries to build a synth in code from it: a curated set of its sounds, an interactive instrument to play them, and a small language of my own to write them.",
+      "The ARP 2600 is a legendary semi-modular analog synthesizer, introduced in 1971.",
+      "My idea was to build a coded synth in SuperCollider, where I can curate sounds and live code with them in Tidal and Strudel.",
     ],
   },
   {
