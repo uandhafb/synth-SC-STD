@@ -27,7 +27,7 @@ const clamp01 = (x) => Math.min(1, Math.max(0, x));
 const store = { get: (k) => { try { return sessionStorage.getItem(k); } catch { return null; } }, set: (k, v) => { try { sessionStorage.setItem(k, v); } catch { /* private mode */ } } };
 const ID = store.get("at-id") || (() => { const id = Math.random().toString(36).slice(2, 10); store.set("at-id", id); return id; })();
 
-const VERSION = 6;                        // shown on the page, to tell a fresh copy from one the phone kept (change it with ?v= in index.html)
+const VERSION = 7;                        // shown on the page, to tell a fresh copy from one the phone kept (change it with ?v= in index.html)
 $("roomTxt").textContent = `room ${ROOM} · v${VERSION}`;
 let station = null, mq = null, audio = null, ground = null;
 let state = { on: true, level: 1 };       // set by the laptop (phones on/off, overall level)
@@ -42,7 +42,10 @@ const waves = [];                         // for the map: { q, t0 }
 // The order makes the first phones in the room a wide chord (D A F C D' G …), not a cluster.
 const SCALE = [0, 7, 3, 10, 12, 5, 15, 19, 17, 22, 24];
 const NAMES = ["D", "E♭", "E", "F", "F♯", "G", "A♭", "A", "B♭", "B", "C", "C♯"];
-const noteOf = (index) => { const st = SCALE[((index % SCALE.length) + SCALE.length) % SCALE.length]; return { freq: 587.33 * 2 ** (st / 12), name: NAMES[st % 12] }; };
+// Every third station (the 3rd, 6th, 9th phone …) plays an octave higher than the others, so the
+// room has two registers: mostly low hits, and some lighter, higher ones among them.
+const noteOf = (index) => { const st = SCALE[((index % SCALE.length) + SCALE.length) % SCALE.length], high = index % 3 === 2;
+  return { freq: 587.33 * 2 ** (st / 12) * (high ? 2 : 1), name: NAMES[st % 12], high }; };
 const CEILING = 0.6;                      // the loudest the page can ever be: 60% of the phone's full level
 
 function makeAudio(ctx = new (window.AudioContext || window.webkitAudioContext)()) {
@@ -104,9 +107,9 @@ function makeAudio(ctx = new (window.AudioContext || window.webkitAudioContext)(
     for (const [o, f] of [[o1, freq], [o2, freq * 1.007]]) { o.frequency.setValueAtTime(f * 2 ** ((10 + 14 * m) / 12), at); o.frequency.exponentialRampToValueAtTime(f, at + fall); }
     nf.type = "lowpass"; nf.frequency.value = 900; ng.gain.value = 0.4 + 2.2 * m;
     const sh = ctx.createWaveShaper(); sh.curve = drive;
-    const cut = (300 + 800 * (1 - depth01)) * (0.5 + 0.5 * bright);
+    const cut = Math.max(freq * 4, (300 + 800 * (1 - depth01)) * (0.5 + 0.5 * bright));   // always room for the note's first harmonics
     const f = ctx.createBiquadFilter(); f.type = "lowpass"; f.Q.value = 3;
-    f.frequency.setValueAtTime(Math.min(2200, cut * 2.2), at); f.frequency.exponentialRampToValueAtTime(cut, at + dec);
+    f.frequency.setValueAtTime(Math.min(3200, cut * 2.2), at); f.frequency.exponentialRampToValueAtTime(cut, at + dec);
     const g = ctx.createGain(), send = ctx.createGain();
     g.gain.setValueAtTime(0, at); g.gain.linearRampToValueAtTime(amp * 0.3, at + 0.004); g.gain.exponentialRampToValueAtTime(0.0008, at + len);
     send.gain.value = 0.5 + 0.5 * m;
@@ -248,7 +251,7 @@ function draw(now) {
 function become(index) {
   station = STATIONS[((index % STATIONS.length) + STATIONS.length) % STATIONS.length];
   store.set("at-station", String(index));
-  $("code").textContent = station.code; $("name").textContent = station.name; $("region").textContent = `${station.region} · ${Math.abs(station.lat).toFixed(1)}°${station.lat >= 0 ? "N" : "S"} ${Math.abs(station.lon).toFixed(1)}°${station.lon >= 0 ? "E" : "W"} · its note: ${noteOf(STATIONS.indexOf(station)).name}`;
+  $("code").textContent = station.code; $("name").textContent = station.name; $("region").textContent = `${station.region} · ${Math.abs(station.lat).toFixed(1)}°${station.lat >= 0 ? "N" : "S"} ${Math.abs(station.lon).toFixed(1)}°${station.lon >= 0 ? "E" : "W"} · its note: ${noteOf(STATIONS.indexOf(station)).name}${noteOf(STATIONS.indexOf(station)).high ? " (high)" : ""}`;
   ground?.stop();
   ground = new Ground({ match: station.match, name: station.name, delay: 9, log: () => {},
     onValue: (v) => audio?.groundLevel(v),

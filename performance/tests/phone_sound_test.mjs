@@ -66,6 +66,8 @@ check("S hit lands on the same note (110 Hz)", Math.abs(big.s - 110) <= 2, `${bi
 check("a big earthquake is clearly heard but not at the ceiling", big.peak > 0.12 && big.peak < ceiling * 0.95, `peak ${db(big.peak)}; knock ${db(big.bell)} rms, wash ${db(big.tone)} rms`);
 check("a small earthquake is quieter than a big one", small.peak < big.peak * 0.75, `small ${db(small.peak)}, big ${db(big.peak)}`);
 check("a far station is quieter than a near one", far.peak < big.peak, `far ${db(far.peak)}, near ${db(big.peak)}`);
+const hi = await js(`T.render(6, (ctx) => { const a = ${A}.makeAudio(ctx); a.sWave(0.5, 0.5, 0.3, 0.9, ${A}.noteOf(2).freq, 0.9); }).then((d) => T.pitch(d, 100, 400, 1.2, 3.0))`);
+check("every third phone plays an octave higher (station 3 = F: 175 Hz, not 87)", Math.abs(hi - 174.6) <= 3 && (await js(`${A}.noteOf(2).high && !${A}.noteOf(0).high && !${A}.noteOf(1).high`)), `${hi} Hz`);
 const notes = await js(`Array.from({ length: 34 }, (_, i) => ${A}.noteOf(i)).map((n) => n.name + Math.round(n.freq))`);
 check("every station's note is in D minor pentatonic (played three octaves below these)", notes.every((n) => /^[DFGAC]\d/.test(n)), [...new Set(notes)].join(" "));
 
