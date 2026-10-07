@@ -27,7 +27,7 @@ const clamp01 = (x) => Math.min(1, Math.max(0, x));
 const store = { get: (k) => { try { return sessionStorage.getItem(k); } catch { return null; } }, set: (k, v) => { try { sessionStorage.setItem(k, v); } catch { /* private mode */ } } };
 const ID = store.get("at-id") || (() => { const id = Math.random().toString(36).slice(2, 10); store.set("at-id", id); return id; })();
 
-const VERSION = 8;                        // shown on the page, to tell a fresh copy from one the phone kept (change it with ?v= in index.html)
+const VERSION = 9;                        // shown on the page, to tell a fresh copy from one the phone kept (change it with ?v= in index.html)
 $("roomTxt").textContent = `room ${ROOM} · v${VERSION}`;
 let station = null, mq = null, audio = null, ground = null;
 let state = { on: true, level: 1 };       // set by the laptop (phones on/off, overall level)
@@ -113,7 +113,7 @@ function makeAudio(ctx = new (window.AudioContext || window.webkitAudioContext)(
     const o1 = ctx.createOscillator(), o2 = ctx.createOscillator(), og = ctx.createGain(), n = noise(), nf = ctx.createBiquadFilter(), ng = ctx.createGain();
     o1.type = "sawtooth"; o2.type = "sawtooth"; og.gain.value = 0.7;
     for (const [o, f] of [[o1, freq], [o2, freq * 1.007]]) { o.frequency.setValueAtTime(f * 2 ** ((10 + 14 * m) / 12), at); o.frequency.exponentialRampToValueAtTime(f, at + fall); }
-    nf.type = "lowpass"; nf.frequency.value = 900; ng.gain.value = 0.4 + 2.2 * m;
+    nf.type = "lowpass"; nf.frequency.value = 900; ng.gain.value = 0.25 + 1.2 * m;   // under the saws, as on the synth, so the note is heard through the noise
     const sh = ctx.createWaveShaper(); sh.curve = drive;
     const cut = soft ? (380 + 1100 * (1 - depth01)) * (0.5 + 0.5 * bright)
       : Math.max(freq * 4, (300 + 800 * (1 - depth01)) * (0.5 + 0.5 * bright));   // always room for the note's first harmonics
@@ -125,11 +125,11 @@ function makeAudio(ctx = new (window.AudioContext || window.webkitAudioContext)(
     o1.connect(sh); o2.connect(og).connect(sh); n.connect(nf).connect(ng).connect(sh); sh.connect(f).connect(g); g.connect(master); g.connect(send).connect(spring);
     for (const x of [o1, o2, n]) { x.start(at); x.stop(at + len + 0.05); }
     if (soft) return;                       // the soft kind has no thump
-    // The thump, as in a kick drum: a sine that dives from 420 Hz to 95 Hz. The first part of the
-    // dive is inside the phone's range, and the ear follows it down and hears a low blow. Bigger
-    // earthquake = a slower, longer dive.
+    // The thump, as in a kick drum: a sine that dives from 420 Hz (or higher) down to the note
+    // itself, so it lands in tune. The first part of the dive is inside the phone's range, and the
+    // ear follows it down and hears a low blow. Bigger earthquake = a slower, longer dive.
     const k = ctx.createOscillator(), kg = ctx.createGain(), klen = 0.22 + 0.5 * m;
-    k.frequency.setValueAtTime(420, at); k.frequency.exponentialRampToValueAtTime(95, at + 0.1 + 0.25 * m);
+    k.frequency.setValueAtTime(Math.max(420, freq * 3), at); k.frequency.exponentialRampToValueAtTime(freq, at + 0.1 + 0.25 * m);
     kg.gain.setValueAtTime(0, at); kg.gain.linearRampToValueAtTime(amp * (0.35 + 0.35 * m), at + 0.004); kg.gain.exponentialRampToValueAtTime(0.0008, at + klen);
     k.connect(kg).connect(master); kg.connect(send);
     k.start(at); k.stop(at + klen + 0.05);
