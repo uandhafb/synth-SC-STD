@@ -33,7 +33,7 @@ let -- NUCLEO · o que gira no escuro e nunca para            (mono: osciladores
     -- CHAO · o chão daqui, agora                              (AO VIVO: o sismômetro de Montréal abre o filtro e o volume)
     chao = n "9*16" # s "scstd" # monomode 1 # legato 1.05 # orbit 6
       # o1lvl 0 # o2lvl 0.7 # o2wave 3 # o3lvl 0 # nzlvl 1 # nzcol 0.3 # vcfdrive 0.8
-      # vcfcut (range 150 5000 qground) # vcfres 0.85 # vcfenv 0 # vcfkey 0 # vcalvl (range 0.15 1 qground) # spmix 0.3
+      # vcfcut (range 150 5000 qground) # vcfres 0.85 # vcfenv 0 # vcfkey 0 # vcalvl (range 0.15 1 qground) # spmix 0.3 # gain 0.5
     -- MANTO · pedra que escorre devagar, por séculos        (acordes com PWM)
     manto = n "<[2,5,9] [0,4,7] [-2,2,5] [-3,0,4]>/2" # s "scstd" # legato 1 # orbit 3
       # o1lf 1 # o1lfrate 0.8 # o1lvl 0 # o2wave 1 # o2pwm 0.8 # o3lvl 0.6 # o3wave 1 # o3pwm 0.6 # o3oct 0 # o3fine (-0.08)
@@ -83,9 +83,9 @@ let -- NUCLEO · o que gira no escuro e nunca para            (mono: osciladores
       # vcfkey 1 # vcfdrive 0 # drift 0.05 # vspread 0 # arrel 2.5 # erel 2.5 # edec 0.9 # vcfcut 1500 # vcfenv 0.35
       # spmix 0.5 # spdecay 0.8
     -- VENTO · o planeta respirando por cima                  (ruído + filtro ressonante + S&H lento)
-    vento = slow 2 $ n "0" # s "scstd" # legato 1.2 # orbit 4
+    vento = slow 7 $ n "0" # s "scstd" # legato 1.2 # orbit 4
       # o1lvl 0 # o2lvl 0 # nzlvl 1 # nzcol 0.5 # vcfenv 0 # vcfkey 0 # sh_vcf 3 # shrate 1.2 # shlag 1
-      # vcfcut 1000 # vcfres 0.9 # aratk 1 # arrel 2 # erel 2 # spmix 0.4
+      # vcfcut 1000 # vcfres 0.9 # aratk 1 # arrel 2 # erel 2 # spmix 0.4 # gain (0.3)
     -- LAVA · luz líquida                                      (FM: o VCO 3 dobrando a afinação de todos)
     lava = n "<2 5 9 7>" # s "scstd" # legato 1 # orbit 4
       # o1lvl 0 # o2wave 3 # o3kbd 0 # o3oct (-1) # vco3_pitch 4 # vcfcut 4000 # vcfenv 0
@@ -163,12 +163,12 @@ d1 $ stack [silence
   -- , nucleo # vcfcut (range 120 900 qground) # nzlvl (range 0.1 0.5 qground)
   -- , chao # gain 1.1
   -- , slow 2 $ vento # gain 0.85 # pan (slow 8 sine)
-  -- , sombra # gain 0.8
+   --, sombra # gain 0.8
   -- ---- a falha ----------------------------------------------------------------------
   -- , falha # o1lfrate (range 4 14 qrate) # gain 1.15
   -- , respingo # spdecay "<0 0.5 1>" # gain 0.9
-  -- , degradeBy (range 0.9 0.2 qrate) $ poeira # pan rand # gain 0.8
-  -- , every 4 (off 0.125 (|+ n 12)) $ magma # vcfcut (range 200 2500 qmag)
+  --, degradeBy (range 0.9 0.2 qrate) $ poeira # pan rand # gain 0.8
+  --, every 4 (off 0.125 (|+ n 12)) $ magma # vcfcut (range 200 2500 qmag)
   -- , whenmod 8 6 (hurry 2) $ placas # pan (slow 3 sine) # gain 0.85
   -- , cascalho # gain 1.15
   -- ---- o enxame ---------------------------------------------------------------------
@@ -208,27 +208,27 @@ d1 $ stack [silence
 -- ============================================================================================
 
 let arranjo = seqPLoop
-      -- o chão respira (0-16)
-      [ (0, 152, nucleo # vcfcut (range 120 1100 qenergy) # nzlvl (range 0.1 0.5 qground))
-      , (0, 24, slow 2 $ vento # gain 0.85 # pan (slow 8 sine))
-      , (2, 16, chao # gain 1)
-      , (4, 20, sombra # gain 0.8)
-      , (10, 18, assobio # gain 0.7)
-      -- a falha (16-48)
-      , (16, 80, falha # o1lfrate (range 4 14 qrate) # gain 1.15)
-      , (28, 80, respingo # spdecay "<0 0.5 1>" # gain 0.9)
-      , (20, 80, degradeBy (range 0.9 0.2 qrate) $ poeira # pan rand # gain 0.8)
-      , (24, 80, every 4 (off 0.125 (|+ n 12)) $ magma # vcfcut (range 200 2500 qmag))
+      -- o chão respira
+      [ (0, 152, nucleo # vcfcut (range 120 1100 qenergy) # nzlvl (range 0.1 0.5 qground) # gain 0.85)
+      , (3, 24, slow 2 $ vento # gain 0.05 # pan (slow 8 sine))
+      , (2, 13, chao # gain 0.05)
+      , (4, 20, sombra # gain 0.5 pan (fast 5 sine))
+      , (10, 18, assobio # gain 0.65)
+      -- a falha
+      , (21, 80, falha # o1lfrate (range 4 14 qrate) # gain 0.25)
+      , (28, 80, respingo # spdecay "<0 0.5 1>" # gain 0.5)
+      , (13, 80, degradeBy (range 0.5 0.2 qrate) $ poeira # pan rand # gain 0.5)
+      , (25, 80, every 4 (off 0.125 (|+ n 12)) $ magma # vcfcut (range 200 2500 qmag))
       , (32, 80, whenmod 8 6 (hurry 2) $ placas # pan (slow 3 sine) # gain 0.85)
-      , (40, 80, cascalho # gain 1.15)
+      , (13, 80, cascalho # gain 0.55 # pan rand)
       -- o enxame (48-80)
-      , (48, 80, every 3 (jux rev) $ sismografo # sh_vcf (range 0.5 3.5 qenergy) # shrate (range 4 16 qrate) # gain 1)
-      , (56, 80, sometimesBy 0.3 (# crush 5) $ fenda # gain 0.7 # pan (fast 2 sine))
-      , (52, 80, borbulha # sh_vcf (range 1 3.5 qenergy) # gain 0.9)
-      , (60, 80, areia # noise_vcf (range 0.3 2.5 qenergy) # gain 0.85)
-      , (64, 80, ondaP # pan rand # gain 1)
-      , (68, 80, estratos # o1lfrate (range 0.3 1.5 qenergy) # gain 0.7)
-      , (72, 80, tremor # swrate (range 6 24 qenergy) # gain 0.7)
+      , (128, 140, every 3 (jux rev) $ sismografo # sh_vcf (range 0.5 3.5 qenergy) # shrate (range 4 16 qrate) # gain 1)
+      , (128, 141, sometimesBy 0.3 (# crush 5) $ fenda # gain 0.7 # pan (fast 2 sine))
+      , (128, 142, borbulha # sh_vcf (range 1 3.5 qenergy) # gain 0.9)
+      , (60, 80, areia # noise_vcf (range 0.3 2.5 qenergy) # gain 0.55)
+      , (64, 80, ondaP # pan rand # gain 0.7)
+      , (68, 80, estratos # o1lfrate (range 0.3 1.5 qenergy) # gain 0.5)
+      , (72, 80, tremor # swrate (range 6 24 qenergy) # gain 0.5)
       -- a ruptura (80-100): o chão para; é a hora das teclas 1 2 3
       , (80, 100, manto # gain 1)
       , (80, 100, off 0.375 (# gain 0.6) $ replica # gain 0.8)
@@ -249,12 +249,15 @@ let arranjo = seqPLoop
       , (108, 124, quartzo # shrate (range 3 14 qrate) # gain 0.8)
       , (112, 128, geiser # gain 0.85)
       -- agora (128-152): o chão de Montréal ao vivo (chao), a sombra e um sinal
-      , (126, 152, chao # gain 1.15)
-      , (128, 152, manto # gain 0.8)
-      , (130, 150, sombra # gain 0.8)
-      , (132, 150, estatica # pan rand # gain 0.6)
-      , (136, 150, degradeBy 0.5 $ sinal # pan rand # gain 0.6)
+      , (126, 152, chao # gain 0.05)
+      , (128, 152, manto # vcfcut (range 500 3500 qground) # gain 0.8)
+      , (130, 150, sombra # vco3_pitch (range 1 9 qground) # gain 0.8)
+      , (132, 150, degradeBy (range 0.95 0.1 qground) $ estatica # pan rand # gain 0.6)
+      , (136, 150, degradeBy (range 0.97 0.3 qground) $ sinal # pan rand # gain 0.6)
       , (140, 150, cigarra # pan (slow 5 sine) # gain 0.6)
+      , (128, 152, tremor # swrate (range 3 30 qground) # gain 0.6)
+      , (128, 152, n (toScale [0,2,3,5,7,8,10] (floor <$> segment 8 (range 0 14 qground))) # s "scstd" # legato 0.5 # vcfcut 1800 # spmix 0.4 # orbit 5 # gain 0.8)
+
       ]
 
 do resetCycles
