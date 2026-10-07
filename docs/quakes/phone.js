@@ -27,7 +27,7 @@ const clamp01 = (x) => Math.min(1, Math.max(0, x));
 const store = { get: (k) => { try { return sessionStorage.getItem(k); } catch { return null; } }, set: (k, v) => { try { sessionStorage.setItem(k, v); } catch { /* private mode */ } } };
 const ID = store.get("at-id") || (() => { const id = Math.random().toString(36).slice(2, 10); store.set("at-id", id); return id; })();
 
-const VERSION = 10;                        // shown on the page, to tell a fresh copy from one the phone kept (change it with ?v= in index.html)
+const VERSION = 11;                        // shown on the page, to tell a fresh copy from one the phone kept (change it with ?v= in index.html)
 $("roomTxt").textContent = `room ${ROOM} · v${VERSION}`;
 let station = null, mq = null, audio = null, ground = null;
 let state = { on: true, level: 1 };       // set by the laptop (phones on/off, overall level)
@@ -167,14 +167,14 @@ function makeAudio(ctx = new (window.AudioContext || window.webkitAudioContext)(
     return len;
   }
 
-  // The station's own ground: a band of noise, clearly heard but well under the hits, that swells
+  // The station's own ground: a soft band of noise, far under the hits, that swells
   // and brightens when the ground moves more.
   const bed = noise(), bf = ctx.createBiquadFilter(), bg = ctx.createGain();
   bf.type = "bandpass"; bf.frequency.value = 420; bf.Q.value = 0.9; bg.gain.value = 0;
   bed.connect(bf).connect(bg).connect(master); bed.start();
   function groundLevel(v) {
     const t = ctx.currentTime;
-    bg.gain.setTargetAtTime(state.on ? (0.12 + 0.6 * v) * state.level : 0, t, 0.12);
+    bg.gain.setTargetAtTime(state.on ? (0.03 + 0.15 * v) * state.level : 0, t, 0.12);
     bf.frequency.setTargetAtTime(300 + 900 * v, t, 0.2);
   }
 
