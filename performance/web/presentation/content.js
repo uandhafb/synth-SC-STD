@@ -53,13 +53,13 @@ export const BLOCKS = [
     lines: ["**3 synth definitions · 21 modules · 107 parameters**"],
   },
   {
-    id: "code", kicker: "inside the code", title: "", scene: "feed", extra: "code",
+    id: "code", kicker: "inside the code", title: "", scene: "glyphs", extra: "code",
     lines: ["Now in the editor: the synth's definition in SuperCollider, and this line in Tidal."],
   },
   {
-    id: "thanks", kicker: "thank you", title: "questions?", scene: "figure", qr: "github.com/uandhafb/synth-SC-STD",
+    id: "thanks", kicker: "thank you", title: "questions?", scene: "ripples", qr: "github.com/uandhafb/synth-SC-STD",
     lines: [
-      "The lines behind this text are moved by **real data**: the ground under Montréal, live, a few seconds ago. When an earthquake is played, they swing wider.",
+      "The visuals behind this text are moved by **real data**: the ground under Montréal, live, a few seconds ago. Every earthquake sends a wave through them.",
       "Data: U.S. Geological Survey · EarthScope · Canadian National Seismograph Network.",
       "Built with SuperCollider, TidalCycles, Strudel, Hydra.",
     ],

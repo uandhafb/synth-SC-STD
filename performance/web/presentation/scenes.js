@@ -91,4 +91,23 @@ export const SCENES = {
       .add(lines(h, 18, 0.975).scrollY(0.027).color(...lime).modulateScrollY(tremor(h, 18, 12, 0.7), shake(L, 0.012, 0.1, 0.2)))
       .blend(h.src(h.o0), 0.35),
     { figure: 0.06, tint: lime }),
+
+  // inside the code: a wall of small marks, like characters on a screen, appearing and
+  // disappearing line by line and drifting slowly upwards
+  glyphs: (h, L) => finish(h, L,
+    h.osc(64 * TAU, 0, 0).thresh(0.35, 0.1).mult(h.osc(30 * TAU, 0, 0).rotate(Math.PI / 2).thresh(0.45, 0.1))
+      .mult(h.noise(26, 0.12).pixelate(64, 30).thresh(0.08, 0.25))
+      .scrollY(0, 0.012).color(...lime)
+      .modulate(h.noise(1.5, 0.05), shake(L, 0.002, 0.02, 0.04)),
+    { figure: 0.02, ghost: 0.2, tint: pink, dim: 0.5 }),
+
+  // the end: circles leaving a centre, the way the waves of an earthquake leave it, in two
+  // colours (the pale P wave ahead, the pink S wave behind), softly bent by the presenter
+  ripples: (h, L) =>
+    h.osc(110, -0.02, 0).kaleid(180).thresh(0.9, 0.03).color(...paper)
+      .add(h.osc(55, -0.012, 0.5).kaleid(180).thresh(0.93, 0.02).color(...pink))
+      .modulate(h.noise(1.6, 0.06), shake(L, 0.004, 0.03, 0.06))
+      .modulate(soft(h), () => (L.cam ? 0.04 : 0))
+      .add(cam(h).thresh(0.5, 0.3).color(...lime), () => (L.cam ? 0.18 : 0))
+      .mult(h.solid(0.62, 0.62, 0.62)),
 };
