@@ -27,7 +27,7 @@ const clamp01 = (x) => Math.min(1, Math.max(0, x));
 const store = { get: (k) => { try { return sessionStorage.getItem(k); } catch { return null; } }, set: (k, v) => { try { sessionStorage.setItem(k, v); } catch { /* private mode */ } } };
 const ID = store.get("at-id") || (() => { const id = Math.random().toString(36).slice(2, 10); store.set("at-id", id); return id; })();
 
-const VERSION = 7;                        // shown on the page, to tell a fresh copy from one the phone kept (change it with ?v= in index.html)
+const VERSION = 8;                        // shown on the page, to tell a fresh copy from one the phone kept (change it with ?v= in index.html)
 $("roomTxt").textContent = `room ${ROOM} · v${VERSION}`;
 let station = null, mq = null, audio = null, ground = null;
 let state = { on: true, level: 1 };       // set by the laptop (phones on/off, overall level)
@@ -42,10 +42,14 @@ const waves = [];                         // for the map: { q, t0 }
 // The order makes the first phones in the room a wide chord (D A F C D' G …), not a cluster.
 const SCALE = [0, 7, 3, 10, 12, 5, 15, 19, 17, 22, 24];
 const NAMES = ["D", "E♭", "E", "F", "F♯", "G", "A♭", "A", "B♭", "B", "C", "C♯"];
-// Every third station (the 3rd, 6th, 9th phone …) plays an octave higher than the others, so the
-// room has two registers: mostly low hits, and some lighter, higher ones among them.
-const noteOf = (index) => { const st = SCALE[((index % SCALE.length) + SCALE.length) % SCALE.length], high = index % 3 === 2;
-  return { freq: 587.33 * 2 ** (st / 12) * (high ? 2 : 1), name: NAMES[st % 12], high }; };
+// Three kinds of phone take turns as people join, so one table hears three colours of the same
+// earthquake:
+//   0 (1st, 4th, 7th …)  low and heavy: the hit with the kick-like thump and the low boost
+//   1 (2nd, 5th, 8th …)  low and soft: the same hit without the thump or the boost (growl and reverb)
+//   2 (3rd, 6th, 9th …)  high: the heavy hit an octave up
+const KINDS = ["low, heavy", "low, soft", "high"];
+const noteOf = (index) => { const st = SCALE[((index % SCALE.length) + SCALE.length) % SCALE.length], kind = ((index % 3) + 3) % 3;
+  return { freq: 587.33 * 2 ** (st / 12) * (kind === 2 ? 2 : 1), name: NAMES[st % 12], kind, high: kind === 2 }; };
 const CEILING = 0.6;                      // the loudest the page can ever be: 60% of the phone's full level
 
 function makeAudio(ctx = new (window.AudioContext || window.webkitAudioContext)()) {
@@ -67,6 +71,10 @@ function makeAudio(ctx = new (window.AudioContext || window.webkitAudioContext)(
   const dull = ctx.createBiquadFilter(); dull.type = "highshelf"; dull.frequency.value = 4000; dull.gain.value = -6;
   const pre = ctx.createGain(); pre.gain.value = 0.5;      // room for the boost, so the limiter stays idle for one earthquake
   master.connect(body).connect(dull).connect(pre).connect(limit).connect(trim).connect(ceil).connect(ctx.destination);
+  // The kind of this phone (see KINDS): the soft one has no low boost and no thump.
+  let soft = false;
+  function setKind(kind) { soft = kind === 1; const t = ctx.currentTime;
+    body.gain.setTargetAtTime(soft ? 0 : 8, t, 0.05); dull.gain.setTargetAtTime(soft ? 0 : -6, t, 0.05); pre.gain.setTargetAtTime(soft ? 0.7 : 0.5, t, 0.05); }
   // two seconds of noise, reused for everything
   const buf = ctx.createBuffer(1, ctx.sampleRate * 2, ctx.sampleRate), d = buf.getChannelData(0);
   for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
@@ -107,7 +115,8 @@ function makeAudio(ctx = new (window.AudioContext || window.webkitAudioContext)(
     for (const [o, f] of [[o1, freq], [o2, freq * 1.007]]) { o.frequency.setValueAtTime(f * 2 ** ((10 + 14 * m) / 12), at); o.frequency.exponentialRampToValueAtTime(f, at + fall); }
     nf.type = "lowpass"; nf.frequency.value = 900; ng.gain.value = 0.4 + 2.2 * m;
     const sh = ctx.createWaveShaper(); sh.curve = drive;
-    const cut = Math.max(freq * 4, (300 + 800 * (1 - depth01)) * (0.5 + 0.5 * bright));   // always room for the note's first harmonics
+    const cut = soft ? (380 + 1100 * (1 - depth01)) * (0.5 + 0.5 * bright)
+      : Math.max(freq * 4, (300 + 800 * (1 - depth01)) * (0.5 + 0.5 * bright));   // always room for the note's first harmonics
     const f = ctx.createBiquadFilter(); f.type = "lowpass"; f.Q.value = 3;
     f.frequency.setValueAtTime(Math.min(3200, cut * 2.2), at); f.frequency.exponentialRampToValueAtTime(cut, at + dec);
     const g = ctx.createGain(), send = ctx.createGain();
@@ -115,6 +124,7 @@ function makeAudio(ctx = new (window.AudioContext || window.webkitAudioContext)(
     send.gain.value = 0.5 + 0.5 * m;
     o1.connect(sh); o2.connect(og).connect(sh); n.connect(nf).connect(ng).connect(sh); sh.connect(f).connect(g); g.connect(master); g.connect(send).connect(spring);
     for (const x of [o1, o2, n]) { x.start(at); x.stop(at + len + 0.05); }
+    if (soft) return;                       // the soft kind has no thump
     // The thump, as in a kick drum: a sine that dives from 420 Hz to 95 Hz. The first part of the
     // dive is inside the phone's range, and the ear follows it down and hears a low blow. Bigger
     // earthquake = a slower, longer dive.
@@ -167,7 +177,7 @@ function makeAudio(ctx = new (window.AudioContext || window.webkitAudioContext)(
     bf.frequency.setTargetAtTime(300 + 900 * v, t, 0.2);
   }
 
-  return { ctx, master, pWave, sWave, groundLevel };
+  return { ctx, master, pWave, sWave, groundLevel, setKind };
 }
 
 // ---- an earthquake arrives ----------------------------------------------------------------------
@@ -251,7 +261,8 @@ function draw(now) {
 function become(index) {
   station = STATIONS[((index % STATIONS.length) + STATIONS.length) % STATIONS.length];
   store.set("at-station", String(index));
-  $("code").textContent = station.code; $("name").textContent = station.name; $("region").textContent = `${station.region} · ${Math.abs(station.lat).toFixed(1)}°${station.lat >= 0 ? "N" : "S"} ${Math.abs(station.lon).toFixed(1)}°${station.lon >= 0 ? "E" : "W"} · its note: ${noteOf(STATIONS.indexOf(station)).name}${noteOf(STATIONS.indexOf(station)).high ? " (high)" : ""}`;
+  $("code").textContent = station.code; $("name").textContent = station.name; $("region").textContent = `${station.region} · ${Math.abs(station.lat).toFixed(1)}°${station.lat >= 0 ? "N" : "S"} ${Math.abs(station.lon).toFixed(1)}°${station.lon >= 0 ? "E" : "W"} · its note: ${noteOf(STATIONS.indexOf(station)).name} (${KINDS[noteOf(STATIONS.indexOf(station)).kind]})`;
+  audio?.setKind(noteOf(STATIONS.indexOf(station)).kind);
   ground?.stop();
   ground = new Ground({ match: station.match, name: station.name, delay: 9, log: () => {},
     onValue: (v) => audio?.groundLevel(v),
@@ -266,6 +277,7 @@ document.addEventListener("visibilitychange", () => { if (document.visibilitySta
 
 function join() {
   audio = makeAudio(); audio.ctx.resume();
+  if (station) audio.setKind(noteOf(STATIONS.indexOf(station)).kind);
   $("join").hidden = true; $("station").hidden = false;
   keepAwake();
   const saved = store.get("at-station");

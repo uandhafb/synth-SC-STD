@@ -55,7 +55,7 @@ check("even a signal 50 times too loud stays under the ceiling", raw <= ceiling 
 // 2. one big and one small earthquake, as the page plays them (amplitudes from onQuake)
 const db = (x) => (20 * Math.log10(x)).toFixed(1) + " dB";
 const one = (mag01, strength) => { const loud = Math.min(1, strength * (0.3 + 0.7 * mag01)); return `T.render(10, (ctx) => { const a = ${A}.makeAudio(ctx), f = ${A}.noteOf(1).freq, b = ${Math.max(0, Math.min(1, (strength - 0.2) / 0.8))}; a.pWave(0.2, ${0.5 * loud + 0.05}, 0.3, f, b, ${mag01}); a.sWave(1.5, ${0.6 * loud + 0.05}, 0.3, ${mag01}, f, b); })`; };
-const big = await js(`${one(0.9, 0.9)}.then((d) => ({ peak: T.peak(d), p: T.pitch(d, 60, 200, 0.45, 0.9), s: T.pitch(d, 60, 200, 2.2, 4.0), bell: T.rms(d, 8820, 22050), tone: T.rms(d, 70560, 132300), high: T.highShare(d.subarray(8820, 22050)) }))`);
+const big = await js(`${one(0.9, 0.9)}.then((d) => ({ peak: T.peak(d), p: T.pitch(d, 60, 200, 0.6, 1.0), s: T.pitch(d, 60, 200, 2.2, 4.0), bell: T.rms(d, 8820, 22050), tone: T.rms(d, 70560, 132300), high: T.highShare(d.subarray(8820, 22050)) }))`);
 // the dry S hit of this earthquake ends 6.2 s into the render; what is heard after that is the reverb
 const tail = await js(`${one(0.9, 0.9).replace("T.render(10", "T.render(13")}.then((d) => ({ dry: T.rms(d, 44100 * 3, 44100 * 4), after1: T.rms(d, 44100 * 7, 44100 * 8), after5: T.rms(d, 44100 * 11, 44100 * 12) }))`);
 check("the reverb sustains a big hit after it ends, then dies away", tail.after1 > 0.003 && tail.after5 < tail.after1 / 5, `during ${db(tail.dry)}, 1 s after ${db(tail.after1)}, 5 s after ${db(tail.after5)}`);
@@ -68,12 +68,15 @@ check("a small earthquake is quieter than a big one", small.peak < big.peak * 0.
 check("a far station is quieter than a near one", far.peak < big.peak, `far ${db(far.peak)}, near ${db(big.peak)}`);
 const hi = await js(`T.render(6, (ctx) => { const a = ${A}.makeAudio(ctx); a.sWave(0.5, 0.5, 0.3, 0.9, ${A}.noteOf(2).freq, 0.9); }).then((d) => T.pitch(d, 100, 400, 1.2, 3.0))`);
 check("every third phone plays an octave higher (station 3 = F: 175 Hz, not 87)", Math.abs(hi - 174.6) <= 3 && (await js(`${A}.noteOf(2).high && !${A}.noteOf(0).high && !${A}.noteOf(1).high`)), `${hi} Hz`);
+const start = (kind) => js(`T.render(4, (ctx) => { const a = ${A}.makeAudio(ctx); a.setKind(${kind}); a.sWave(0.5, 0.5, 0.3, 0.9, ${A}.noteOf(1).freq, 0.9); }).then((d) => T.rms(d, 22050, 22050 + 6615))`);
+const heavy = await start(0), softer = await start(1);
+check("three kinds take turns: heavy, soft, high; the soft one has no thump (a gentler start)", softer < heavy * 0.7 && (await js(`[0,1,2,3,4,5].map((i) => ${A}.noteOf(i).kind).join('')`)) === "012012", `first 150 ms: heavy ${db(heavy)}, soft ${db(softer)}`);
 const notes = await js(`Array.from({ length: 34 }, (_, i) => ${A}.noteOf(i)).map((n) => n.name + Math.round(n.freq))`);
 check("every station's note is in D minor pentatonic (played three octaves below these)", notes.every((n) => /^[DFGAC]\d/.test(n)), [...new Set(notes)].join(" "));
 
 // 3. the room: eight phones (stations 0..7) for the Indonesian M 6.5, mixed, saved as a wav
 const b64 = await js(`(async () => { const geo = await import('./lib/geo.js'); const q = { lat: -5, lon: 106.9, mag01: 0.9, depth01: 0.52 };
-  const d = await T.render(26, (ctx) => { for (let i = 0; i < 8; i++) { const st = geo.STATIONS[i], a = ${A}.makeAudio(ctx), arr = geo.arrivals(geo.distanceDeg(q, st)); if (arr.zone === 'shadow') continue;
+  const d = await T.render(26, (ctx) => { for (let i = 0; i < 8; i++) { const st = geo.STATIONS[i], a = ${A}.makeAudio(ctx), arr = geo.arrivals(geo.distanceDeg(q, st)); a.setKind(${A}.noteOf(i).kind); if (arr.zone === 'shadow') continue;
     const loud = Math.min(1, arr.strength * (0.3 + 0.7 * q.mag01)), n = ${A}.noteOf(i), b = Math.max(0, Math.min(1, (arr.strength - 0.2) / 0.8));
     a.pWave(1 + arr.p * geo.SECONDS_PER_MINUTE, 0.5 * loud + 0.05, q.depth01, n.freq, b, q.mag01);
     if (arr.s !== null) a.sWave(1 + arr.s * geo.SECONDS_PER_MINUTE, 0.6 * loud + 0.05, q.depth01, q.mag01, n.freq, b); } });
