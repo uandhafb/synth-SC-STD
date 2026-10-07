@@ -41,6 +41,17 @@ s.reboot {
 			s.sync;
 			"[synth] loaded sc/local.scd".postln;
 		};
+		// The last thing in the post window: everything above loaded without errors.
+		[
+			"",
+			"   ~~~~~~~~^~~~~~~/\\~~~~~~~~/\\/\\~~~/\\~~~~^~~~~~~~~",
+			"",
+			"        the ground is listening.",
+			"        R E A D Y   T O   C O D E S H A K E",
+			"",
+			"   ~~~~~^~~~~~~~~~~~/\\~~~~~~^~~~~~~~~~/\\/\\~~~~~~~~",
+			""
+		].do(_.postln);
 	};
 	s.latency = 0.3;
 };
