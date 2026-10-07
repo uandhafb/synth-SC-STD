@@ -15,7 +15,7 @@
 // Messages come through a public MQTT broker (the approach of Gabriel Vigliensoni's phase-study
 // ensemble); the page itself is static.
 
-import { STATIONS, distanceDeg, arrivals, SECONDS_PER_MINUTE } from "./lib/geo.js?v=14";
+import { STATIONS, distanceDeg, arrivals, destination, frontDeg, project, SECONDS_PER_MINUTE } from "./lib/geo.js?v=14";
 import { connectMqtt, BROKER, topicsFor } from "./lib/mqtt-lite.js";
 import { Ground } from "./lib/ground.js";
 
@@ -27,7 +27,7 @@ const clamp01 = (x) => Math.min(1, Math.max(0, x));
 const store = { get: (k) => { try { return sessionStorage.getItem(k); } catch { return null; } }, set: (k, v) => { try { sessionStorage.setItem(k, v); } catch { /* private mode */ } } };
 const ID = store.get("at-id") || (() => { const id = Math.random().toString(36).slice(2, 10); store.set("at-id", id); return id; })();
 
-const VERSION = 15;                        // shown on the page, to tell a fresh copy from one the phone kept (change it with ?v= in index.html)
+const VERSION = 16;                        // shown on the page, to tell a fresh copy from one the phone kept (change it with ?v= in index.html)
 $("roomTxt").textContent = `room ${ROOM.replace(/^([A-Za-z]+)(\d{3})(\d{3})$/, "$1 $2 · $3")} · v${VERSION}`;   // EAST398498 is shown as EAST 398 · 498
 let station = null, mq = null, audio = null, ground = null;
 let state = { on: true, level: 1 };       // set by the laptop (phones on/off, overall level)
@@ -230,6 +230,15 @@ function shake(px, seconds) {
 // ---- the map and the live line ------------------------------------------------------------------
 
 const trace = new Float32Array(240); let traceAt = 0, groundAt = -1e9;
+const view = { lat: 20, lon: 0 };         // the point of the Earth the globe is seen from
+// A point on the great circle from a to b (t = 0.5: half way), through 3D vectors.
+function between(a, b, t = 0.5) {
+  const v = (p) => { const f = p.lat * Math.PI / 180, l = p.lon * Math.PI / 180; return [Math.cos(f) * Math.cos(l), Math.cos(f) * Math.sin(l), Math.sin(f)]; };
+  const A = v(a), B = v(b), w = Math.acos(Math.max(-1, Math.min(1, A[0] * B[0] + A[1] * B[1] + A[2] * B[2])));
+  if (w < 1e-6 || Math.PI - w < 0.03) return t < 0.5 ? a : b;                 // the same point, or exactly opposite
+  const ka = Math.sin((1 - t) * w) / Math.sin(w), kb = Math.sin(t * w) / Math.sin(w), x = ka * A[0] + kb * B[0], y = ka * A[1] + kb * B[1], z = ka * A[2] + kb * B[2];
+  return { lat: Math.asin(Math.max(-1, Math.min(1, z))) * 180 / Math.PI, lon: Math.atan2(y, x) * 180 / Math.PI };
+}
 
 function draw(now) {
   const map = $("map"), dpr = window.devicePixelRatio || 1, r = map.getBoundingClientRect();
@@ -237,18 +246,35 @@ function draw(now) {
     if (map.width !== Math.round(r.width * dpr)) { map.width = Math.round(r.width * dpr); map.height = Math.round(r.height * dpr); }
     const c = map.getContext("2d"), W = r.width, H = r.height;
     c.setTransform(dpr, 0, 0, dpr, 0, 0); c.clearRect(0, 0, W, H);
-    const mh = Math.min(H, W / 2), y0 = (H - mh) / 2;     // the map keeps its shape (2:1), centred
-    const X = (lon) => ((lon + 180) / 360) * W, Y = (lat) => y0 + ((90 - lat) / 180) * mh;
-    c.strokeStyle = "rgba(233,230,223,0.4)"; c.lineWidth = 0.7;
-    for (const ring of land) { c.beginPath(); ring.forEach(([lon, lat], i) => { if (i && Math.abs(lon - ring[i - 1][0]) < 90 && lat > -85.5 && ring[i - 1][1] > -85.5) c.lineTo(X(lon), Y(lat)); else c.moveTo(X(lon), Y(lat)); }); c.stroke(); }
-    for (let i = waves.length - 1; i >= 0; i--) {              // the epicentres, fading
-      const w = waves[i], age = (now - w.t0) / 1000, fade = 1 - age / 14;
-      if (fade <= 0) { waves.splice(i, 1); continue; }
-      c.fillStyle = `rgba(255,90,54,${fade.toFixed(2)})`; c.beginPath(); c.arc(X(w.q.lon), Y(w.q.lat), 3 + 10 * w.q.mag01, 0, 7); c.fill();
-      c.strokeStyle = `rgba(255,90,54,${(fade * 0.5).toFixed(2)})`; c.lineWidth = 1; c.beginPath(); c.moveTo(X(w.q.lon), Y(w.q.lat)); c.lineTo(X(station.lon), Y(station.lat)); c.stroke();
+    // A globe, as on the projection: the Earth seen from above a point between this station and
+    // the latest earthquake, so both are in view; with no earthquake, from above the station.
+    for (let i = waves.length - 1; i >= 0; i--) if (now - waves[i].t0 > 18000) waves.splice(i, 1);
+    const last = waves[waves.length - 1];
+    const want = station ? (last ? between(station, last.q) : station) : { lat: 20, lon: 0 };
+    view.lat += (want.lat - view.lat) * 0.06; view.lon += ((((want.lon - view.lon) % 360) + 540) % 360 - 180) * 0.06;   // turns smoothly, the short way round
+    const R = Math.min(W, H) / 2 - 6, cx = W / 2, cy = H / 2;
+    const path = (pts, close) => { let pen = false; c.beginPath(); for (const pt of pts) { const s = project(pt, view, R); if (!s) { pen = false; continue; } if (pen) c.lineTo(cx + s.x, cy + s.y); else c.moveTo(cx + s.x, cy + s.y); pen = true; } if (close && pen) c.closePath(); c.stroke(); };
+    c.fillStyle = "#0d1013"; c.beginPath(); c.arc(cx, cy, R, 0, 7); c.fill();
+    c.strokeStyle = "rgba(233,230,223,0.28)"; c.lineWidth = 1; c.beginPath(); c.arc(cx, cy, R, 0, 7); c.stroke();
+    c.strokeStyle = "rgba(233,230,223,0.5)"; c.lineWidth = 0.8;
+    for (const ring of land) path(ring.map(([lon, lat]) => ({ lat, lon })));
+    for (const w of waves) {
+      const age = (now - w.t0) / 1000, fade = Math.max(0, 1 - age / 18), minutes = age / SECONDS_PER_MINUTE;
+      // the two wave fronts, travelling at their real speeds: P (pale) ahead, S (red) behind. The
+      // sound plays when a ring reaches this station.
+      for (const [wave, colour] of [["p", "244,236,200"], ["s", "255,90,54"]]) {
+        const deg = frontDeg(minutes, wave); if (deg === null || deg < 0.5) continue;
+        c.strokeStyle = `rgba(${colour},${(0.85 * fade).toFixed(2)})`; c.lineWidth = wave === "s" ? 2 : 1.2;
+        path(Array.from({ length: 121 }, (_, k) => destination(w.q, k * 3, deg)));
+      }
+      c.strokeStyle = `rgba(255,90,54,${(0.35 * fade).toFixed(2)})`; c.lineWidth = 1; c.setLineDash([3, 4]);
+      path(Array.from({ length: 41 }, (_, k) => between(w.q, station, k / 40))); c.setLineDash([]);     // the path through the Earth, drawn on its surface
+      const e = project(w.q, view, R);
+      if (e) { c.fillStyle = `rgba(255,90,54,${fade.toFixed(2)})`; c.beginPath(); c.arc(cx + e.x, cy + e.y, 3 + 9 * w.q.mag01, 0, 7); c.fill(); }
     }
-    if (station) { c.fillStyle = "#e9e6df"; c.beginPath(); c.arc(X(station.lon), Y(station.lat), 4.5, 0, 7); c.fill();
-      c.strokeStyle = "#e9e6df"; c.lineWidth = 1; c.beginPath(); c.arc(X(station.lon), Y(station.lat), 9 + 2 * Math.sin(now / 400), 0, 7); c.stroke(); }
+    const st = station && project(station, view, R);
+    if (st) { c.fillStyle = "#e9e6df"; c.beginPath(); c.arc(cx + st.x, cy + st.y, 4.5, 0, 7); c.fill();
+      c.strokeStyle = "#e9e6df"; c.lineWidth = 1; c.beginPath(); c.arc(cx + st.x, cy + st.y, 9 + 2 * Math.sin(now / 400), 0, 7); c.stroke(); }
   }
   const tr = $("trace"), tb = tr.getBoundingClientRect();
   if (tb.width) {
