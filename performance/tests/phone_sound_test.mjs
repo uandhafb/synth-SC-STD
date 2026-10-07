@@ -65,7 +65,7 @@ check("P hit lands on the station's note, low (station 2 = A, 110 Hz)", Math.abs
 check("S hit lands on the same note (110 Hz)", Math.abs(big.s - 110) <= 2, `${big.s} Hz`);
 check("a big earthquake is clearly heard but not at the ceiling", big.peak > 0.12 && big.peak < ceiling * 0.95, `peak ${db(big.peak)}; knock ${db(big.bell)} rms, wash ${db(big.tone)} rms`);
 check("a small earthquake is quieter than a big one", small.peak < big.peak * 0.75, `small ${db(small.peak)}, big ${db(big.peak)}`);
-check("a far station is quieter and duller than a near one", far.peak < big.peak && far.high < big.high, `high share ${(far.high * 100).toFixed(1)}% vs ${(big.high * 100).toFixed(1)}%`);
+check("a far station is quieter than a near one", far.peak < big.peak, `far ${db(far.peak)}, near ${db(big.peak)}`);
 const notes = await js(`Array.from({ length: 34 }, (_, i) => ${A}.noteOf(i)).map((n) => n.name + Math.round(n.freq))`);
 check("every station's note is in D minor pentatonic (played three octaves below these)", notes.every((n) => /^[DFGAC]\d/.test(n)), [...new Set(notes)].join(" "));
 

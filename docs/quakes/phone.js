@@ -27,7 +27,7 @@ const clamp01 = (x) => Math.min(1, Math.max(0, x));
 const store = { get: (k) => { try { return sessionStorage.getItem(k); } catch { return null; } }, set: (k, v) => { try { sessionStorage.setItem(k, v); } catch { /* private mode */ } } };
 const ID = store.get("at-id") || (() => { const id = Math.random().toString(36).slice(2, 10); store.set("at-id", id); return id; })();
 
-const VERSION = 5;                        // shown on the page, to tell a fresh copy from one the phone kept (change it with ?v= in index.html)
+const VERSION = 6;                        // shown on the page, to tell a fresh copy from one the phone kept (change it with ?v= in index.html)
 $("roomTxt").textContent = `room ${ROOM} · v${VERSION}`;
 let station = null, mq = null, audio = null, ground = null;
 let state = { on: true, level: 1 };       // set by the laptop (phones on/off, overall level)
@@ -54,11 +54,16 @@ function makeAudio(ctx = new (window.AudioContext || window.webkitAudioContext)(
   const master = ctx.createGain(); master.gain.value = 0.9;
   const limit = ctx.createDynamicsCompressor();
   limit.threshold.value = -6; limit.knee.value = 3; limit.ratio.value = 20; limit.attack.value = 0.002; limit.release.value = 0.2;
-  const trim = ctx.createGain(); trim.gain.value = 0.7;
+  const trim = ctx.createGain(); trim.gain.value = 1;
   const ceil = ctx.createWaveShaper(), curve = new Float32Array(2049);
   for (let i = 0; i < curve.length; i++) curve[i] = CEILING * Math.tanh((i / 1024 - 1) * 1.3);
   ceil.curve = curve; ceil.oversample = "2x";
-  master.connect(limit).connect(trim).connect(ceil).connect(ctx.destination);
+  // "Bass" for a speaker that has none: phones play almost nothing below 250-300 Hz, so the weight
+  // is put where they can still move air: +8 dB around 300 Hz, and the fizz above 4 kHz is taken down.
+  const body = ctx.createBiquadFilter(); body.type = "peaking"; body.frequency.value = 300; body.Q.value = 0.8; body.gain.value = 8;
+  const dull = ctx.createBiquadFilter(); dull.type = "highshelf"; dull.frequency.value = 4000; dull.gain.value = -6;
+  const pre = ctx.createGain(); pre.gain.value = 0.5;      // room for the boost, so the limiter stays idle for one earthquake
+  master.connect(body).connect(dull).connect(pre).connect(limit).connect(trim).connect(ceil).connect(ctx.destination);
   // two seconds of noise, reused for everything
   const buf = ctx.createBuffer(1, ctx.sampleRate * 2, ctx.sampleRate), d = buf.getChannelData(0);
   for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
@@ -99,14 +104,22 @@ function makeAudio(ctx = new (window.AudioContext || window.webkitAudioContext)(
     for (const [o, f] of [[o1, freq], [o2, freq * 1.007]]) { o.frequency.setValueAtTime(f * 2 ** ((10 + 14 * m) / 12), at); o.frequency.exponentialRampToValueAtTime(f, at + fall); }
     nf.type = "lowpass"; nf.frequency.value = 900; ng.gain.value = 0.4 + 2.2 * m;
     const sh = ctx.createWaveShaper(); sh.curve = drive;
-    const cut = (380 + 1100 * (1 - depth01)) * (0.5 + 0.5 * bright);
+    const cut = (300 + 800 * (1 - depth01)) * (0.5 + 0.5 * bright);
     const f = ctx.createBiquadFilter(); f.type = "lowpass"; f.Q.value = 3;
-    f.frequency.setValueAtTime(Math.min(3000, cut * 2.2), at); f.frequency.exponentialRampToValueAtTime(cut, at + dec);
+    f.frequency.setValueAtTime(Math.min(2200, cut * 2.2), at); f.frequency.exponentialRampToValueAtTime(cut, at + dec);
     const g = ctx.createGain(), send = ctx.createGain();
     g.gain.setValueAtTime(0, at); g.gain.linearRampToValueAtTime(amp * 0.3, at + 0.004); g.gain.exponentialRampToValueAtTime(0.0008, at + len);
     send.gain.value = 0.5 + 0.5 * m;
     o1.connect(sh); o2.connect(og).connect(sh); n.connect(nf).connect(ng).connect(sh); sh.connect(f).connect(g); g.connect(master); g.connect(send).connect(spring);
     for (const x of [o1, o2, n]) { x.start(at); x.stop(at + len + 0.05); }
+    // The thump, as in a kick drum: a sine that dives from 420 Hz to 95 Hz. The first part of the
+    // dive is inside the phone's range, and the ear follows it down and hears a low blow. Bigger
+    // earthquake = a slower, longer dive.
+    const k = ctx.createOscillator(), kg = ctx.createGain(), klen = 0.22 + 0.5 * m;
+    k.frequency.setValueAtTime(420, at); k.frequency.exponentialRampToValueAtTime(95, at + 0.1 + 0.25 * m);
+    kg.gain.setValueAtTime(0, at); kg.gain.linearRampToValueAtTime(amp * (0.35 + 0.35 * m), at + 0.004); kg.gain.exponentialRampToValueAtTime(0.0008, at + klen);
+    k.connect(kg).connect(master); kg.connect(send);
+    k.start(at); k.stop(at + klen + 0.05);
   }
 
   // P wave: the first, smaller arrival: the same low hit, short and dry.
