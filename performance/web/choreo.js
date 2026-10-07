@@ -173,7 +173,7 @@ export function tilt(what, degrees = 5) {
 // bounce: each body is thrown up and lands; with a large amount they scatter before gathering.
 export function bounce(what, amount = 0.5) {
   say("bounce", what, amount);
-  const a = clamp(amount), els = bodies(what);
+  const a = clamp(amount), els = bodies(what, Math.round(10 + 50 * a));
   for (const el of els) {
     const up = -(12 + 150 * a) * rand(0.5, 1), side = a > 0.6 ? rand(-1, 1) * 260 * a : 0, turn = a > 0.6 ? rand(-1, 1) * 28 * a : 0;
     animate(el, [{ transform: "translate(0, 0) rotate(0deg)" }, { transform: `translate(${side.toFixed(0)}px, ${up.toFixed(0)}px) rotate(${turn.toFixed(1)}deg)`, offset: 0.18 },
@@ -202,22 +202,21 @@ export function fall(what, amount = 0.5) {
   light(els, ms, "choreo-fall");
 }
 
-// incline: the body leans over to an angle and STAYS there, its lines running diagonally (the floor
-// is no longer level). Unlike tilt, it does not swing back by itself. incline("page", 0) levels it.
+// incline: the text leans over to an angle and STAYS there, its lines running diagonally. With
+// "text", every line of text on the page tilts inside its own place: tables, borders and layout do
+// not move. Unlike tilt, it does not swing back by itself. incline("text", 0) levels it.
 export function incline(what, degrees = 5, quiet = false) {
   if (!quiet) say("incline", what, degrees);
-  for (const el of bodies(what)) {
-    el.style.transition = `rotate ${quiet ? 0.6 : 1.6}s cubic-bezier(.3,.7,.2,1)`;
-    el.style.rotate = `${clamp(degrees, -20, 20).toFixed(2)}deg`;        // "rotate" combines with the other movements
-  }
+  const deg = `${clamp(degrees, -20, 20).toFixed(2)}deg`;
+  if (what === "text") { document.documentElement.style.setProperty("--choreo-lean", deg); return; }
+  for (const el of bodies(what)) { el.style.transition = "rotate 1.6s cubic-bezier(.3,.7,.2,1)"; el.style.rotate = deg; }
 }
 
-// breathing: the resting state. The page slowly swells and settles while the Earth is quiet.
+// breathing: the resting state. The text softly fades and returns; nothing changes size or place.
 export function breathing() {
   say("breathing");
-  breath?.cancel();
-  breath = content().animate([{ transform: "scale(1)", opacity: 1 }, { transform: "scale(1.014)", opacity: 0.8 }, { transform: "scale(1)", opacity: 1 }],
-    { duration: 6500, iterations: Infinity, easing: "ease-in-out" });
+  document.documentElement.classList.add("choreo-breathing");
+  breath = { cancel: () => document.documentElement.classList.remove("choreo-breathing") };
 }
 
 // still: everything stops and rests.
@@ -225,7 +224,7 @@ export function still() {
   say("still");
   breath?.cancel(); breath = null;
   for (const a of [...running]) a.cancel();
-  content().style.rotate = "0deg";
+  document.documentElement.style.setProperty("--choreo-lean", "0deg");
 }
 
 // ---- the score: how an earthquake becomes movement ----------------------------------------------
@@ -239,34 +238,29 @@ export function placeWords(place) {
   return parts.flatMap((p) => (STATES[p] ? [STATES[p]] : [p])).filter((p) => p.length > 2);
 }
 
+// How far the text leans: it follows the Earth's agitation (the relay's "energy", 0..1), towards the
+// side of the map where the last earthquake was, and comes back to level as things calm down.
+const LEAN = 9;                        // degrees at full agitation
+let energy = 0, side = -1;
 let breathTimer = null;
 
-// How far the page leans: it follows the Earth's agitation (the relay's "energy", 0..1), towards the
-// side of the map where the last earthquake was, and comes back to level as things calm down.
-const LEAN = 7;                        // degrees at full agitation
-let energy = 0, side = -1;
-
+// Only the text moves: the page itself, its tables and its layout stay where they are.
 export function score(q) {
-  side = q.lon >= 0 ? -1 : 1;                               // quake in the east: the page leans to the left
+  side = q.lon >= 0 ? -1 : 1;                               // quake in the east: the text leans to the left
   energy = Math.min(1, energy + 0.2 + 0.8 * q.mag01);
-  incline("page", Math.round(side * energy * LEAN * 10) / 10);
-  // The page keeps breathing through small earthquakes; only a big one (M 5+) interrupts it.
+  incline("text", Math.round(side * energy * LEAN * 10) / 10);
+  // The text keeps breathing through small earthquakes; only a big one (M 5+) interrupts it.
   clearTimeout(breathTimer);
   if (q.mag >= 5) { breath?.cancel(); breath = null; breathTimer = setTimeout(breathing, 9000 + 6000 * q.mag01); }
   else if (!breath) breathing();
   // The place's name, where it is written on screen; otherwise a handful of the words on screen.
   const word = placeWords(q.place).find((w) => findWord(w).some((el) => inView(el, 0)));
-  // Small and medium earthquakes move words and letters only. The whole page moves (leans, sinks,
-  // throws its rows) only for big ones (M 5+), so a replay does not rock the page all the time.
   shake(word ?? "words", q.mag01);
-  setTimeout(() => shake("headings", Math.round(q.mag01 * 80) / 100), 150);                                         // the titles on screen tremble too
+  setTimeout(() => shake("headings", Math.round(q.mag01 * 80) / 100), 150);                       // the titles on screen tremble too
   if (word && q.mag01 > 0.45) wobble(word, Math.round(q.mag01 * 80) / 100);
-  if (q.mag01 > 0.35) setTimeout(() => fall("words", Math.round(q.mag01 * 100) / 100), 500);                          // stronger: letters fall
-  if (q.mag >= 5) {
-    setTimeout(() => tilt("page", Math.round(-(q.lon / 180) * (2 + 9 * q.mag01) * 10) / 10), 250);                    // leans away from the quake's side of the map
-    if (q.depth01 > 0.6) setTimeout(() => float("page", -Math.round(q.depth01 * 60) / 100), 1200);                    // deep: the page sinks a little
-  }
-  if (q.mag >= 5.5) setTimeout(() => { bounce("rows", q.mag01); shake("page", Math.round(q.mag01 * 70) / 100); }, 450);  // very big: the table is thrown
+  if (q.mag01 > 0.35) setTimeout(() => fall("words", Math.round(q.mag01 * 100) / 100), 500);        // stronger: letters fall
+  if (q.mag >= 5) setTimeout(() => bounce("words", Math.round(q.mag01 * 100) / 100), 300);          // big: the words are thrown
+  if (q.mag >= 5.5) setTimeout(() => stretch("headings", Math.round(q.mag01 * 60) / 100), 900);     // very big: the titles are pulled wide
 }
 
 // ---- on the page --------------------------------------------------------------------------------
@@ -275,6 +269,9 @@ const style = document.createElement("style");
 style.textContent = `
   .choreo-w { display: inline-block; white-space: pre; transition: background-color .6s, color .6s; border-radius: 2px; }
   .choreo-l { display: inline-block; white-space: pre; position: relative; z-index: 5; }
+  .choreo-t { display: inline-block; max-width: 100%; rotate: var(--choreo-lean, 0deg); transition: rotate 1.4s cubic-bezier(.3,.7,.2,1); }
+  .choreo-breathing .choreo-t { animation: choreo-breath 6.5s ease-in-out infinite; }
+  @keyframes choreo-breath { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
   .choreo-w.choreo-fall { background: transparent !important; }
   .choreo-w.choreo-fall, .choreo-w.choreo-fall a, .choreo-w.choreo-fall .choreo-l { color: #e8431f !important; font-weight: 700; }
   .choreo-w.choreo-on { background: #ff5a36; color: #fff !important; }
@@ -285,6 +282,15 @@ document.head.appendChild(style);
 Object.assign(window, { shake, wobble, float, stretch, tilt, bounce, fall, incline, breathing, still });       // for the console
 // Begin at the first table that lists earthquakes by country (a screen full of place names);
 // you can scroll by hand to any part of the page you like.
+// The text of every cell, paragraph, list item and title gets its own wrapper, so it can lean and
+// fade inside its place while the boxes around it stay still.
+for (const el of content().querySelectorAll("td, th, p, li, dd, dt, h1, h2, h3, h4, caption, figcaption")) {
+  if (!el.firstChild || el.querySelector("table, ul, ol, p, td")) continue;      // only the innermost holders of text
+  const t = document.createElement("span"); t.className = "choreo-t";
+  while (el.firstChild) t.appendChild(el.firstChild);
+  el.appendChild(t);
+}
+
 // Everything turns, leans and swells around the middle of what is on screen (the page is very
 // tall: turning it around its own middle would slide the visible part out of the frame).
 const base = (() => { const r = content().getBoundingClientRect(); return { left: r.left + scrollX, top: r.top + scrollY }; })();
@@ -299,6 +305,6 @@ const events = new EventSource(`${ORIGIN}/events`);
 events.onmessage = (e) => {
   const m = JSON.parse(e.data);
   if (m.type === "quake") score(m.q);
-  else if (m.type === "activity") { energy = m.energy; incline("page", energy < 0.02 ? 0 : side * energy * LEAN, true); }   // easing back, silently
+  else if (m.type === "activity") { energy = m.energy; incline("text", energy < 0.02 ? 0 : side * energy * LEAN, true); }   // easing back, silently
 };
 breathing();
