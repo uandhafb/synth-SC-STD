@@ -49,7 +49,7 @@ export const BLOCKS = [
   },
   {
     id: "works", kicker: "how it works", title: "", scene: "marks", extra: "schematic", dense: true,
-    lines: ["**107 parameters**"],
+    lines: ["**3 synth definitions · 21 modules · 107 parameters**"],
   },
   {
     id: "code", kicker: "inside the code", title: "", scene: "feed", extra: "code",
