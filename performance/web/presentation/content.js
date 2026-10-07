@@ -48,8 +48,8 @@ export const BLOCKS = [
     ],
   },
   {
-    id: "works", kicker: "how it works", title: "from a line of code to the speakers", scene: "marks", extra: "schematic",
-    lines: ["Every one of the **107 parameters** can be set from the code, note by note. What the code does not set, the panel sets."],
+    id: "works", kicker: "how it works", title: "", scene: "marks", extra: "schematic", dense: true,
+    lines: ["**107 parameters**: the code sets them note by note; the panel sets the rest."],
   },
   {
     id: "code", kicker: "inside the code", title: "one line, one voice", scene: "feed", extra: "code",

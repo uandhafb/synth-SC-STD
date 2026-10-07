@@ -17,9 +17,18 @@ const rich = (s) => esc(s).replace(/\{([^{}|]+)\|([^{}|\s]+)\}/g, '<a class="nam
 const node = (label, small, i, cls = "") => `<div class="node ${cls}" style="--i:${i}">${label}${small ? `<small>${small}</small>` : ""}</div>`;
 const arrow = '<span class="arrow">→</span>';
 const EXTRAS = {
-  schematic: () => `<div class="schematic">
-    <div class="row">${[node("Tidal · Strudel", "the pattern", 0), node("SuperDirt", "one message per note", 1), node("3 oscillators", "+ noise, ring mod", 2), node("mixer", "", 3), node("filter", "VCF", 4), node("amplifier", "VCA", 5), node("spring reverb", "shared", 6), node("speakers", "", 7)].join(arrow)}</div>
-    <div class="row">${node("envelopes · sample &amp; hold · envelope follower", "they move the pitch, the filter and the level (the patch cords)", 0, "side")}<span class="arrow">↑</span>${node("the panel in the browser", "sets every value the code leaves alone", 0, "side")}</div>
+  // The architecture, checked against the code (sc/synthdefs/00_modules.scd, the voice function):
+  // four lanes. The boxes of lanes 1 and 2 light up in the order a note travels; each envelope
+  // lights together with the module it opens.
+  schematic: () => `<div class="arch">
+    <div class="lane"><div class="lab">1 · the code <span class="file">tidal/params.hs · strudel/params.js</span></div>
+      <div class="row">${node("Tidal · Strudel", "I type a pattern", 0)}<span class="arrow osc">— OSC →</span>${node("SuperDirt", "gets one message per note, inside SuperCollider", 1)}</div></div>
+    <div class="lane"><div class="lab">2 · the synth: one voice per note <span class="file">sc/synthdefs/ 00_modules.scd · scstd.scd · spring.scd</span></div>
+      <div class="row">${[node("VCO 1 · VCO 2 · VCO 3", "oscillators + noise, ring mod", 2), node("mixer", "", 3), node("VCF", "filter", 4), node("VCA", "amplifier", 5), node("spring reverb", "one for all voices", 6), node("speakers", "", 7)].join(arrow)}</div></div>
+    <div class="lane"><div class="lab">3 · what moves it</div>
+      <div class="row gap">${node("ADSR envelope", "opens the filter", 4, "side")}${node("AR envelope", "opens the amplifier", 5, "side")}${node("sample &amp; hold · lag · envelope follower", "the patch cords: to pitch, filter and level", 2, "side")}</div></div>
+    <div class="lane"><div class="lab">4 · the panel <span class="file">ui/ · relay/ · sc/buses.scd</span></div>
+      <div class="row">${node("sliders in the browser", "", 0, "side")}<span class="arrow osc">← OSC →</span>${node("SuperCollider", "keeps every value the code does not set", 1, "side")}</div></div>
   </div>`,
   code: () => `<div class="codebox"><span class="c">-- TidalCycles</span>
 d1 <span class="k">$</span> n <span class="s">"c e g"</span> <span class="k">#</span> s <span class="s">"scstd"</span> <span class="k">#</span> vcfcut 800
