@@ -235,12 +235,16 @@ export function score(q) {
   clearTimeout(breathTimer);
   // The place's name, where it is written on screen; otherwise a handful of the words on screen.
   const word = placeWords(q.place).find((w) => findWord(w).some((el) => inView(el, 0)));
+  // Small and medium earthquakes move words and letters only. The whole page moves (leans, sinks,
+  // throws its rows) only for big ones (M 5+), so a replay does not rock the page all the time.
   shake(word ?? "words", q.mag01);
   if (word && q.mag01 > 0.45) wobble(word, Math.round(q.mag01 * 80) / 100);
-  if (q.mag01 > 0.3) setTimeout(() => tilt("page", Math.round(-(q.lon / 180) * (2 + 9 * q.mag01) * 10) / 10), 250);   // leans away from the quake's side of the map
   if (q.mag01 > 0.35) setTimeout(() => fall("words", Math.round(q.mag01 * 100) / 100), 500);                          // stronger: letters fall
-  if (q.depth01 > 0.6) setTimeout(() => float("page", -Math.round(q.depth01 * 60) / 100), 1200);                      // deep: the page sinks a little
-  if (q.mag >= 5.5) setTimeout(() => { bounce("rows", q.mag01); shake("page", Math.round(q.mag01 * 70) / 100); }, 450);  // big: the table is thrown
+  if (q.mag >= 5) {
+    setTimeout(() => tilt("page", Math.round(-(q.lon / 180) * (2 + 9 * q.mag01) * 10) / 10), 250);                    // leans away from the quake's side of the map
+    if (q.depth01 > 0.6) setTimeout(() => float("page", -Math.round(q.depth01 * 60) / 100), 1200);                    // deep: the page sinks a little
+  }
+  if (q.mag >= 5.5) setTimeout(() => { bounce("rows", q.mag01); shake("page", Math.round(q.mag01 * 70) / 100); }, 450);  // very big: the table is thrown
   breathTimer = setTimeout(breathing, 9000 + 6000 * q.mag01);
 }
 

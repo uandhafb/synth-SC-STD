@@ -280,6 +280,7 @@ events.onmessage = (e) => {
   else if (m.type === "ground") onGround(m);
   else if (m.type === "room") onRoom(m);
   else if (m.type === "qr") toggleQr();
+  else if (m.type === "page") { document.getElementById("credit").textContent = m.credit; if (m.reload) document.getElementById("page").src = `/wiki?${Date.now()}`; }
 };
 
 // For looking at the page without the relay: stage.html?demo fires earthquakes by itself.
@@ -302,4 +303,11 @@ function frame(now) {
 }
 requestAnimationFrame(frame);
 
-document.addEventListener("keydown", (e) => { if (e.key === "f") document.documentElement.requestFullscreen?.(); if (e.key === "c") toggleQr(); });
+// u: choose another page to dance, live (a web address, or a Wikipedia title).
+async function choosePage() {
+  const want = prompt("Which page should the earthquakes move?\n\nA web address (https://…), or a Wikipedia title: Montreal · Plate tectonics · pt:Terremoto\n(empty = back to the list of earthquakes)");
+  if (want === null) return;
+  const r = await (await fetch(`/page?url=${encodeURIComponent(want)}`)).json();
+  if (!r.ok) alert(`That page could not be opened:\n${r.error}\n\nThe current page stays.`);
+}
+document.addEventListener("keydown", (e) => { if (e.key === "f") document.documentElement.requestFullscreen?.(); if (e.key === "c") toggleQr(); if (e.key === "u") choosePage(); });

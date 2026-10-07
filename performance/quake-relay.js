@@ -109,9 +109,24 @@ export class Relay {
       if (url.pathname === "/events") {
         res.writeHead(200, { "Content-Type": "text/event-stream", "Cache-Control": "no-cache", Connection: "keep-alive" });
         res.write(`data: ${JSON.stringify({ type: "mode", mode: this.paused ? "paused" : this.mode })}\n\n`);
+        res.write(`data: ${JSON.stringify({ type: "page", credit: this.pageCredit, reload: false })}\n\n`);
         this.clients.add(res);
         this.sendRoom();
         req.on("close", () => this.clients.delete(res));
+        return;
+      }
+      // Choose the page live: /page?url=<web address or Wikipedia title ("Montreal", "pt:Terremoto")>
+      if (url.pathname === "/page") {
+        let want = (url.searchParams.get("url") ?? "").trim();
+        if (!/^https?:\/\//i.test(want)) {
+          const m = /^([a-z]{2,3}):(.+)$/i.exec(want), lang = m ? m[1].toLowerCase() : "en", title = (m ? m[2] : want).trim();
+          want = title ? `https://${lang}.wikipedia.org/wiki/${encodeURIComponent(title.replace(/ /g, "_"))}` : PAGE;
+        }
+        this.loadPage(want).then(() => {
+          this.o.log(`the page that dances: ${this.pageSource} (${want})`);
+          this.broadcast({ type: "page", credit: this.pageCredit, reload: true });
+          res.writeHead(200, { "Content-Type": "application/json" }); res.end(JSON.stringify({ ok: true, credit: this.pageCredit }));
+        }).catch((err) => { res.writeHead(200, { "Content-Type": "application/json" }); res.end(JSON.stringify({ ok: false, error: String(err.message ?? err) })); });
         return;
       }
       if (url.pathname === "/wiki") {
@@ -229,24 +244,32 @@ export class Relay {
   // The page that dances: today's Wikipedia list of earthquakes, as it is right now. Its own
   // scripts are removed and its style sheets are copied in, so the saved copy also works without
   // internet. Without any copy, a plain page is made from the day's earthquakes.
-  async loadPage() {
-    const saved = path.join(this.o.dataDir, "page.html");
+  // `url` can be any web page (chosen live from the projection, key u); the default is the
+  // Wikipedia list, and only that one is saved for use without internet.
+  async loadPage(url = PAGE) {
+    const saved = path.join(this.o.dataDir, "page.html"), isDefault = url === PAGE;
     try {
-      let html = (await this.o.fetchText(PAGE)).replace(/<script\b[\s\S]*?<\/script>/gi, "");
-      for (const link of html.match(/<link\b[^>]*rel="stylesheet"[^>]*>/gi) ?? []) {
+      let html = (await this.o.fetchText(url)).replace(/<script\b[\s\S]*?<\/script>/gi, "");
+      for (const link of (html.match(/<link\b[^>]*rel="stylesheet"[^>]*>/gi) ?? []).slice(0, 12)) {
         const href = /href="([^"]+)"/.exec(link)?.[1];
         if (!href) continue;
-        try { const cssText = await this.o.fetchText(new URL(href.replace(/&amp;/g, "&"), PAGE).href); html = html.replace(link, () => `<style>${cssText}</style>`); } catch { /* keep the link */ }
+        try { const cssText = await this.o.fetchText(new URL(href.replace(/&amp;/g, "&"), url).href); html = html.replace(link, () => `<style>${cssText}</style>`); } catch { /* keep the link */ }
       }
-      html = html.replace(/<head>/i, () => `<head><base href="https://en.wikipedia.org/"><!-- fetched ${new Date().toISOString()} -->`);
-      fs.writeFileSync(saved, html);
-      this.page = html; this.pageSource = "Wikipedia, fetched now";
-    } catch {
+      html = /<head[^>]*>/i.test(html) ? html.replace(/<head[^>]*>/i, (m) => `${m}<base href="${url}"><!-- fetched ${new Date().toISOString()} -->`) : `<base href="${url}">${html}`;
+      const title = (/<title[^>]*>([^<]*)<\/title>/i.exec(html)?.[1] ?? "").replace(/\s+[-–—|]\s+Wikip[eé]dia.*$/i, "").trim();
+      const host = new URL(url).hostname;
+      if (isDefault) fs.writeFileSync(saved, html);
+      this.page = html;
+      this.pageSource = host.endsWith("wikipedia.org") ? "Wikipedia, fetched now" : `${host}, fetched now`;
+      this.pageCredit = host.endsWith("wikipedia.org") ? `Text: Wikipedia contributors, “${title || "List of earthquakes in 2026"}”, CC BY-SA 4.0` : `Page: ${host} (shown live from the web, not stored)`;
+    } catch (err) {
+      if (!isDefault) throw err;                  // a page chosen live could not be fetched: keep the current one
+      this.pageCredit = PAGE_CREDIT;
       if (fs.existsSync(saved)) { this.page = fs.readFileSync(saved, "utf8"); this.pageSource = "Wikipedia, saved copy (no internet)"; }
       else {
         const rows = this.day.map((q) => `<tr><td>${new Date(q.time).toISOString().slice(11, 16)}</td><td>${q.mag.toFixed(1)}</td><td>${Math.round(q.depth)} km</td><td>${q.place.replace(/[<&]/g, "")}</td></tr>`).join("");
         this.page = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Earthquakes of the last 24 hours</title><style>body{font:17px/1.5 Georgia,serif;margin:2em;color:#202122}td,th{padding:.25em .9em;border-bottom:1px solid #ccc;text-align:left}</style></head><body><div id="mw-content-text"><h1>Earthquakes of the last 24 hours</h1><p>Magnitude 2.5 and above, from the U.S. Geological Survey.</p><table><tr><th>UTC</th><th>M</th><th>Depth</th><th>Place</th></tr>${rows}</table></div></body></html>`;
-        this.pageSource = "a plain page from the USGS list (no internet, no saved Wikipedia copy)";
+        this.pageSource = "a plain page from the USGS list (no internet, no saved Wikipedia copy)"; this.pageCredit = "Data: U.S. Geological Survey";
       }
     }
     this.o.log(`the page that dances: ${this.pageSource}`);
@@ -254,11 +277,10 @@ export class Relay {
 
   // The fetched page with our additions: reading-friendly layout, the credit, and the choreography.
   pageHtml(origin) {
-    const wiki = this.pageSource?.startsWith("Wikipedia");
     const add = `<style>.vector-header-container,.vector-column-start,.vector-column-end,.vector-page-toolbar,.vector-sticky-header-container,
       .vector-body-before-content,#siteNotice,.mw-footer-container,.mw-editsection,.mw-jump-link,.vector-settings{display:none!important}
       .mw-page-container{max-width:none!important;padding:0 1.4em!important} .mw-content-container{max-width:none!important} html{font-size:108%}</style>
-      <div style="font:12px/1.4 sans-serif;color:#54595d;padding:1.2em;border-top:1px solid #c8ccd1">${wiki ? `${PAGE_CREDIT}. ${this.pageSource}; the movements are added by Arrival Times.` : "Data: U.S. Geological Survey."}</div>
+      <div style="font:12px/1.4 sans-serif;color:#54595d;padding:1.2em;border-top:1px solid #c8ccd1">${this.pageCredit}. ${this.pageSource}; the movements are added by Arrival Times.</div>
       <script type="module" src="${origin}/choreo.js"></script>`;
     return /<\/body>/i.test(this.page) ? this.page.replace(/<\/body>/i, () => `${add}</body>`) : this.page + add;
   }
