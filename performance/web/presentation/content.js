@@ -8,12 +8,13 @@
 //   photo   a picture file in the folder  presentation/photos/  (for example "me.jpg"); null = none
 //   scene   which Hydra visual plays behind it (the names are in scenes.js)
 //   extra   a built-in piece: "schematic", "code", "mapping", "qr", "sections" (or nothing)
-// Text in [SQUARE BRACKETS] is a placeholder, waiting for your own words.
+// Text in [square brackets] is shown in pink, with its brackets. In CAPITALS it is a placeholder,
+// waiting for your own words.
 
 export const BLOCKS = [
   {
     id: "title", kicker: "EAST 398 · 498", title: "CODESHAKE", scene: "paper",
-    lines: ["a SuperCollider · Tidal · Strudel synthesizer, the Earth's movement data, and a room full of phones", "Uandha Fernandes Barbosa, BMus and BSc Eng"],
+    lines: ["a SuperCollider · Tidal · Strudel synthesizer, the Earth's movement data, and a room full of phones", "[Uandha Fernandes Barbosa, BMus and BSc Eng]"],
   },
   {
     id: "me", kicker: "who", title: "", scene: "figure", photo: "me.jpg",
