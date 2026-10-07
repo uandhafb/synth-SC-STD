@@ -40,11 +40,11 @@ export const BLOCKS = [
     ],
   },
   {
-    id: "began", kicker: "where it began", title: "a 1970s synthesizer, rebuilt in code", scene: "old",
+    id: "began", kicker: "where it began", title: "a 1970s synthesizer that inspired my coded synth", scene: "old",
+    photo: "synth.jpg", credit: "Dalhousie University, 2024 fall term",
     lines: [
-      "The ARP 2600 (1971) is **semi-modular**: it plays with no cables at all, and every connection inside can be replaced with a patch cord.",
-      "This project rebuilds that architecture in software, for live coding. It models what each module **does**, tuned by ear and by measurement: not the circuit, and not the panel.",
-      "[HOW THE PROJECT BEGAN FOR YOU]",
+      "The ARP 2600 is a legendary semi-modular analog synthesizer, introduced in 1971 by Alan R. Pearlman's company, ARP Instruments.",
+      "My project tries to build a synth in code from it: a curated set of its sounds, an interactive instrument to play them, and a small language of my own to write them.",
     ],
   },
   {

@@ -45,10 +45,10 @@ b, strong { color: var(--accent); font-weight: 700; }
 .block a.name { color: var(--accent); font-weight: 700; text-decoration: none; border-bottom: 2px solid transparent; }
 .block a.name:hover { border-bottom-color: var(--accent); }
 .block a.name sup { color: var(--accent-2); font-size: 0.7em; margin-left: 0.1em; }
-.pic { margin: 0; display: grid; gap: 0.4em; }
+.pic { margin: 0; display: grid; gap: 0.4em; justify-items: end; }
 .pic figcaption { font-size: clamp(10px, 1vw, 22px); color: var(--muted); text-align: right; }
 /* the photo whole, in its own shape and colours */
-.block .photo { width: 100%; height: auto; max-height: 62vh; object-fit: contain; border: 1px solid var(--line); display: block; }
+.block .photo { width: 100%; height: auto; max-height: 54vh; object-fit: contain; border: 1px solid var(--line); display: block; }
 .block .photo.missing { aspect-ratio: 3 / 2; display: grid; place-items: center; background: rgba(255, 255, 255, 0.05); color: var(--muted); font-size: 12px; text-align: center; padding: 1em; filter: none; }
 .placeholder { color: var(--accent-2); }
 #deck .block[data-id="title"] h1, #deck .block[data-id="codeshake"] h1 { font-size: clamp(48px, 10vw, 180px); letter-spacing: 0.02em; }
