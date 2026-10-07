@@ -23,7 +23,7 @@ export const BLOCKS = [
       "Master of Arts and Technology candidate · Concordia University",
       "I research **live coding**, **human-computer interaction and embodiment** and **machine learning**.",
       "[What is live coding?] It is the practice of creating music, visuals or web choreography with the code on screen for everyone to see.",
-      "This presentation is an example: made with **Hydra** and JavaScript, and turned by my hands through the camera.",
+      "This presentation is an example: made with **Hydra**, JavaScript and **MediaPipe**, which reads my hands through the camera.",
     ],
   },
   {
