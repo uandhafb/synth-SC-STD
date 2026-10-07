@@ -13,12 +13,12 @@
 export const BLOCKS = [
   {
     id: "title", kicker: "EAST 398 · 498", title: "CODESHAKE", scene: "paper",
-    lines: ["a synthesizer, the Earth, and a room full of phones", "[YOUR NAME]"],
+    lines: ["a SuperCollider · Tidal · Strudel synthesizer, the Earth's movement data, and a room full of phones", "Uandha Fernandes Barbosa, BMus and BSc Eng"],
   },
   {
-    id: "me", kicker: "who", title: "[YOUR NAME]", scene: "figure", photo: "me.jpg",
+    id: "me", kicker: "who", title: "Uandha Fernandes Barbosa", scene: "figure", photo: "me.jpg",
     lines: [
-      "[YOUR PROGRAMME] · Concordia University, Montréal",
+      "BMus and BSc Eng · [YOUR PROGRAMME] · Concordia University, Montréal",
       "I research **live coding** and **embodied interaction**: how a body, an acoustic instrument and code can perform together in real time.",
       "[ONE OR TWO SENTENCES OF YOUR OWN ABOUT YOUR RESEARCH]",
       "This presentation is part of it: the blocks change when I raise my hand.",
