@@ -2,7 +2,8 @@
 //
 // It is given one of the real stations in lib/geo.js. Then:
 //   1. every earthquake the laptop plays arrives here the way it would at that station: first the
-//      P wave (a small bell), later the S wave (a longer, trembling tone), after the real travel
+//      P wave (a knock), later the S wave (a heavy hit like the synth's, then a wash like the sea
+//      with the station's note trembling in it), after the real travel
 //      time compressed into seconds; nothing in the shadow zone (104-140 degrees away), where the
 //      Earth's liquid core hides the earthquake; only a faint late P on the far side.
 //      Every station has its own note of D minor (the key of the piece), so the room is a chord
@@ -68,45 +69,67 @@ function makeAudio(ctx = new (window.AudioContext || window.webkitAudioContext)(
   const crowd = (at, len) => { for (let i = sounding.length - 1; i >= 0; i--) if (sounding[i] < ctx.currentTime) sounding.splice(i, 1);
     const n = sounding.filter((end) => end > at).length; if (n < 12) sounding.push(at + len); return n >= 12 ? 0 : n >= 6 ? 0.5 : 1; };
 
-  // P wave: a small glass bell on the station's note. Two sine partials (the note and an inharmonic
-  // one at 2.76x, as in a struck bar) and a tiny click of noise for the strike.
-  //   depth: shallow = struck hard (fast attack, more of the high partial and the click);
-  //          deep = struck softly (slower attack, rounder, rings a little longer)
-  //   bright (1 near .. 0 far): a lowpass closes with distance, as the Earth absorbs the highs
-  function pWave(at, amp, depth01, freq = 1174.66, bright = 1) {
-    const hard = 1 - depth01, len = 0.5 + 0.5 * depth01;
-    amp *= crowd(at, len); if (!amp) return;
-    const lp = ctx.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = Math.max(freq * 1.2, 600 + 7000 * bright * bright); lp.Q.value = 0.5;
-    const g = ctx.createGain(), atk = 0.002 + 0.014 * depth01;
-    g.gain.setValueAtTime(0, at); g.gain.linearRampToValueAtTime(amp, at + atk); g.gain.exponentialRampToValueAtTime(0.0008, at + len);
-    const o1 = ctx.createOscillator(), o2 = ctx.createOscillator(), g2 = ctx.createGain(), n = noise(), nf = ctx.createBiquadFilter(), ng = ctx.createGain();
-    o1.frequency.value = freq; o2.frequency.value = freq * 2.76;
-    g2.gain.setValueAtTime((0.15 + 0.45 * hard) * (0.3 + 0.7 * bright), at); g2.gain.exponentialRampToValueAtTime(0.01, at + len * 0.35);   // the high partial dies first
-    nf.type = "bandpass"; nf.frequency.value = Math.min(9000, freq * 3); nf.Q.value = 1.5;
-    ng.gain.setValueAtTime(0.5 * hard * bright + 0.002, at); ng.gain.exponentialRampToValueAtTime(0.001, at + 0.025);
-    o1.connect(g); o2.connect(g2).connect(g); n.connect(nf).connect(ng).connect(g); g.connect(lp).connect(master);
+  // A small "spring" shared by all the sounds, after the synth's spring reverb: two short delays
+  // (43 and 52 ms, the synth's two springs) feeding back through a lowpass.
+  const spring = ctx.createGain(), back = ctx.createGain(), tone = ctx.createBiquadFilter(), wet = ctx.createGain();
+  tone.type = "lowpass"; tone.frequency.value = 2600; wet.gain.value = 0.6;
+  back.gain.value = 0.3;                  // two delays share the loop: 2 x 0.3 = 0.6 around, so it always dies away
+  for (const t of [0.043, 0.052]) { const dl = ctx.createDelay(0.2); dl.delayTime.value = t; spring.connect(dl); back.connect(dl); dl.connect(tone); }
+  tone.connect(back); tone.connect(wet).connect(master);
+  const drive = new Float32Array(1025); for (let i = 0; i < drive.length; i++) drive[i] = Math.tanh((i / 512 - 1) * 2.2);
+
+  // The hit: the phone's version of the note the synth plays for an earthquake (ruptureNote in the
+  // relay), on the station's own note. The same recipe, scaled for a phone speaker:
+  //   a saw and a triangle whose pitch FALLS into the note (the "thud": 10..24 semitones, like adsr_pitch)
+  //   + dark noise, more for bigger earthquakes (nzlvl), all driven (vcfdrive)
+  //   through a resonant lowpass that closes fast (vcfenv, edec); deep or far = darker
+  //   and a send to the spring (spmix), more for bigger earthquakes.
+  // m = size (0..1), len = seconds until it has died away.
+  function hit(at, amp, freq, m, depth01, bright, len) {
+    const fall = 0.04 + 0.14 * m, dec = Math.min(len, 0.2 + 1.3 * m);
+    const o1 = ctx.createOscillator(), o2 = ctx.createOscillator(), og = ctx.createGain(), n = noise(), nf = ctx.createBiquadFilter(), ng = ctx.createGain();
+    o1.type = "sawtooth"; o2.type = "triangle"; og.gain.value = 0.5;
+    for (const [o, f] of [[o1, freq], [o2, freq * 2]]) { o.frequency.setValueAtTime(f * 2 ** ((10 + 14 * m) / 12), at); o.frequency.exponentialRampToValueAtTime(f, at + fall); }
+    nf.type = "lowpass"; nf.frequency.value = 1800; ng.gain.value = 0.3 + 1.6 * m;
+    const sh = ctx.createWaveShaper(); sh.curve = drive;
+    const cut = Math.max(freq * 1.3, (500 + 2400 * (1 - depth01)) * (0.35 + 0.65 * bright));
+    const f = ctx.createBiquadFilter(); f.type = "lowpass"; f.Q.value = 3.5;
+    f.frequency.setValueAtTime(Math.min(9000, cut * (2 + 4 * bright)), at); f.frequency.exponentialRampToValueAtTime(cut, at + dec);
+    const g = ctx.createGain(), send = ctx.createGain();
+    g.gain.setValueAtTime(0, at); g.gain.linearRampToValueAtTime(amp * 0.3, at + 0.003); g.gain.exponentialRampToValueAtTime(0.0008, at + len);
+    send.gain.value = 0.2 + 0.5 * m;
+    o1.connect(sh); o2.connect(og).connect(sh); n.connect(nf).connect(ng).connect(sh); sh.connect(f).connect(g); g.connect(master); g.connect(send).connect(spring);
     for (const x of [o1, o2, n]) { x.start(at); x.stop(at + len + 0.05); }
   }
 
-  // S wave: the same note an octave lower, long and trembling. A triangle and a slightly detuned
-  // sine (a slow beat between them), with a little breath of noise.
-  //   magnitude: bigger = longer and shaking more (the tremolo is deeper and faster)
-  //   depth and distance: darker (lowpass)
+  // P wave: the first, smaller hit: a dry knock on the station's note.
+  function pWave(at, amp, depth01, freq = 1174.66, bright = 1, mag01 = 0.5) {
+    const len = 0.25 + 0.45 * mag01;
+    amp *= crowd(at, len); if (!amp) return;
+    hit(at, amp * 1.6, freq, 0.1 + 0.3 * mag01, depth01, bright, len);   // short, so it needs more level to be heard
+  }
+
+  // S wave: the big hit, an octave lower, and then the sea it leaves behind: a wash of noise that
+  // rolls in slowly, with the station's note trembling quietly inside it.
+  //   magnitude: bigger = a heavier hit, a longer wash, a stronger tremor
   function sWave(at, amp, depth01, mag01, freq = 1174.66, bright = 1) {
     const len = 0.7 + 3.6 * mag01, f2 = freq / 2;
     amp *= crowd(at, len); if (!amp) return len;
-    const lp = ctx.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = Math.max(f2 * 1.5, (500 + 5000 * bright * bright) * (1 - 0.4 * depth01)); lp.Q.value = 0.7;
+    hit(at, amp, f2, mag01, depth01, bright, Math.min(len, 0.5 + 2.2 * mag01));
     const g = ctx.createGain();
-    g.gain.setValueAtTime(0, at); g.gain.linearRampToValueAtTime(amp, at + 0.06); g.gain.exponentialRampToValueAtTime(0.0008, at + len);
-    const o1 = ctx.createOscillator(), o2 = ctx.createOscillator(), g2 = ctx.createGain(), n = noise(), nf = ctx.createBiquadFilter(), ng = ctx.createGain();
-    o1.type = "triangle"; o1.frequency.value = f2; o2.frequency.value = f2 * 1.004; g2.gain.value = 0.4;
-    nf.type = "bandpass"; nf.frequency.value = f2 * 2; nf.Q.value = 0.8; ng.gain.value = 0.12;
-    // the tremor: its own gain stage (1 +- depth), so it shakes the same way from start to end of
-    // the note and never turns the tone inside out (which would detune it)
-    const lfo = ctx.createOscillator(), lg = ctx.createGain(), trem = ctx.createGain();
+    g.gain.setValueAtTime(0, at); g.gain.linearRampToValueAtTime(amp * 0.5, at + Math.min(0.5, len * 0.3)); g.gain.exponentialRampToValueAtTime(0.0008, at + len);
+    // the wash: noise through a bandpass that rises and falls slowly, like a wave on a beach
+    const n = noise(), nf = ctx.createBiquadFilter(), ng = ctx.createGain(), sweep = ctx.createOscillator(), sg = ctx.createGain();
+    nf.type = "bandpass"; nf.Q.value = 0.7; nf.frequency.value = 700 + 900 * bright; ng.gain.value = 0.45;
+    sweep.frequency.value = 0.45 + 0.3 * Math.random(); sg.gain.value = 350 + 400 * bright; sweep.connect(sg).connect(nf.frequency);
+    // the note inside it, with the tremor as its own gain stage (1 +- depth), so it never turns the
+    // tone inside out (which would detune it)
+    const o1 = ctx.createOscillator(), o2 = ctx.createOscillator(), og = ctx.createGain(), lfo = ctx.createOscillator(), lg = ctx.createGain(), trem = ctx.createGain();
+    o1.type = "triangle"; o1.frequency.value = f2; o2.frequency.value = f2 * 1.004; og.gain.value = 0.6;
     lfo.frequency.value = 6 + 7 * mag01 + 2 * Math.random(); lg.gain.value = 0.2 + 0.5 * mag01; lfo.connect(lg).connect(trem.gain);
-    o1.connect(g); o2.connect(g2).connect(g); n.connect(nf).connect(ng).connect(g); g.connect(trem).connect(lp).connect(master);
-    for (const x of [o1, o2, n, lfo]) { x.start(at); x.stop(at + len + 0.1); }
+    const lp = ctx.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = Math.max(f2 * 1.5, (500 + 5000 * bright * bright) * (1 - 0.4 * depth01));
+    n.connect(nf).connect(ng).connect(g); o1.connect(og); o2.connect(og); og.connect(trem).connect(g); g.connect(lp).connect(master);
+    for (const x of [n, sweep, o1, o2, lfo]) { x.start(at); x.stop(at + len + 0.1); }
     return len;
   }
 
@@ -140,7 +163,7 @@ function onQuake(q) {
   const note = noteOf(STATIONS.indexOf(station)), bright = clamp01((a.strength - 0.2) / 0.8);   // near = bright, far = dull
   const now = audio.ctx.currentTime;
   const tp = a.p * SECONDS_PER_MINUTE, ts = a.s === null ? null : a.s * SECONDS_PER_MINUTE;
-  audio.pWave(now + tp, 0.5 * loud + 0.05, q.depth01, note.freq, bright);
+  audio.pWave(now + tp, 0.5 * loud + 0.05, q.depth01, note.freq, bright, q.mag01);
   setTimeout(() => {
     flash("p", 0.25 + 0.5 * loud, 0.35); shake(3 + 10 * loud, 0.35);
     say(`<b>P wave</b> from ${where} · M ${q.mag.toFixed(1)}<br>${Math.round(deg)}° away · ${a.p.toFixed(1)} min through the Earth${a.zone === "core" ? "<br>(it crossed the core: faint, and no S wave)" : ""}`);
