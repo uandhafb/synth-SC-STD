@@ -3,7 +3,7 @@
 // A small movement vocabulary for the words of a page, in the spirit of Joana Chicau's
 // choreographic coding (the web page as a stage, its elements as bodies, code as the score).
 // The verbs are the performer's own, from her MIDI web-choreography sketches:
-//     shake  wobble  float  stretch  tilt  bounce  fall  + breathing (after Chicau)  + still
+//     shake  wobble  float  stretch  tilt  bounce  fall  incline  + breathing (after Chicau)  + still
 // Here the earthquakes call them (see score()); they can also be typed in the browser console:
 //     shake("Indonesia", 0.8)     bounce("rows", 0.6)     tilt("page", -8)     still()
 //
@@ -82,7 +82,7 @@ function bodies(what, n = 14) {
   if (what === "words") return someWords(n);
   if (what === "page") return [content()];
   if (what === "rows") return [...content().querySelectorAll("tr")].filter((el) => inView(el, 0.1));
-  if (what === "headings") return [...document.querySelectorAll("h1, h2, h3, caption, th")].filter((el) => inView(el, 0.1));
+  if (what === "headings") return [...document.querySelectorAll("h1, h2, h3, h4, caption, th, figcaption")].filter((el) => inView(el, 0.05));
   if (/^[.#\[]/.test(what)) return [...document.querySelectorAll(what)].filter((el) => inView(el, 0.1));
   return findWord(what).filter((el) => inView(el));
 }
@@ -202,11 +202,21 @@ export function fall(what, amount = 0.5) {
   light(els, ms, "choreo-fall");
 }
 
+// incline: the body leans over to an angle and STAYS there, its lines running diagonally (the floor
+// is no longer level). Unlike tilt, it does not swing back by itself. incline("page", 0) levels it.
+export function incline(what, degrees = 5, quiet = false) {
+  if (!quiet) say("incline", what, degrees);
+  for (const el of bodies(what)) {
+    el.style.transition = `rotate ${quiet ? 0.6 : 1.6}s cubic-bezier(.3,.7,.2,1)`;
+    el.style.rotate = `${clamp(degrees, -20, 20).toFixed(2)}deg`;        // "rotate" combines with the other movements
+  }
+}
+
 // breathing: the resting state. The page slowly swells and settles while the Earth is quiet.
 export function breathing() {
   say("breathing");
   breath?.cancel();
-  breath = content().animate([{ transform: "scale(1)", opacity: 1 }, { transform: "scale(1.012)", opacity: 0.86 }, { transform: "scale(1)", opacity: 1 }],
+  breath = content().animate([{ transform: "scale(1)", opacity: 1 }, { transform: "scale(1.014)", opacity: 0.8 }, { transform: "scale(1)", opacity: 1 }],
     { duration: 6500, iterations: Infinity, easing: "ease-in-out" });
 }
 
@@ -215,6 +225,7 @@ export function still() {
   say("still");
   breath?.cancel(); breath = null;
   for (const a of [...running]) a.cancel();
+  content().style.rotate = "0deg";
 }
 
 // ---- the score: how an earthquake becomes movement ----------------------------------------------
@@ -230,14 +241,25 @@ export function placeWords(place) {
 
 let breathTimer = null;
 
+// How far the page leans: it follows the Earth's agitation (the relay's "energy", 0..1), towards the
+// side of the map where the last earthquake was, and comes back to level as things calm down.
+const LEAN = 7;                        // degrees at full agitation
+let energy = 0, side = -1;
+
 export function score(q) {
-  breath?.cancel(); breath = null;                  // the earthquake interrupts the breathing
+  side = q.lon >= 0 ? -1 : 1;                               // quake in the east: the page leans to the left
+  energy = Math.min(1, energy + 0.2 + 0.8 * q.mag01);
+  incline("page", Math.round(side * energy * LEAN * 10) / 10);
+  // The page keeps breathing through small earthquakes; only a big one (M 5+) interrupts it.
   clearTimeout(breathTimer);
+  if (q.mag >= 5) { breath?.cancel(); breath = null; breathTimer = setTimeout(breathing, 9000 + 6000 * q.mag01); }
+  else if (!breath) breathing();
   // The place's name, where it is written on screen; otherwise a handful of the words on screen.
   const word = placeWords(q.place).find((w) => findWord(w).some((el) => inView(el, 0)));
   // Small and medium earthquakes move words and letters only. The whole page moves (leans, sinks,
   // throws its rows) only for big ones (M 5+), so a replay does not rock the page all the time.
   shake(word ?? "words", q.mag01);
+  setTimeout(() => shake("headings", Math.round(q.mag01 * 80) / 100), 150);                                         // the titles on screen tremble too
   if (word && q.mag01 > 0.45) wobble(word, Math.round(q.mag01 * 80) / 100);
   if (q.mag01 > 0.35) setTimeout(() => fall("words", Math.round(q.mag01 * 100) / 100), 500);                          // stronger: letters fall
   if (q.mag >= 5) {
@@ -245,7 +267,6 @@ export function score(q) {
     if (q.depth01 > 0.6) setTimeout(() => float("page", -Math.round(q.depth01 * 60) / 100), 1200);                    // deep: the page sinks a little
   }
   if (q.mag >= 5.5) setTimeout(() => { bounce("rows", q.mag01); shake("page", Math.round(q.mag01 * 70) / 100); }, 450);  // very big: the table is thrown
-  breathTimer = setTimeout(breathing, 9000 + 6000 * q.mag01);
 }
 
 // ---- on the page --------------------------------------------------------------------------------
@@ -258,17 +279,26 @@ style.textContent = `
   .choreo-w.choreo-fall, .choreo-w.choreo-fall a, .choreo-w.choreo-fall .choreo-l { color: #e8431f !important; font-weight: 700; }
   .choreo-w.choreo-on { background: #ff5a36; color: #fff !important; }
   .choreo-w.choreo-on a { color: #fff !important; }
-  #mw-content-text, body { transform-origin: 50% 30%; }
   html { overflow-x: hidden; }`;
 document.head.appendChild(style);
 
-Object.assign(window, { shake, wobble, float, stretch, tilt, bounce, fall, breathing, still });       // for the console
+Object.assign(window, { shake, wobble, float, stretch, tilt, bounce, fall, incline, breathing, still });       // for the console
 // Begin at the first table that lists earthquakes by country (a screen full of place names);
 // you can scroll by hand to any part of the page you like.
+// Everything turns, leans and swells around the middle of what is on screen (the page is very
+// tall: turning it around its own middle would slide the visible part out of the frame).
+const base = (() => { const r = content().getBoundingClientRect(); return { left: r.left + scrollX, top: r.top + scrollY }; })();
+const centre = () => { content().style.transformOrigin = `${(scrollX + innerWidth / 2 - base.left).toFixed(0)}px ${(scrollY + innerHeight / 2 - base.top).toFixed(0)}px`; };
+addEventListener("scroll", centre, { passive: true }); addEventListener("resize", centre);
 const tables = [...document.querySelectorAll("table.wikitable")];
 (tables.find((t) => t.querySelectorAll(".flagicon, .mw-flagicon, img").length >= 6) ?? tables[0])?.scrollIntoView({ block: "start" });
+centre();
 document.addEventListener("click", (e) => { if (e.target.closest("a")) e.preventDefault(); }, true);   // links stay still
 
 const events = new EventSource(`${ORIGIN}/events`);
-events.onmessage = (e) => { const m = JSON.parse(e.data); if (m.type === "quake") score(m.q); };
+events.onmessage = (e) => {
+  const m = JSON.parse(e.data);
+  if (m.type === "quake") score(m.q);
+  else if (m.type === "activity") { energy = m.energy; incline("page", energy < 0.02 ? 0 : side * energy * LEAN, true); }   // easing back, silently
+};
 breathing();

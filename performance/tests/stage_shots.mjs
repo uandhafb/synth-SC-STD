@@ -46,9 +46,12 @@ await sleep(13000);                                  // page + Wikipedia copy + 
 await shot("0_quiet");
 relay.fire(describe({ id: "a", mag: 4.4, depth: 35, lat: -6.2, lon: 130.1, place: "142 km NE of Tual, Indonesia", time: Date.now() - 3600e3 }));
 await sleep(2000); await shot("1_small");
+console.log("after a small quake: breathing still running:", await js(`document.getElementById('page').contentDocument.getAnimations().some(a => a.effect.getComputedTiming().iterations === Infinity && a.playState === 'running')`),
+  "| headings moving:", await js(`[...document.getElementById('page').contentDocument.querySelectorAll('h1,h2,h3,h4,caption,th,figcaption')].filter(el => el.getAnimations().length).length`));
 await sleep(3500); await shot("2_small_later");
 relay.fireBig(2);                                    // Indonesia, M 6.5, 372 km deep
 await sleep(2300); await shot("3_big");
+console.log("after a big quake: breathing paused:", await js(`!document.getElementById('page').contentDocument.getAnimations().some(a => a.effect.getComputedTiming().iterations === Infinity)`));
 await sleep(2500); await shot("4_big_later");
 console.log("strip:", await js(`[...document.querySelectorAll('#strip .line')].map(l => l.textContent).join(' || ')`));
 console.log("words on the page that can move:", await js(`document.getElementById('page').contentDocument.querySelectorAll('.choreo-w').length`));
