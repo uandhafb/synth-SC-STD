@@ -27,7 +27,7 @@ const clamp01 = (x) => Math.min(1, Math.max(0, x));
 const store = { get: (k) => { try { return sessionStorage.getItem(k); } catch { return null; } }, set: (k, v) => { try { sessionStorage.setItem(k, v); } catch { /* private mode */ } } };
 const ID = store.get("at-id") || (() => { const id = Math.random().toString(36).slice(2, 10); store.set("at-id", id); return id; })();
 
-const VERSION = 12;                        // shown on the page, to tell a fresh copy from one the phone kept (change it with ?v= in index.html)
+const VERSION = 13;                        // shown on the page, to tell a fresh copy from one the phone kept (change it with ?v= in index.html)
 $("roomTxt").textContent = `room ${ROOM} · v${VERSION}`;
 let station = null, mq = null, audio = null, ground = null;
 let state = { on: true, level: 1 };       // set by the laptop (phones on/off, overall level)
@@ -201,6 +201,7 @@ function onQuake(q) {
   audio.pWave(now + tp, 0.5 * loud + 0.05, q.depth01, note.freq, bright, q.mag01);
   setTimeout(() => {
     flash("p", 0.25 + 0.5 * loud, 0.35); shake(3 + 10 * loud, 0.35);
+    buzz(q.mag01 > 0.5 ? 70 : 40);                           // P: one short tap (Android only)
     say(`<b>P wave</b> from ${where} · M ${q.mag.toFixed(1)}<br>${Math.round(deg)}° away · ${a.p.toFixed(1)} min through the Earth${a.zone === "core" ? "<br>(it crossed the core: faint, and no S wave)" : ""}`);
   }, tp * 1000);
   if (ts !== null) {
@@ -208,12 +209,15 @@ function onQuake(q) {
     setTimeout(() => {
       flash("s", 0.3 + 0.6 * loud, len); shake(6 + 26 * loud, len);
       say(`<b class="s">S wave</b> from ${where} · M ${q.mag.toFixed(1)}<br>${Math.round(deg)}° away · ${a.s.toFixed(1)} min through the Earth`);
-      if (navigator.vibrate) navigator.vibrate(q.mag01 > 0.6 ? [180, 60, 260, 60, 400] : q.mag01 > 0.3 ? [120, 50, 200] : [90]);
+      buzz(q.mag01 > 0.6 ? [250, 60, 350, 60, 600] : q.mag01 > 0.3 ? [160, 50, 280] : [120]);   // S: the shaking
     }, ts * 1000);
   }
 }
 
 const say = (html) => { $("arrival").innerHTML = html; };
+// Vibration: Android only (Chrome, Samsung Internet); iPhones and Firefox do not allow it. It also
+// stays still when the phone's own vibration is switched off (silent / do not disturb / battery saver).
+const buzz = (pattern) => { try { return navigator.vibrate ? navigator.vibrate(pattern) : false; } catch { return false; } };
 function flash(kind, amount, seconds) {
   const el = $("flash"); el.className = ""; void el.offsetWidth;
   el.style.setProperty("--amt", amount.toFixed(2)); el.style.setProperty("--len", `${seconds.toFixed(2)}s`); el.className = kind;
@@ -278,6 +282,7 @@ document.addEventListener("visibilitychange", () => { if (document.visibilitySta
 
 function join() {
   audio = makeAudio(); audio.ctx.resume();
+  buzz([120, 80, 120]);                     // two taps on joining: "this phone can vibrate"
   if (station) audio.setKind(noteOf(STATIONS.indexOf(station)).kind);
   $("join").hidden = true; $("station").hidden = false;
   keepAwake();
