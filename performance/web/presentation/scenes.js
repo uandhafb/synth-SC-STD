@@ -12,11 +12,14 @@ const TAU = Math.PI * 2;
 
 // n thin horizontal lines.
 const lines = (h, n, thin = 0.965) => h.osc(n * TAU, 0, 0).rotate(Math.PI / 2).thresh(thin, 0.012);
-// What a seismometer adds: a displacement that changes quickly along the line and is different
-// for each line (the noise is cut into n rows), moving like paper under the pen.
-const tremor = (h, n, grain = 22, speed = 0.5) => h.noise(grain, speed).pixelate(900, n).scrollX(0, 0.03);
-// How far the lines are pushed: a little always, more with the real ground, most on an earthquake.
-const shake = (L, rest, ground = 0.05, hit = 0.12) => () => rest + ground * L.ground + hit * L.pulse;
+// What moves the lines: one slow, smooth field of noise. Smooth matters: with a fast, grainy field
+// the thin lines break into dots and dashes (noise on the screen); with a slow one they stay whole
+// and bend in long curves, like contour lines or a calm sea. `grain` is how tight the curves are
+// (small = long and wide), `speed` how fast they drift. (n is kept so each scene reads the same.)
+const tremor = (h, n, grain = 22, speed = 0.5) => h.noise(Math.max(1.2, grain / 9), speed * 0.25);
+// How far the lines are pushed: always enough to draw long curves (that is the look), a little
+// more with the real ground, and wider for a moment on an earthquake or a change of block.
+const shake = (L, rest, ground = 0.05, hit = 0.12) => () => Math.max(0.05, rest * 6) + 0.5 * ground * L.ground + 0.35 * hit * L.pulse;
 // The camera as a mirror, in grey: what bends the lines into the presenter's figure.
 const cam = (h) => h.src(h.s0).scale(1, -1, 1).saturate(0).contrast(1.5);
 // Bend the traces with the camera, add a faint ghost of the image so the figure is easy to find,

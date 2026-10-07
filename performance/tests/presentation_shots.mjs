@@ -56,7 +56,7 @@ check("the camera is inside the visuals", await js("window.presentation.L.cam ==
 await sleep(2500);
 check("the first block is on screen", await js("document.querySelector('#deck .block.on')?.dataset.id") === "title");
 const ids = [];
-for (let i = 0; i < blocks; i++) { await sleep(1300); ids.push(await js("document.querySelector('#deck .block.on')?.dataset.id")); await shot(`${i + 1}_${ids[i]}`); await key("ArrowRight"); }
+for (let i = 0; i < blocks; i++) { await sleep(1300); ids.push(await js("document.querySelector('#deck .block.on')?.dataset.id")); await shot(`${i + 1}_${ids[i]}`); await key("ArrowRight"); if (i === 0) { await sleep(180); await shot("transition"); } }
 check("the right arrow goes through every block, in order", new Set(ids).size === blocks, ids.join(" → "));
 check("no block is taller than the screen", await js("[...document.querySelectorAll('#deck .block')].every((b) => b.scrollHeight <= innerHeight * 0.96)"), await js("[...document.querySelectorAll('#deck .block')].map((b) => Math.round(100 * b.scrollHeight / innerHeight) + '%').join(' ')"));
 await key("ArrowLeft"); await sleep(400);
