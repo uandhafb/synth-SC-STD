@@ -154,8 +154,7 @@ let -- NUCLEO · o que gira no escuro e nunca para            (mono: osciladores
       # o2fm (range 0 0.2 $ 0.71 <~ rand) # legato (range 0.4 0.9 $ 0.53 <~ rand) # spmix 0.25
 
 -- ============================================================================================
--- 2 · PARTITURA · abrir e fechar linhas (tirar ou pôr o "--"), Cmd+Enter a cada mudança.
---     O nome é o som; o resto da linha é o gesto. Os dados da Terra entram no gesto.
+-- 2. TESTANDO E CALIBRANDO
 -- ============================================================================================
 
 d1 $ stack [silence
@@ -172,7 +171,7 @@ d1 $ stack [silence
   -- , whenmod 8 6 (hurry 2) $ placas # pan (slow 3 sine) # gain 0.85
   -- , cascalho # gain 1.15
   -- ---- o enxame ---------------------------------------------------------------------
-  -- , every 3 (jux rev) $ sismografo # sh_vcf (range 0.5 3.5 qenergy) # shrate (range 4 16 qrate) # gain 1
+  --, every 3 (jux rev) $ sismografo # sh_vcf (range 0.5 3.5 qenergy) # shrate (range 4 16 qrate) # gain 1
   -- , sometimesBy 0.3 (# crush 5) $ fenda # gain 0.7 # pan (fast 2 sine)
   -- , ondaP # pan rand # gain 1
   -- , borbulha # sh_vcf (range 1 3.5 qenergy) # gain 0.9
@@ -202,9 +201,7 @@ d1 $ stack [silence
   ]
 
 -- ============================================================================================
--- 3 · ARRANJO · a peça toca sozinha (uns 4 min e meio), com variações; dá para falar com a turma.
---     Rodar o primeiro bloco uma vez; o segundo começa do início. A partitura acima continua
---     valendo: rodar o "d1 $ stack" de novo volta para a mão.
+-- 3 · ARRANJO
 -- ============================================================================================
 
 let arranjo = seqPLoop
@@ -217,26 +214,26 @@ let arranjo = seqPLoop
       -- a falha
       , (21, 80, falha # o1lfrate (range 4 14 qrate) # gain 0.25)
       , (28, 80, respingo # spdecay "<0 0.5 1>" # gain 0.5)
-      , (13, 80, degradeBy (range 0.5 0.2 qrate) $ poeira # pan rand # gain 0.5)
+      , (13, 80, degradeBy (range 0.5 0.2 qrate) $ poeira # pan rand # gain 0.75)
       , (25, 80, every 4 (off 0.125 (|+ n 12)) $ magma # vcfcut (range 200 2500 qmag))
       , (32, 80, whenmod 8 6 (hurry 2) $ placas # pan (slow 3 sine) # gain 0.85)
-      , (13, 80, cascalho # gain 0.55 # pan rand)
-      -- o enxame (48-80)
+      , (13, 80, cascalho # gain 0.7r5 # pan rand)
+      -- o enxame
       , (128, 140, every 3 (jux rev) $ sismografo # sh_vcf (range 0.5 3.5 qenergy) # shrate (range 4 16 qrate) # gain 1)
       , (128, 141, sometimesBy 0.3 (# crush 5) $ fenda # gain 0.7 # pan (fast 2 sine))
       , (128, 142, borbulha # sh_vcf (range 1 3.5 qenergy) # gain 0.9)
       , (60, 80, areia # noise_vcf (range 0.3 2.5 qenergy) # gain 0.55)
-      , (64, 80, ondaP # pan rand # gain 0.7)
+      , (54, 80, ondaP # pan rand # gain 0.7)
       , (68, 80, estratos # o1lfrate (range 0.3 1.5 qenergy) # gain 0.5)
       , (72, 80, tremor # swrate (range 6 24 qenergy) # gain 0.5)
-      -- a ruptura (80-100): o chão para; é a hora das teclas 1 2 3
+      -- a ruptura
       , (80, 100, manto # gain 1)
       , (80, 100, off 0.375 (# gain 0.6) $ replica # gain 0.8)
       , (84, 96, lava # vco3_pitch (range 1 9 qenergy) # gain 0.75)
       , (88, 100, degradeBy 0.5 $ cristal # pan rand # gain 0.6)
       , (86, 100, brasa # gain 0.75)
       , (92, 100, calor # o1lfrate (range 3 14 qenergy) # gain 0.7)
-      -- as réplicas (100-128): tudo volta, mais pesado
+      -- as réplicas
       , (100, 128, every 8 (hurry 2) $ falha # o1lfrate (range 4 14 qrate) # gain 1.15)
       , (100, 128, respingo # spdecay "<1 0.5 0>" # gain 0.9)
       , (104, 128, borbulha # sh_vcf (range 1 3.5 qenergy) # gain 0.9)
@@ -248,7 +245,7 @@ let arranjo = seqPLoop
       , (116, 128, tremor # swrate (range 6 24 qenergy) # gain 0.7)
       , (108, 124, quartzo # shrate (range 3 14 qrate) # gain 0.8)
       , (112, 128, geiser # gain 0.85)
-      -- agora (128-152): o chão de Montréal ao vivo (chao), a sombra e um sinal
+      -- agora  o chão de Montréal ao vivo (chao), a sombra e um sinal
       , (126, 152, chao # gain 0.05)
       , (128, 152, manto # vcfcut (range 500 3500 qground) # gain 0.8)
       , (130, 150, sombra # vco3_pitch (range 1 9 qground) # gain 0.8)
@@ -261,7 +258,7 @@ let arranjo = seqPLoop
       ]
 
 do resetCycles
-   d1 $ arranjo
+   d1 $ arranjor
 
 -- ============================================================================================
 -- FIM · o silêncio
