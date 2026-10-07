@@ -234,6 +234,7 @@ function onRoom(m) {
     const qr = window.qrcode(0, "M"); qr.addData(m.url); qr.make();
     document.getElementById("qrCode").innerHTML = qr.createSvgTag({ cellSize: 8, margin: 2, scalable: true });
     document.getElementById("qrUrl").textContent = m.url.replace(/^https?:\/\//, "");
+    document.getElementById("qrRoom").textContent = "room " + String(m.room ?? "").replace(/^([A-Za-z]+)(\d{3})(\d{3})$/, "$1 $2 · $3");   // EAST398498 is shown as EAST 398 · 498
   }
 }
 const toggleQr = () => { elQr.hidden = !elQr.hidden; };
