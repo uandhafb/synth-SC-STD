@@ -45,9 +45,11 @@ const js = async (expr) => (await send("Runtime.evaluate", { expression: expr, r
 await sleep(13000);                                  // page + Wikipedia copy + land outlines + the first live seconds
 await shot("0_quiet");
 relay.fire(describe({ id: "a", mag: 4.4, depth: 35, lat: -6.2, lon: 130.1, place: "142 km NE of Tual, Indonesia", time: Date.now() - 3600e3 }));
-await sleep(2000); await shot("1_small");
-console.log("after a small quake: breathing still running:", await js(`document.getElementById('page').contentDocument.getAnimations().some(a => a.effect.getComputedTiming().iterations === Infinity && a.playState === 'running')`),
-  "| headings moving:", await js(`[...document.getElementById('page').contentDocument.querySelectorAll('h1,h2,h3,h4,caption,th,figcaption')].filter(el => el.getAnimations().length).length`));
+await sleep(700);
+const headingsMoving = await js(`[...document.getElementById('page').contentDocument.querySelectorAll('h1,h2,h3,h4,caption,th,figcaption')].filter(el => el.getAnimations().length).length`);
+await sleep(1300); await shot("1_small");
+console.log("after a small quake: breathing still running:", await js(`document.getElementById('page').contentDocument.body.getAnimations().some(a => a.playState === 'running')`),
+  "| headings that moved:", headingsMoving);
 await sleep(3500); await shot("2_small_later");
 relay.fireBig(2);                                    // Indonesia, M 6.5, 372 km deep
 await sleep(2300); await shot("3_big");

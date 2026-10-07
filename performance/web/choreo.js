@@ -264,8 +264,8 @@ export function incline(what, degrees = 5, quiet = false) {
   for (const el of bodies(what)) { el.style.transition = "rotate 1.6s cubic-bezier(.3,.7,.2,1)"; el.style.rotate = deg; }
 }
 
-// breathing: the resting state. The text fades almost away and returns, every 5 seconds; nothing
-// changes size or place.
+// breathing: the resting state, and it never stops. The whole page rises and sinks, slowly and
+// gently (8 s), like a chest; nothing fades and nothing changes size.
 export function breathing() {
   say("breathing");
   document.documentElement.classList.add("choreo-breathing");
@@ -324,9 +324,9 @@ style.textContent = `
   .choreo-t { display: inline-block; max-width: 100%; }
   /* only the text on (or near) the screen leans and breathes: the page is very long */
   .choreo-t.choreo-near { rotate: var(--choreo-lean, 0deg); transition: rotate 1.4s cubic-bezier(.3,.7,.2,1); }
-  .choreo-breathing .choreo-t.choreo-near { animation: choreo-breath 5s ease-in-out infinite; }
-  /* how far the text fades at the bottom of each breath: set from the live ground (see below) */
-  @keyframes choreo-breath { 0%, 100% { opacity: 1; } 50% { opacity: var(--choreo-breath, 0.22); } }
+  .choreo-breathing body { animation: choreo-breath 8s ease-in-out infinite; }
+  /* how far the page rises on each breath: set from the live ground (see below) */
+  @keyframes choreo-breath { 0%, 100% { translate: 0 0; } 50% { translate: 0 calc(-1 * var(--choreo-breath, 14px)); } }
   .choreo-w.choreo-fallen { background: transparent !important; }
   .choreo-w.choreo-fallen, .choreo-w.choreo-fallen a, .choreo-w.choreo-fallen .choreo-l { color: #e8431f !important; font-weight: 700; }
   .choreo-w.choreo-on { background: #ff5a36; color: #fff !important; }
@@ -367,10 +367,10 @@ events.onmessage = (e) => {
   else if (m.type === "activity") { energy = m.energy; incline("text", energy < 0.02 ? 0 : side * energy * LEAN, true); }   // easing back, silently
   else if (m.type === "mode" && m.mode === "replay") restore();                // every new replay starts from a whole page
   else if (m.type === "ground") {
-    // The breath follows the live ground under Montréal: still ground = a shallow breath (the text
-    // fades to 55%), moving ground = a deep one (down to 8%).
+    // The breath follows the live ground under Montréal: still ground = the page rises 8 px,
+    // moving ground = up to 26 px.
     groundNow += (m.value - groundNow) * 0.08;
-    document.documentElement.style.setProperty("--choreo-breath", (0.55 - 0.47 * clamp(groundNow * 1.6)).toFixed(2));
+    document.documentElement.style.setProperty("--choreo-breath", Math.round(8 + 18 * clamp(groundNow * 1.6)) + "px");
   }
 };
 breathing();
