@@ -25,7 +25,7 @@ const EXTRAS = {
       <div class="row">${node("Tidal · Strudel", "I type a pattern", 0)}<span class="arrow osc">— OSC →</span>${node("SuperDirt", "gets one message per note, inside SuperCollider", 1)}</div></div>
     <div class="lane"><div class="lab">2 · the synth <span class="file">sc/synthdefs/ 00_modules.scd · scstd.scd · spring.scd</span></div>
       <div class="row">${[node("VCO 1 · VCO 2 · VCO 3", "oscillators + noise, ring mod", 2), node("mixer", "", 3), node("VCF", "filter", 4), node("VCA", "amplifier", 5), node("spring reverb", "one for all voices", 6), node("speakers", "", 7)].join(arrow)}</div></div>
-    <div class="lane"><div class="lab">3 · what moves it</div>
+    <div class="lane"><div class="lab">3 · <span class="file" style="margin-left:0">sc/synthdefs/ 00_modules.scd</span></div>
       <div class="row gap">${node("ADSR envelope", "opens the filter", 4, "side")}${node("AR envelope", "opens the amplifier", 5, "side")}${node("sample &amp; hold · lag · envelope follower", "the patch cords: to pitch, filter and level", 2, "side")}</div></div>
     <div class="lane"><div class="lab">4 · the panel <span class="file">ui/ · relay/ · sc/buses.scd</span></div>
       <div class="row">${node("sliders in the browser", "", 0, "side")}<span class="arrow osc">← OSC →</span>${node("SuperCollider", "keeps every value the code does not set", 1, "side")}</div></div>
