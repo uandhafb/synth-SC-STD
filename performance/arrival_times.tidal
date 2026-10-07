@@ -22,6 +22,7 @@ let qmag = cF 0 "mag"; qdepth = cF 0.5 "depth"; qenergy = cF 0 "energy"; qrate =
 
 -- ============================================================================================
 -- 1 · VOCABULÁRIO · cada nome é um som do synth (rodar este bloco inteiro uma vez)
+--     Os nomes entre parênteses à direita dizem que parte do synth faz o som.
 -- ============================================================================================
 
 let -- NUCLEO · o que gira no escuro e nunca para            (mono: osciladores + ruído + filtro)
@@ -41,10 +42,13 @@ let -- NUCLEO · o que gira no escuro e nunca para            (mono: osciladores
     magma = n "-22 [-22 -10] ~ -22 [~ -15] -22 <-17 -19> [-10 -12]" # s "scstd" # legato 0.7 # orbit 1
       # o2wave 1 # o2pw 0.35 # o3lvl 0.5 # vcfcut 250 # vcfres 0.8 # vcfenv 0.7 # vcfdrive 0.9
       # edec 0.18 # esus 0 # arrel 0.1 # erel 0.1 # spmix 0.1
-    -- FALHA · onde a terra guarda a sua pressa               (bumbo: envelope puxando a afinação)
-    falha = n "-26 ~ ~ -26 ~ ~ -26 ~" # s "scstd" # legato 0.2 # orbit 0
-      # o1lvl 0 # o2wave 3 # o2lvl 1 # o3lvl 0 # nzlvl 0.05 # adsr_pitch 30 # eatk 0.001 # edec 0.09 # esus 0
-      # vcfcut 3000 # vcfenv 0.3 # vcfdrive 0.8 # aratk 0.001 # arrel 0.18 # erel 0.18 # vcalvl 1 # spmix 0
+    -- FALHA · onde a terra guarda a sua pressa               (bumbo + o VCO 1 lento, estalando por baixo)
+    falha = stack [
+        n "-26 ~ ~ -26 ~ ~ -26 ~" # s "scstd" # legato 0.2 # orbit 0
+          # o1lvl 0 # o2wave 3 # o2lvl 1 # o3lvl 0 # nzlvl 0.05 # adsr_pitch 30 # eatk 0.001 # edec 0.09 # esus 0
+          # vcfcut 3000 # vcfenv 0.3 # vcfdrive 0.8 # aratk 0.001 # arrel 0.18 # erel 0.18 # vcalvl 1 # spmix 0,
+        n "-14" # s "scstd" # legato 1 # orbit 0
+          # o1lf 1 # o1lfrate 8.8 # o1lvl 0.8 # o2lvl 0 # vcfcut 4000 # vcfenv 0 # vcfres 0.3 # vcalvl 0.45 # spmix 0 ]
     -- PLACAS · continentes que se empurram sem se ver        (tons, ritmo euclidiano)
     placas = off 0.25 (|+ n 4) $ n "-14(5,8)" # s "scstd" # legato 0.3 # orbit 0
       # o1lvl 0 # o2wave 3 # o2lvl 1 # adsr_pitch 12 # eatk 0.001 # edec 0.15 # esus 0
@@ -93,10 +97,52 @@ let -- NUCLEO · o que gira no escuro e nunca para            (mono: osciladores
     ondaS = n "-22 ~ -22 <-19 -24>" # s "scstd" # legato 1 # orbit 1
       # o1lf 1 # o1lfrate 6 # o1wave 1 # o1lvl 0 # vco1_vca (-0.6) # o3lvl 0.8
       # vcfcut 500 # vcfres 0.6 # vcfdrive 1 # vcfenv 0.2 # spmix 0.1
-    -- SOMBRA · o lugar onde a onda não chega                 (o filtro cantando sozinho)
-    sombra = n "0" # s "scstd" # legato 1 # orbit 3
+    -- SOMBRA · o lugar onde a onda não chega                 (FM: o VCO 3 solto do teclado, torcendo a afinação)
+    sombra = n "<-10 -7 -3 -5>" # s "scstd" # legato 1 # orbit 3
+      # o1lvl 0 # o2wave 3 # o3kbd 0 # o3oct (-1) # vco3_pitch 4 # vcfcut 1800 # vcfenv 0
+      # aratk 0.5 # arrel 1.5 # erel 1.5 # vcalvl 0.5 # spmix 0.5 # spdecay 0.8
+    -- RESPINGO · a água que salta quando a pedra racha       (dedilhado curto afogado na mola)
+    respingo = n "2 ~ ~ 14 ~ ~ 9 ~" # s "scstd" # legato 0.1 # orbit 10
+      # vcfenv 0.7 # vcfcut 600 # edec 0.15 # esus 0 # spmix 0.8 # sptone 0.8 # spdecay 0.5
+    -- BORBULHA · o gás subindo pela rocha, sem pressa         (mono: o sample & hold borbulha o filtro sem recomeçar)
+    borbulha = n "2 5 7 9" # s "scstd" # monomode 1 # legato 1.1 # orbit 8
+      # sh_vcf 2 # shrate 3 # vcfcut 700 # vcfres 0.6 # spmix 0.2
+    -- VOZ · quem fala, fala de dentro da pedra                (MICROFONE pelo filtro, borbulhando, com mola)
+    voz = n "0" # s "scstd" # monomode 1 # legato 1 # orbit 9
+      # o1lvl 0 # o2lvl 0 # inlvl 1 # vcaenv 0 # vcfcut 900 # vcfres 0.8 # sh_vcf 2 # shrate 5 # spmix 0.6
+    -- ASSOBIO · o vento achando uma fresta                    (o filtro cantando sozinho, sem osciladores)
+    assobio = n "0" # s "scstd" # legato 1 # orbit 3
       # o1lvl 0 # o2lvl 0 # vcfres 1.1 # vcfenv 0 # vcfkey 0 # vcfcut "<587 880 698 440>" # vcalvl 0.35
       # aratk 0.3 # arrel 1 # erel 1 # spmix 0.5 # spdecay 0.8
+    -- BRASA · o que ainda está quente                         (sino de FM)
+    brasa = n "2 ~ 9 ~ 14 ~ 5 ~" # s "scstd" # legato 0.1 # orbit 3
+      # o1oct 0.485 # o1lvl 0 # o2wave 3 # o2fm 0.12 # vcfcut 12000 # vcfenv 0 # aratk 0.001 # arrel 2.5 # erel 2.5
+      # vcalvl 0.7 # spmix 0.5 # spdecay 0.8
+    -- CIGARRA · bicho que sente antes da gente                (assobios que escorregam)
+    cigarra = n "<14 21 17 26>" # s "scstd" # legato 0.9 # orbit 5
+      # o1lf 1 # o1lfrate 16 # o1lvl 0 # o2wave 3 # o2lvl 1 # o2fm 0.035 # sh_pitch 5 # shrate 8 # shlag 0.55
+      # vcfcut 5000 # vcfenv 0 # vcfdrive 0 # drift 0 # vcalvl 0.6 # spmix 0.25
+    -- CALOR · o ar tremendo em cima da pedra                  (acordes com trêmulo: LFO no volume)
+    calor = n "<[2,5,9] [0,4,7] [-2,2,5] [-3,0,4]>" # s "scstd" # legato 1 # orbit 3
+      # o1lf 1 # o1lfrate 6 # o1wave 1 # o1lvl 0 # vco1_vca (-0.6) # vcalvl 0.6 # spmix 0.5 # spdecay 0.8
+    -- AREIA · mil grãos discutindo                            (ruído sacudindo o filtro)
+    areia = n "-10 -3" # s "scstd" # legato 1 # orbit 1
+      # vcfcut 600 # vcfres 0.6 # noise_vcf 1.5 # spmix 0.1
+    -- QUARTZO · cada face, outra cor                          (sample & hold na largura do pulso)
+    quartzo = n "-10 [~ -10] -3 -5" # s "scstd" # legato 1 # orbit 5
+      # o1lvl 0 # o2wave 1 # sh_pw 0.9 # shrate 6 # vcfcut 3000 # vcfenv 0 # spmix 0.25
+    -- ESTATICA · o rádio entre duas estações                  (ring modulator: seno x ruído)
+    estatica = n "2 9" # s "scstd" # legato 1 # orbit 4
+      # o1lvl 0 # o2lvl 0 # o2wave 3 # rmlvl 1 # rma 1 # rmb 3 # vcfcut 5000 # vcfenv 0 # vcalvl 0.6 # spmix 0.4
+    -- GEISER · a pressão achando saída                        (envelope invertido: a nota nasce grave e sobe)
+    geiser = n "-10 ~ -3 ~" # s "scstd" # legato 1 # orbit 5
+      # mixa 5 # mixalvl (-1) # mixblvl 0 # mix_pitch 12 # eatk 0.001 # edec 0.5 # esus 0 # spmix 0.25
+    -- ESTRATOS · o tempo empilhado em degraus                 (sample & hold lendo uma rampa: escada)
+    estratos = n "2" # s "scstd" # legato 1 # orbit 5
+      # shsrc 1 # o1lf 1 # o1lfrate 0.75 # o1lvl 0 # sh_pitch 12 # shrate 6 # vcfcut 3000 # vcfenv 0 # spmix 0.25
+    -- SOPRO · tua voz abrindo a pedra                         (MICROFONE: o volume da voz abre o filtro; a voz não passa)
+    sopro = n "-10" # s "scstd" # monomode 1 # legato 1 # orbit 11
+      # envf_vcf 4 # vcfcut 200 # vcfres 0.5 # vcfenv 0 # spmix 0.3
     -- SINAL · alguém, em algum lugar, tentando avisar        (bipes que "falam")
     sinal = degradeBy 0.35 $ n (segment 16 $ (0.37 <~ irand 24) + 12) # s "scstd" # orbit 5
       # o1lf 1 # o1lvl 0 # o2wave 3 # o2lvl 1 # vcalvl 1 # aratk 0.003 # arrel 0.03 # erel 0.03
@@ -113,9 +159,10 @@ d1 $ stack [silence
   -- , nucleo # vcfcut (range 120 900 qground) # nzlvl (range 0.1 0.5 qground)
   -- , chao # gain 1.1
   -- , slow 2 $ vento # gain 0.85 # pan (slow 8 sine)
-  -- , degradeBy 0.4 $ sombra # gain 0.75
+  -- , sombra # gain 0.8
   -- ---- a falha ----------------------------------------------------------------------
-  -- , falha # gain 1.15
+  -- , falha # o1lfrate (range 4 14 qrate) # gain 1.15
+  -- , respingo # spdecay "<0 0.5 1>" # gain 0.9
   -- , degradeBy (range 0.9 0.2 qrate) $ poeira # pan rand # gain 0.8
   -- , every 4 (off 0.125 (|+ n 12)) $ magma # vcfcut (range 200 2500 qmag)
   -- , whenmod 8 6 (hurry 2) $ placas # pan (slow 3 sine) # gain 0.85
@@ -124,6 +171,7 @@ d1 $ stack [silence
   -- , every 3 (jux rev) $ sismografo # sh_vcf (range 0.5 3.5 qenergy) # shrate (range 4 16 qrate) # gain 1
   -- , sometimesBy 0.3 (# crush 5) $ fenda # gain 0.7 # pan (fast 2 sine)
   -- , ondaP # pan rand # gain 1
+  -- , borbulha # sh_vcf (range 1 3.5 qenergy) # gain 0.9
   -- , tremor # swrate (range 6 24 qenergy) # gain 0.7
   -- ---- a ruptura (teclas 1 2 3 no relay) --------------------------------------------
   -- , manto # gain 1
@@ -133,6 +181,19 @@ d1 $ stack [silence
   -- ---- as réplicas ------------------------------------------------------------------
   -- , ondaS # o1lfrate (range 3 12 qenergy) # gain 0.9
   -- , sinal # pan rand # gain 0.7
+  -- ---- minerais, bichos, cores ------------------------------------------------------
+  -- , assobio # gain 0.75
+  -- , brasa # gain 0.8
+  -- , cigarra # pan (slow 5 sine) # gain 0.7
+  -- , calor # o1lfrate (range 3 14 qenergy) # gain 0.8
+  -- , areia # noise_vcf (range 0.3 2.5 qenergy) # gain 0.85
+  -- , quartzo # shrate (range 3 14 qrate) # gain 0.8
+  -- , estatica # pan rand # gain 0.7
+  -- , geiser # gain 0.85
+  -- , estratos # o1lfrate (range 0.3 1.5 qenergy) # gain 0.75
+  -- ---- a voz (MICROFONE: com caixas de som, volume baixo, senão apita) ---------------
+  -- , sopro # gain 0.9
+  -- , voz # gain 0.8
   ]
 
 -- ============================================================================================
@@ -146,9 +207,11 @@ let arranjo = seqPLoop
       [ (0, 152, nucleo # vcfcut (range 120 1100 qenergy) # nzlvl (range 0.1 0.5 qground))
       , (0, 24, slow 2 $ vento # gain 0.85 # pan (slow 8 sine))
       , (2, 16, chao # gain 1)
-      , (4, 20, degradeBy 0.4 $ sombra # gain 0.75)
+      , (4, 20, sombra # gain 0.8)
+      , (10, 18, assobio # gain 0.7)
       -- a falha (16-48)
-      , (16, 80, falha # gain 1.15)
+      , (16, 80, falha # o1lfrate (range 4 14 qrate) # gain 1.15)
+      , (28, 80, respingo # spdecay "<0 0.5 1>" # gain 0.9)
       , (20, 80, degradeBy (range 0.9 0.2 qrate) $ poeira # pan rand # gain 0.8)
       , (24, 80, every 4 (off 0.125 (|+ n 12)) $ magma # vcfcut (range 200 2500 qmag))
       , (32, 80, whenmod 8 6 (hurry 2) $ placas # pan (slow 3 sine) # gain 0.85)
@@ -156,26 +219,37 @@ let arranjo = seqPLoop
       -- o enxame (48-80)
       , (48, 80, every 3 (jux rev) $ sismografo # sh_vcf (range 0.5 3.5 qenergy) # shrate (range 4 16 qrate) # gain 1)
       , (56, 80, sometimesBy 0.3 (# crush 5) $ fenda # gain 0.7 # pan (fast 2 sine))
+      , (52, 80, borbulha # sh_vcf (range 1 3.5 qenergy) # gain 0.9)
+      , (60, 80, areia # noise_vcf (range 0.3 2.5 qenergy) # gain 0.85)
       , (64, 80, ondaP # pan rand # gain 1)
+      , (68, 80, estratos # o1lfrate (range 0.3 1.5 qenergy) # gain 0.7)
       , (72, 80, tremor # swrate (range 6 24 qenergy) # gain 0.7)
       -- a ruptura (80-100): o chão para; é a hora das teclas 1 2 3
       , (80, 100, manto # gain 1)
       , (80, 100, off 0.375 (# gain 0.6) $ replica # gain 0.8)
       , (84, 96, lava # vco3_pitch (range 1 9 qenergy) # gain 0.75)
       , (88, 100, degradeBy 0.5 $ cristal # pan rand # gain 0.6)
+      , (86, 100, brasa # gain 0.75)
+      , (92, 100, calor # o1lfrate (range 3 14 qenergy) # gain 0.7)
       -- as réplicas (100-128): tudo volta, mais pesado
-      , (100, 128, every 8 (hurry 2) $ falha # gain 1.15)
+      , (100, 128, every 8 (hurry 2) $ falha # o1lfrate (range 4 14 qrate) # gain 1.15)
+      , (100, 128, respingo # spdecay "<1 0.5 0>" # gain 0.9)
+      , (104, 128, borbulha # sh_vcf (range 1 3.5 qenergy) # gain 0.9)
       , (100, 128, degradeBy (range 0.8 0.1 qrate) $ poeira # pan rand # gain 0.8)
       , (100, 128, cascalho # gain 1.15)
       , (100, 128, ondaS # o1lfrate (range 3 12 qenergy) # gain 0.9)
       , (104, 128, every 4 (off 0.125 (|+ n 12)) $ magma # vcfcut (range 300 3500 qmag) # crush (range 16 5 qenergy))
       , (108, 128, every 2 (jux rev) $ sismografo # sh_vcf (range 0.5 3.5 qenergy) # gain 1)
       , (116, 128, tremor # swrate (range 6 24 qenergy) # gain 0.7)
+      , (108, 124, quartzo # shrate (range 3 14 qrate) # gain 0.8)
+      , (112, 128, geiser # gain 0.85)
       -- agora (128-152): o chão de Montréal ao vivo (chao), a sombra e um sinal
       , (126, 152, chao # gain 1.15)
       , (128, 152, manto # gain 0.8)
-      , (130, 150, degradeBy 0.3 $ sombra # gain 0.7)
+      , (130, 150, sombra # gain 0.8)
+      , (132, 150, estatica # pan rand # gain 0.6)
       , (136, 150, degradeBy 0.5 $ sinal # pan rand # gain 0.6)
+      , (140, 150, cigarra # pan (slow 5 sine) # gain 0.6)
       ]
 
 do resetCycles
