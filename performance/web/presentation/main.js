@@ -60,7 +60,7 @@ try {
 
 function runScene(name) {
   if (!h) return;
-  try { (SCENES[name] ?? SCENES.rings)(h, L).out(h.o0); } catch (err) { console.error("scene", name, err); }
+  try { (SCENES[name] ?? SCENES.paper)(h, L).out(h.o0); } catch (err) { console.error("scene", name, err); }
 }
 
 // ---- moving through the blocks ----------------------------------------------------------------------

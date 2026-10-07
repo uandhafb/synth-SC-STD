@@ -12,11 +12,11 @@
 
 export const BLOCKS = [
   {
-    id: "title", kicker: "EAST 398 · 498", title: "CODESHAKE", scene: "rings",
+    id: "title", kicker: "EAST 398 · 498", title: "CODESHAKE", scene: "paper",
     lines: ["a synthesizer, the Earth, and a room full of phones", "[YOUR NAME]"],
   },
   {
-    id: "me", kicker: "who", title: "[YOUR NAME]", scene: "mirror", photo: "me.jpg",
+    id: "me", kicker: "who", title: "[YOUR NAME]", scene: "figure", photo: "me.jpg",
     lines: [
       "[YOUR PROGRAMME] · Concordia University, Montréal",
       "I research **live coding** and **embodied interaction**: how a body, an acoustic instrument and code can perform together in real time.",
@@ -25,7 +25,7 @@ export const BLOCKS = [
     ],
   },
   {
-    id: "tools", kicker: "the tools", title: "three languages, one instrument", scene: "weave",
+    id: "tools", kicker: "the tools", title: "three languages, one instrument", scene: "three",
     lines: [
       "**SuperCollider** · the sound engine. The synthesizer is written and runs here.",
       "**TidalCycles** · a language for patterns. I type rhythm and melody; it sends them, note by note, to SuperCollider.",
@@ -34,7 +34,7 @@ export const BLOCKS = [
     ],
   },
   {
-    id: "began", kicker: "where it began", title: "a 1970s synthesizer, rebuilt in code", scene: "drift",
+    id: "began", kicker: "where it began", title: "a 1970s synthesizer, rebuilt in code", scene: "old",
     lines: [
       "The ARP 2600 (1971) is **semi-modular**: it makes sound with no cables at all, and every internal connection can be replaced with a patch cord.",
       "This project recreates that architecture in software, for live coding: three oscillators, noise, ring modulator, filter, envelopes, sample & hold, envelope follower, spring reverb.",
@@ -43,33 +43,33 @@ export const BLOCKS = [
     ],
   },
   {
-    id: "works", kicker: "how it works", title: "from a line of code to the speakers", scene: "grid", extra: "schematic",
+    id: "works", kicker: "how it works", title: "from a line of code to the speakers", scene: "marks", extra: "schematic",
     lines: ["Every one of the **107 parameters** can be set from the code, note by note. What the code does not set, the panel sets."],
   },
   {
-    id: "code", kicker: "inside the code", title: "one line, one voice", scene: "scan", extra: "code",
+    id: "code", kicker: "inside the code", title: "one line, one voice", scene: "feed", extra: "code",
     lines: ["Now in the editor: the synth's definition in SuperCollider, and this line in Tidal."],
   },
   {
-    id: "piece", kicker: "from synth to piece", title: "the Earth plays it", scene: "quake", extra: "mapping",
+    id: "piece", kicker: "from synth to piece", title: "the Earth plays it", scene: "shock", extra: "mapping",
     lines: [
       "Real earthquakes from the U.S. Geological Survey: **the last 24 hours, replayed in four minutes.**",
       "And under everything, the ground under Montréal, **live**, a few seconds ago.",
     ],
   },
   {
-    id: "phones", kicker: "your turn", title: "your phone is a seismic station", scene: "rings", extra: "qr",
+    id: "phones", kicker: "your turn", title: "your phone is a seismic station", scene: "arrive", extra: "qr",
     lines: [
       "Scan, tap **Join**, volume up, phone on the table.",
       "Each phone becomes a real station somewhere on Earth. An earthquake reaches each one at its own time: first the P wave, then the S wave. Some stations are in the shadow of the Earth's core and hear nothing.",
     ],
   },
   {
-    id: "codeshake", kicker: "the piece", title: "CODESHAKE", scene: "quake", extra: "sections",
+    id: "codeshake", kicker: "the piece", title: "CODESHAKE", scene: "shock", extra: "sections",
     lines: ["about four and a half minutes"],
   },
   {
-    id: "thanks", kicker: "thank you", title: "questions?", scene: "mirror", photo: "me2.jpg",
+    id: "thanks", kicker: "thank you", title: "questions?", scene: "figure", photo: "me2.jpg",
     lines: [
       "Movement vocabulary for the page: after **Joana Chicau**'s choreographic coding.",
       "Phones as an ensemble: after **Gabriel Vigliensoni**'s phase-study.",
