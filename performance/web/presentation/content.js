@@ -6,6 +6,7 @@
 //   lines   the text; each line in quotes is one paragraph. `code` in backticks is shown as code,
 //           **two stars** make a word stand out.
 //   photo   a picture file in the folder  presentation/photos/  (for example "me.jpg"); null = none
+//   credit  the line under the photo (who took it)
 //   scene   which Hydra visual plays behind it (the names are in scenes.js)
 //   extra   a built-in piece: "schematic", "code", "mapping", "qr", "sections" (or nothing)
 // Text in [square brackets] is shown in pink, with its brackets. In CAPITALS it is a placeholder,
@@ -17,10 +18,10 @@ export const BLOCKS = [
     lines: ["a SuperCollider · Tidal · Strudel synthesizer, the Earth's movement data, and a room full of phones", "[Uandha Fernandes Barbosa, BMus and BSc Eng]"],
   },
   {
-    id: "me", kicker: "who", title: "", scene: "figure", photo: "me.jpg",
+    id: "me", kicker: "who", title: "", scene: "figure", photo: "me.jpg", credit: "photo: Nicolas Morales-Sanabria",
     lines: [
-      "Master of Arts and Technology candidate · Concordia University, Montréal",
-      "I research **live coding**, **human-computer interaction**, **embodiment** and **machine learning**.",
+      "Master of Arts and Technology candidate · Concordia University",
+      "I research **live coding**, **human-computer interaction and embodiment** and **machine learning**.",
       "[What is live coding?] It is the practice of creating music, visuals or web choreography with the code on screen for everyone to see.",
       "This presentation is an example: made with **Hydra** and JavaScript, and turned by my hands through the camera.",
     ],

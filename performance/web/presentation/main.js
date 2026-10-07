@@ -40,7 +40,7 @@ deck.innerHTML = BLOCKS.map((b) => `<section class="block${b.photo ? " has-photo
   <div class="kicker">${rich(b.kicker ?? "")}</div>
   <h1>${rich(b.title ?? "")}</h1>
   <div class="text">${(b.lines ?? []).map((l) => `<p>${rich(l)}</p>`).join("")}</div>
-  ${b.photo ? `<img class="photo" alt="" src="photos/${esc(b.photo)}" data-file="${esc(b.photo)}">` : ""}
+  ${b.photo ? `<figure class="pic"><img class="photo" alt="" src="photos/${esc(b.photo)}" data-file="${esc(b.photo)}">${b.credit ? `<figcaption>${esc(b.credit)}</figcaption>` : ""}</figure>` : ""}
   ${b.extra && EXTRAS[b.extra] ? `<div class="extra">${EXTRAS[b.extra]()}</div>` : ""}
 </section>`).join("");
 // a photo that is not there yet: say which file is expected
