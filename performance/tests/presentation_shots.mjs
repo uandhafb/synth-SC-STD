@@ -48,7 +48,7 @@ const waitFor = async (expr, ms = 20000) => { const t0 = Date.now(); while (Date
 
 await waitFor("!!window.presentation");
 const blocks = await js("document.querySelectorAll('#deck .block').length");
-check("the page builds its blocks from content.js", blocks >= 8, `${blocks} blocks`);
+check("the page builds its blocks from content.js", blocks >= 5, `${blocks} blocks`);
 await shot("0_start");
 await js("document.getElementById('startBtn').click()");
 check("the camera starts and the hand tracker loads (from the laptop, no internet)", await waitFor("!!window.presentation.hands", 30000), await js("document.getElementById('camTxt').textContent"));
@@ -68,7 +68,7 @@ check("while the questions are open the arrows do not turn the blocks", await js
 await key("Escape"); await sleep(200);
 check("Esc closes the questions", await js("document.getElementById('qa').hidden"));
 check("the page hears the live ground through the relay", process.env.GROUND === "off" || await waitFor("window.presentation.L.ground > 0", 25000), await js("window.presentation.L.ground.toFixed(3)"));
-check("the QR code of the room is drawn", process.env.PHONES === "off" || await waitFor("document.querySelectorAll('#qrCode svg').length === 1", 15000), await js("document.getElementById('qrUrl').textContent"));
+if (await js("!!document.getElementById('qrCode')")) check("the QR code of the room is drawn", process.env.PHONES === "off" || await waitFor("document.querySelectorAll('#qrCode svg').length === 1", 15000), await js("document.getElementById('qrUrl').textContent"));   // only when a block shows the QR code
 const fps = await js("new Promise((done) => { let n = 0; const t0 = performance.now(); (function f() { n++; if (performance.now() - t0 < 3000) requestAnimationFrame(f); else done(Math.round(n / 3)); })(); })");
 console.log(`frames per second in this test browser (software rendering, so lower than on the real screen): ${fps}`);
 // The relay serves .wasm files without their special type, so the hand tracker says so and loads

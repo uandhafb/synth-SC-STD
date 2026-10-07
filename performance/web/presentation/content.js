@@ -56,24 +56,6 @@ export const BLOCKS = [
     lines: ["Now in the editor: the synth's definition in SuperCollider, and this line in Tidal."],
   },
   {
-    id: "piece", kicker: "from synth to piece", title: "the Earth plays it", scene: "shock", extra: "mapping",
-    lines: [
-      "Real earthquakes from the U.S. Geological Survey: **the last 24 hours, replayed in four minutes.**",
-      "And under everything, the ground under Montréal, **live**, a few seconds ago.",
-    ],
-  },
-  {
-    id: "phones", kicker: "your turn", title: "your phone is a seismic station", scene: "arrive", extra: "qr",
-    lines: [
-      "Scan, tap **Join**, volume up, phone on the table.",
-      "Each phone becomes a real station somewhere on Earth. An earthquake reaches each one at its own time: first the P wave, then the S wave. Some stations are in the shadow of the Earth's core and hear nothing.",
-    ],
-  },
-  {
-    id: "codeshake", kicker: "the piece", title: "CODESHAKE", scene: "shock", extra: "sections",
-    lines: ["about four and a half minutes"],
-  },
-  {
     id: "thanks", kicker: "thank you", title: "questions?", scene: "figure", photo: "me2.jpg",
     lines: [
       "Movement vocabulary for the page: after **Joana Chicau**'s choreographic coding.",
