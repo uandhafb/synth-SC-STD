@@ -18,9 +18,9 @@ export const BLOCKS = [
   {
     id: "me", kicker: "who", title: "", scene: "figure", photo: "me.jpg",
     lines: [
-      "BMus and BSc Eng · [YOUR PROGRAMME] · Concordia University, Montréal",
-      "I research **live coding** and **embodied interaction**: how a body, an acoustic instrument and code can perform together in real time.",
-      "[ONE OR TWO SENTENCES OF YOUR OWN ABOUT YOUR RESEARCH]",
+      "Master of Arts and Technology candidate · Concordia University, Montréal",
+      "I research **live coding**, **human-computer interaction**, **embodiment** and **machine learning**.",
+      "What is live coding? Writing and changing code in front of people, while it runs. The code is the instrument: it makes sound, visuals, or the choreography of a web page, with algorithms, in real time.",
       "This presentation is part of it: the blocks change when I raise my hand.",
     ],
   },
