@@ -46,15 +46,18 @@ d1: n(<span class="s">"c e g"</span>).s(<span class="s">"scstd"</span>).vcfcut(8
 };
 
 const deck = $("deck");
-deck.innerHTML = BLOCKS.map((b) => `<section class="block${b.photo ? " has-photo" : ""}${b.dense ? " dense" : ""}" data-id="${esc(b.id)}">
+deck.innerHTML = BLOCKS.map((b) => `<section class="block${b.photo || b.qr ? " has-photo" : ""}${b.dense ? " dense" : ""}" data-id="${esc(b.id)}">
   <div class="kicker">${rich(b.kicker ?? "")}</div>
   <h1>${rich(b.title ?? "")}</h1>
   <div class="text">${(b.lines ?? []).map((l) => `<p>${rich(l)}</p>`).join("")}</div>
   ${b.photo ? `<figure class="pic"><img class="photo" alt="" src="photos/${esc(b.photo)}" data-file="${esc(b.photo)}">${b.credit ? `<figcaption>${esc(b.credit)}</figcaption>` : ""}</figure>` : ""}
+  ${b.qr ? `<figure class="pic qrpic"><div class="code" data-qr="https://${esc(b.qr)}"></div><figcaption>${esc(b.qr)}</figcaption></figure>` : ""}
   ${b.extra && EXTRAS[b.extra] ? `<div class="extra">${EXTRAS[b.extra]()}</div>` : ""}
 </section>`).join("");
 // a photo that is not there yet: say which file is expected
 for (const img of deck.querySelectorAll("img.photo")) img.addEventListener("error", () => { const d = document.createElement("div"); d.className = "photo missing"; d.textContent = `photo: put ${img.dataset.file} in presentation/photos/`; img.replaceWith(d); });
+// QR codes for fixed addresses (made here, no internet needed)
+for (const el of deck.querySelectorAll("[data-qr]")) { try { const qr = window.qrcode(0, "M"); qr.addData(el.dataset.qr); qr.make(); el.innerHTML = qr.createSvgTag({ cellSize: 6, margin: 0, scalable: true }); } catch { el.textContent = el.dataset.qr; } }
 $("dots").innerHTML = BLOCKS.map(() => "<i></i>").join("");
 
 // ---- Hydra ----------------------------------------------------------------------------------------

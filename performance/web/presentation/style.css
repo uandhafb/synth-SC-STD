@@ -46,6 +46,8 @@ b, strong { color: var(--accent); font-weight: 700; }
 .block a.name:hover { border-bottom-color: var(--accent); }
 .block a.name sup { color: var(--accent-2); font-size: 0.7em; margin-left: 0.1em; }
 .pic { margin: 0; display: grid; gap: 0.4em; justify-items: end; }
+.qrpic .code { background: #fff; padding: 12px; line-height: 0; width: min(100%, 44vh); }
+.qrpic .code svg { width: 100%; height: auto; display: block; }
 .pic figcaption { font-size: clamp(10px, 1vw, 22px); color: var(--muted); text-align: right; }
 /* the photo whole, in its own shape and colours */
 .block .photo { width: 100%; height: auto; max-height: 54vh; object-fit: contain; border: 1px solid var(--line); display: block; }

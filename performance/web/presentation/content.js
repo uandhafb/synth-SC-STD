@@ -7,6 +7,7 @@
 //           **two stars** make a word stand out.
 //   photo   a picture file in the folder  presentation/photos/  (for example "me.jpg"); null = none
 //   credit  the line under the photo (who took it)
+//   qr      a web address shown as a QR code beside the text (for example the project on GitHub)
 //   dense   true = slightly smaller text, for a block with many lines
 //   {Strudel|strudel.cc} is a name you can click: it opens that page, and gets a small arrow ↗
 //   "→ strudel.cc" in a line also becomes a link to that page
@@ -56,13 +57,11 @@ export const BLOCKS = [
     lines: ["Now in the editor: the synth's definition in SuperCollider, and this line in Tidal."],
   },
   {
-    id: "thanks", kicker: "thank you", title: "questions?", scene: "figure", photo: "me2.jpg",
+    id: "thanks", kicker: "thank you", title: "questions?", scene: "figure", qr: "github.com/uandhafb/synth-SC-STD",
     lines: [
-      "Movement vocabulary for the page: after **Joana Chicau**'s choreographic coding.",
-      "Phones as an ensemble: after **Gabriel Vigliensoni**'s phase-study.",
-      "Data: U.S. Geological Survey · EarthScope · Canadian National Seismograph Network. Text on the page: Wikipedia contributors.",
-      "Built with SuperCollider, SuperDirt, TidalCycles, Strudel, Hydra.",
-      "github.com/uandhafb/synth-SC-STD",
+      "The lines behind this text are moved by **real data**: the ground under Montréal, live, a few seconds ago. When an earthquake is played, they swing wider.",
+      "Data: U.S. Geological Survey · EarthScope · Canadian National Seismograph Network.",
+      "Built with SuperCollider, TidalCycles, Strudel, Hydra.",
     ],
   },
 ];
