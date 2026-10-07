@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Codeshake · presentation</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<!-- The presentation: Hydra behind, one block of text at a time on top, turned by hand.
+     Open it through the relay (it needs localhost for the camera, and the relay for the live ground):
+       http://localhost:8095/presentation/index.html
+     The words are in content.js. -->
+<canvas id="hydra"></canvas>
+
+<main id="deck" aria-live="polite"></main>
+
+<!-- the camera, as the hand tracker sees it, and the ring that fills before a block changes -->
+<aside id="cam" hidden>
+  <video id="video" hidden></video>
+  <canvas id="camView" width="320" height="240"></canvas>
+  <svg id="ring" viewBox="0 0 40 40" aria-hidden="true"><circle class="track" cx="20" cy="20" r="16"/><circle class="fill" cx="20" cy="20" r="16"/><text id="ringTxt" x="20" y="25" text-anchor="middle"></text></svg>
+  <div id="camTxt">starting the camera…</div>
+</aside>
+
+<nav id="dots" aria-label="Blocks"></nav>
+
+<!-- questions and answers: Q opens the list -->
+<section id="qa" hidden>
+  <div class="qa-box">
+    <div class="kicker">questions · press a number, Q or Esc to close</div>
+    <ol id="qaList"></ol>
+    <div id="qaAnswer" hidden></div>
+  </div>
+</section>
+
+<div id="start">
+  <div class="start-box">
+    <div class="kicker">CODESHAKE · presentation</div>
+    <button id="startBtn">start (camera on)</button>
+    <button id="startNoCam" class="quiet">start without the camera</button>
+    <p class="muted">one open hand, held: next · two open hands, held: back<br>
+      keys: → ← move · Q questions · H hands on/off · C camera corner · F full screen</p>
+  </div>
+</div>
+
+<div id="note" hidden></div>
+
+<script src="vendor/hydra-synth.js"></script>
+<script src="../vendor/qrcode.js"></script>
+<script type="module" src="main.js"></script>
+</body>
+</html>

@@ -1,0 +1,100 @@
+/* The presentation. The look follows the LAÇO site: black, off-white, acid lime, hot pink,
+   JetBrains Mono, dark translucent boxes over full-screen Hydra. */
+@font-face { font-family: "JetBrains Mono"; font-weight: 400; src: url("vendor/fonts/jetbrains-mono-400.woff2") format("woff2"); font-display: swap; }
+@font-face { font-family: "JetBrains Mono"; font-weight: 700; src: url("vendor/fonts/jetbrains-mono-700.woff2") format("woff2"); font-display: swap; }
+@font-face { font-family: "JetBrains Mono"; font-weight: 800; src: url("vendor/fonts/jetbrains-mono-800.woff2") format("woff2"); font-display: swap; }
+
+:root {
+  --bg: #000; --ink: #f4f4ef; --muted: #b4b4bf; --accent: #d4ff3a; --accent-2: #ff4fd8;
+  --panel: rgba(4, 4, 8, 0.78); --line: rgba(255, 255, 255, 0.2);
+  --font: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  color-scheme: dark;
+}
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; overflow: hidden; background: var(--bg); color: var(--ink); font-family: var(--font); }
+#hydra { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+.muted { color: var(--muted); }
+.kicker { font-size: clamp(11px, 1.1vw, 16px); letter-spacing: 0.28em; text-transform: uppercase; color: var(--accent); }
+code { font-family: inherit; background: rgba(255, 255, 255, 0.1); padding: 0.05em 0.35em; border-radius: 3px; color: var(--accent); }
+b, strong { color: var(--accent); font-weight: 700; }
+
+/* ---- the blocks: one on screen, the others wait to the right (next) or the left (seen) ---- */
+#deck { position: fixed; inset: 0; }
+.block {
+  position: absolute; left: 5vw; top: 50%; width: min(70vw, 1280px); max-height: 88vh;
+  padding: clamp(18px, 2.6vw, 44px); background: var(--panel); border: 1px solid var(--line); border-left: 4px solid var(--accent);
+  transform: translate(110vw, -50%); opacity: 0; transition: transform 0.7s cubic-bezier(.2, .8, .2, 1), opacity 0.5s;
+  display: grid; grid-template-columns: 1fr; gap: clamp(8px, 1.2vw, 18px);
+}
+.block > * { min-width: 0; }                 /* nothing inside may push the box wider */
+.block.seen { transform: translate(-110vw, -50%); }
+.block.on { transform: translate(0, -50%); opacity: 1; }
+.block.has-photo { grid-template-columns: 1fr minmax(160px, 26%); }
+.block.has-photo > .kicker, .block.has-photo > h1 { grid-column: 1 / -1; }
+.block h1 { margin: 0; font-weight: 800; line-height: 1.02; font-size: clamp(30px, 5.2vw, 92px); letter-spacing: -0.02em; text-wrap: balance; }
+.block .text { display: grid; gap: clamp(6px, 0.9vw, 14px); align-content: start; }
+.block p { margin: 0; font-size: clamp(14px, 1.55vw, 26px); line-height: 1.45; }
+.block .extra { grid-column: 1 / -1; }
+.block .photo { width: 100%; aspect-ratio: 3 / 4; object-fit: cover; border: 1px solid var(--line); filter: grayscale(1) contrast(1.15); }
+.block .photo.missing { display: grid; place-items: center; background: rgba(255, 255, 255, 0.05); color: var(--muted); font-size: 12px; text-align: center; padding: 1em; filter: none; }
+.placeholder { color: var(--accent-2); }
+#deck .block[data-id="title"] h1, #deck .block[data-id="codeshake"] h1 { font-size: clamp(48px, 10vw, 180px); letter-spacing: 0.02em; }
+
+/* the schematic: boxes joined by arrows, lighting up one after another */
+.schematic { display: flex; flex-wrap: wrap; align-items: stretch; gap: 0.7em 0; font-size: clamp(10px, 1vw, 18px); }
+.schematic .row { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5em 0; width: 100%; }
+.schematic .node { border: 1px solid var(--line); padding: 0.5em 0.65em; background: rgba(0, 0, 0, 0.5); animation: light 8s infinite; animation-delay: calc(var(--i) * 0.8s); }
+.schematic .node small { display: block; color: var(--muted); font-size: 0.78em; }
+.schematic .arrow { flex: 0 0 auto; padding: 0 0.35em; color: var(--accent); }
+.schematic .side { color: var(--accent-2); border-color: var(--accent-2); animation: none; }
+@keyframes light { 0%, 12%, 100% { border-color: var(--line); color: var(--ink); box-shadow: none; } 4% { border-color: var(--accent); color: var(--accent); box-shadow: 0 0 18px rgba(212, 255, 58, 0.5); } }
+@media (prefers-reduced-motion: reduce) { .schematic .node { animation: none; } .block { transition: none; } }
+
+.codebox { font-size: clamp(13px, 1.6vw, 28px); background: rgba(0, 0, 0, 0.6); border: 1px solid var(--line); padding: 0.8em 1em; white-space: pre-wrap; }
+.codebox .c { color: var(--muted); } .codebox .k { color: var(--accent-2); } .codebox .s { color: var(--accent); }
+.mapping { display: grid; grid-template-columns: auto auto 1fr; gap: 0.35em 0.9em; font-size: clamp(13px, 1.5vw, 25px); align-items: baseline; }
+.mapping .to { color: var(--accent); }
+.sections { display: flex; flex-wrap: wrap; gap: 0.5em; font-size: clamp(12px, 1.3vw, 22px); }
+.sections span { border: 1px solid var(--line); padding: 0.4em 0.7em; background: rgba(0, 0, 0, 0.5); }
+.sections span b { display: block; font-weight: 400; color: var(--muted); font-size: 0.75em; }
+.qr { display: flex; gap: 1.2em; align-items: center; }
+.qr .code { background: #fff; padding: 10px; line-height: 0; width: min(26vh, 300px); }
+.qr .code svg { width: 100%; height: auto; display: block; }
+.qr .url { font-size: clamp(11px, 1.1vw, 18px); color: var(--muted); word-break: break-all; }
+
+/* ---- the camera corner ---- */
+#cam { position: fixed; right: 2vw; bottom: 2vw; width: min(20vw, 300px); border: 1px solid var(--line); background: #000; }
+#cam.small { width: 120px; } #cam.off #camView { opacity: 0.25; }
+#camView { display: block; width: 100%; height: auto; }
+#ring { position: absolute; left: 6px; top: 6px; width: 46px; height: 46px; }
+#ring circle { fill: none; stroke-width: 4; }
+#ring .track { stroke: rgba(255, 255, 255, 0.25); }
+#ring .fill { stroke: var(--accent); stroke-dasharray: 100.5; stroke-dashoffset: 100.5; transform: rotate(-90deg); transform-origin: center; transition: stroke-dashoffset 0.08s linear; }
+#ring.back .fill { stroke: var(--accent-2); transform: rotate(-90deg) scaleY(-1); }
+#ring text { fill: var(--ink); font: 700 14px var(--font); }
+#camTxt { font-size: 11px; padding: 4px 6px; color: var(--muted); background: rgba(0, 0, 0, 0.7); min-height: 1.9em; }
+
+/* ---- where we are ---- */
+#dots { position: fixed; left: 5vw; bottom: 2.4vw; display: flex; gap: 8px; }
+#dots i { width: 22px; height: 4px; background: rgba(255, 255, 255, 0.25); }
+#dots i.on { background: var(--accent); }
+
+/* ---- questions ---- */
+#qa { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.82); display: grid; place-items: center; padding: 4vw; }
+#qa[hidden] { display: none; }
+.qa-box { width: min(1200px, 100%); max-height: 92vh; overflow: auto; display: grid; gap: 1em; }
+#qaList { margin: 0; padding-left: 2.2em; display: grid; gap: 0.35em; font-size: clamp(14px, 1.5vw, 24px); }
+#qaList li { cursor: pointer; } #qaList li:hover, #qaList li.on { color: var(--accent); }
+#qaList li::marker { color: var(--accent-2); font-weight: 700; }
+#qaAnswer { border-left: 4px solid var(--accent-2); padding: 0.4em 0 0.4em 1em; display: grid; gap: 0.6em; }
+#qaAnswer h2 { margin: 0; font-size: clamp(20px, 2.6vw, 44px); font-weight: 800; line-height: 1.1; }
+#qaAnswer p { margin: 0; font-size: clamp(15px, 1.7vw, 28px); line-height: 1.45; }
+#qaAnswer .where { color: var(--muted); font-size: clamp(12px, 1.1vw, 18px); }
+
+/* ---- start, and short notices ---- */
+#start { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.9); display: grid; place-items: center; z-index: 5; }
+#start[hidden] { display: none; }
+.start-box { display: grid; gap: 14px; justify-items: start; max-width: 720px; padding: 24px; }
+button { font: 700 20px var(--font); color: #000; background: var(--accent); border: 0; padding: 14px 22px; cursor: pointer; }
+button.quiet { background: transparent; color: var(--muted); border: 1px solid var(--line); font-weight: 400; font-size: 14px; }
+#note { position: fixed; left: 50%; top: 2vw; transform: translateX(-50%); background: var(--panel); border: 1px solid var(--accent-2); padding: 8px 14px; font-size: 14px; z-index: 6; }
