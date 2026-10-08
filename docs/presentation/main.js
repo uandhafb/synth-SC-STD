@@ -66,13 +66,18 @@ const L = { ground: 0, swell: 0.5, wave: 0, pulse: 0, cam: false };   // live va
 let h = null;
 try {
   const canvas = $("hydra"), scale = Math.min(devicePixelRatio || 1, 1.5);
+  // The canvas must be given its real size here. Hydra does not resize a canvas it is handed, and
+  // a canvas left at its default (300 x 150) is stretched over the whole screen: every thin line
+  // then turns into steps, dots and dashes.
+  canvas.width = Math.round(innerWidth * scale); canvas.height = Math.round(innerHeight * scale);
   const hydra = new window.Hydra({ canvas, width: Math.round(innerWidth * scale), height: Math.round(innerHeight * scale), detectAudio: false, makeGlobal: false,
     // Full precision for the drawing maths. Hydra's default (medium) is coarse on many graphics
     // chips: positions and, above all, the growing clock get rounded, and after a minute the thin
     // lines turn into steps, dots and dashes.
     precision: "highp" });
   h = hydra.synth;
-  addEventListener("resize", () => hydra.setResolution(Math.round(innerWidth * scale), Math.round(innerHeight * scale)));
+  const fit = () => hydra.setResolution(Math.round(innerWidth * scale), Math.round(innerHeight * scale));
+  fit(); addEventListener("resize", fit);
 } catch (err) { note(`visuals not available: ${err?.message ?? err}`, 8000); }
 (function fade() { L.pulse *= 0.94; requestAnimationFrame(fade); })();
 
@@ -232,4 +237,4 @@ if (/^(localhost|127\.0\.0\.1)$/.test(location.hostname)) {
   } catch { roomChannel(); }
 } else roomChannel();
 
-window.presentation = { go, next, back, L, get source() { return source; }, get at() { return at; }, get hands() { return hands; } };   // for tests and the console
+window.presentation = { go, next, back, L, get h() { return h; }, get source() { return source; }, get at() { return at; }, get hands() { return hands; } };   // for tests and the console
