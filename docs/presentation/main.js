@@ -66,7 +66,11 @@ const L = { ground: 0, swell: 0.5, wave: 0, pulse: 0, cam: false };   // live va
 let h = null;
 try {
   const canvas = $("hydra"), scale = Math.min(devicePixelRatio || 1, 1.5);
-  const hydra = new window.Hydra({ canvas, width: Math.round(innerWidth * scale), height: Math.round(innerHeight * scale), detectAudio: false, makeGlobal: false });
+  const hydra = new window.Hydra({ canvas, width: Math.round(innerWidth * scale), height: Math.round(innerHeight * scale), detectAudio: false, makeGlobal: false,
+    // Full precision for the drawing maths. Hydra's default (medium) is coarse on many graphics
+    // chips: positions and, above all, the growing clock get rounded, and after a minute the thin
+    // lines turn into steps, dots and dashes.
+    precision: "highp" });
   h = hydra.synth;
   addEventListener("resize", () => hydra.setResolution(Math.round(innerWidth * scale), Math.round(innerHeight * scale)));
 } catch (err) { note(`visuals not available: ${err?.message ?? err}`, 8000); }
