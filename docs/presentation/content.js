@@ -36,7 +36,7 @@ export const BLOCKS = [
       "{JavaScript|developer.mozilla.org/docs/Web/JavaScript} [1995 · web choreography] the programming language of web pages, and it can be used for web choreography.",
       "{SuperCollider|supercollider.github.io} [1996 · sound] a language for sound synthesis, developed by James McCartney. Free and open source.",
       "{TidalCycles|tidalcycles.org} [2009 · sound] a live coding environment for algorithmic patterns, written in Haskell. Free and open source; it inspired the Uzulangs, including the web-based Strudel.",
-      "{Hydra|hydra.ojack.xyz} [2017 · visuals] a live coding environment for visuals in the web browser, created by Olivia Jack and inspired by analog modular video synthesizers. Free and open source.",
+      "{Hydra|hydra.ojack.xyz} [2018 · visuals] a live coding environment for visuals in the web browser, created by Olivia Jack and inspired by analog modular video synthesizers. Free and open source.",
       "{Strudel|strudel.cc} [2022 · sound] the official port of the TidalCycles pattern language to JavaScript. Free, web-based and open source.",
     ],
   },
