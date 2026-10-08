@@ -175,7 +175,7 @@ let usual = null;
 const feel = (v) => {
   L.ground += (clamp(v * 1.6) - L.ground) * 0.15;
   usual = usual === null ? v : usual + (v - usual) * 0.003;                       // about 15 s to settle (20 values a second)
-  L.swell += (clamp(0.5 + (v - usual) / (1.2 * usual + 0.03)) - L.swell) * 0.2;
+  L.swell += (clamp(0.5 + (v - usual) / (2.2 * usual + 0.04)) - L.swell) * 0.08;    // eased: a swell takes about a second
 };
 const hit = (q) => { L.pulse = Math.max(L.pulse, 0.4 + 0.6 * (q?.mag01 ?? 0.5)); };
 let source = "none";

@@ -24,7 +24,7 @@ const tremor = (h, n, grain = 22, speed = 0.5) => h.noise(Math.max(1.2, grain / 
 // How far the lines are pushed. The ground decides: when it is as busy as usual the lines draw
 // their long curves; when it has just become busier they swing wide (up to three times as far),
 // when it goes quiet they almost straighten. A change of block adds a short swell.
-const shake = (L, rest, ground = 0.05, hit = 0.12) => () => 0.012 + 0.11 * L.swell * L.swell * 1.6 + 0.35 * hit * L.pulse;
+const shake = (L, rest, ground = 0.05, hit = 0.12) => () => 0.03 + 0.15 * L.swell * L.swell + 0.35 * hit * L.pulse;
 // The whole picture rides on the seismograph line: up when the line goes up, down when it goes
 // down, at the same instant as the trace in the corner.
 const ride = (L) => () => L.wave * 0.02;
@@ -36,15 +36,18 @@ const cam = (h) => h.src(h.s0).scale(1, -1, 1).saturate(0).contrast(1.5);
 // mixed with its own previous frame, nudged a little in the four directions, which spreads the
 // image out in space and in time. The lines then bend around a soft body, not around its details.
 export function prepare(h) {
-  const past = () => h.src(h.o1);
-  cam(h).blend(past().add(past().scrollX(0.007), 1).add(past().scrollX(-0.007), 1).add(past().scrollY(0.007), 1).add(past().scrollY(-0.007), 1)
-    .mult(h.solid(0.2, 0.2, 0.2)), 0.82).out(h.o1);
+  // Two passes, the second one wider (o1, then o2): a camera picture is made of small square
+  // blocks and grain, and one pass still let them through as steps in the lines.
+  const pass = (from, own, r, keep) => { const past = () => h.src(own);
+    from.blend(past().add(past().scrollX(r), 1).add(past().scrollX(-r), 1).add(past().scrollY(r), 1).add(past().scrollY(-r), 1).mult(h.solid(0.2, 0.2, 0.2)), keep).out(own); };
+  pass(cam(h), h.o1, 0.008, 0.8);
+  pass(h.src(h.o1), h.o2, 0.022, 0.86);
 }
-const soft = (h) => h.src(h.o1);
+const soft = (h) => h.src(h.o2);
 // Bend the traces with the camera, add a faint ghost of the image so the figure is easy to find,
 // and dim everything so the text on top stays readable.
 const finish = (h, L, chain, { figure = 0.05, ghost = 0.16, tint = pink, dim = 0.7 } = {}) =>
-  chain.scrollY(ride(L)).modulateScrollY(soft(h), () => (L.cam ? figure * 1.6 : 0))
+  chain.scrollY(ride(L)).modulateScrollY(soft(h), () => (L.cam ? figure : 0))
     .add(cam(h).thresh(0.5, 0.3).color(...tint), () => (L.cam ? ghost : 0))
     .mult(h.solid(dim, dim, dim));
 
