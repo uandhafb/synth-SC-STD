@@ -59,7 +59,7 @@ export const BLOCKS = [
   {
     id: "thanks", kicker: "thank you", title: "questions?", scene: "ripples", qr: "github.com/uandhafb/synth-SC-STD",
     lines: [
-      "The visuals behind this text are moved by **real data**: the ground under Riachuelo, in Brazil, live, about half a minute ago. Every movement of the Earth sends a wave through them.",
+      "The visuals behind this text are moved by **real data**: the ground under Riachuelo, in Brazil, live, about half a minute ago.",
       "Data: U.S. Geological Survey · EarthScope · Canadian National Seismograph Network.",
       "Built with SuperCollider, TidalCycles, Strudel, Hydra.",
     ],
