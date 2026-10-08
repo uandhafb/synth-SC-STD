@@ -30,25 +30,17 @@ const shake = (L, rest, ground = 0.05, hit = 0.12) => () => 0.03 + 0.15 * L.swel
 const ride = (L) => () => L.wave * 0.02;
 // The camera as a mirror, in grey.
 const cam = (h) => h.src(h.s0).scale(1, -1, 1).saturate(0).contrast(1.5);
-// What bends the lines into the presenter's figure: the camera, SOFTENED. A sharp camera image
-// (edges, hair, the grain of a dark room) breaks the thin lines into dots and dashes, the same way
-// grainy noise does. So the camera is first blurred into its own buffer (o1): every frame it is
-// mixed with its own previous frame, nudged a little in the four directions, which spreads the
-// image out in space and in time. The lines then bend around a soft body, not around its details.
-export function prepare(h) {
-  // Two passes, the second one wider (o1, then o2): a camera picture is made of small square
-  // blocks and grain, and one pass still let them through as steps in the lines.
-  const pass = (from, own, r, keep) => { const past = () => h.src(own);
-    from.blend(past().add(past().scrollX(r), 1).add(past().scrollX(-r), 1).add(past().scrollY(r), 1).add(past().scrollY(-r), 1).mult(h.solid(0.2, 0.2, 0.2)), keep).out(own); };
-  pass(cam(h), h.o1, 0.008, 0.8);
-  pass(h.src(h.o1), h.o2, 0.022, 0.86);
-}
-const soft = (h) => h.src(h.o2);
+// The camera never bends the lines. It did at first, and that is what broke them into steps, dots
+// and dashes: a camera picture is full of hard edges and grain, and a thin line pushed by it is
+// cut wherever the picture changes (blurring it in the shader only made fainter copies of the same
+// edges). The lines are moved by smooth things only: slow noise and the seismograph. The
+// presenter is in the picture as a tinted silhouette laid over the lines.
+export function prepare() {}
 // Bend the traces with the camera, add a faint ghost of the image so the figure is easy to find,
 // and dim everything so the text on top stays readable.
 const finish = (h, L, chain, { figure = 0.05, ghost = 0.16, tint = pink, dim = 0.7 } = {}) =>
-  chain.scrollY(ride(L)).modulateScrollY(soft(h), () => (L.cam ? figure : 0))
-    .add(cam(h).thresh(0.5, 0.3).color(...tint), () => (L.cam ? ghost : 0))
+  chain.scrollY(ride(L))
+    .add(cam(h).thresh(0.5, 0.3).color(...tint), () => (L.cam ? ghost * 1.5 : 0))
     .mult(h.solid(dim, dim, dim));
 
 export const SCENES = {
@@ -61,7 +53,6 @@ export const SCENES = {
   figure: (h, L) =>
     h.osc(30 * TAU, 0, 0).thresh(0.955, 0.012).color(...paper)
       .modulateScrollX(tremor(h, 30, 14, 0.4), shake(L, 0.004, 0.03, 0.05)).scrollX(ride(L))
-      .modulateScrollX(soft(h), () => (L.cam ? 0.07 : 0))
       .add(cam(h).thresh(0.5, 0.3).color(...pink), () => (L.cam ? 0.3 : 0))
       .mult(h.solid(0.72, 0.72, 0.72)),
 
@@ -118,7 +109,6 @@ export const SCENES = {
     h.osc(110, -0.02, 0).kaleid(180).thresh(0.9, 0.03).color(...paper)
       .add(h.osc(55, -0.012, 0.5).kaleid(180).thresh(0.93, 0.02).color(...pink))
       .modulate(h.noise(1.6, 0.06), shake(L, 0.004, 0.03, 0.06)).scale(() => 1 + L.wave * 0.03)
-      .modulate(soft(h), () => (L.cam ? 0.04 : 0))
       .add(cam(h).thresh(0.5, 0.3).color(...lime), () => (L.cam ? 0.18 : 0))
       .mult(h.solid(0.62, 0.62, 0.62)),
 };
