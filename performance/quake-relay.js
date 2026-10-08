@@ -250,6 +250,17 @@ export class Relay {
     const saved = path.join(this.o.dataDir, "page.html"), isDefault = url === PAGE;
     try {
       let html = (await this.o.fetchText(url)).replace(/<script\b[\s\S]*?<\/script>/gi, "");
+      // Many sites only load their pictures when a script says so: the real address waits in
+      // data-src / data-srcset and "src" holds an empty placeholder. The scripts are removed here,
+      // so the real addresses are put in place now, or the pictures would never appear.
+      html = html.replace(/<(?:img|source|iframe|video)\b[^>]*>/gi, (tag) => {
+        for (const [lazy, real] of [["data-srcset", "srcset"], ["data-src", "src"], ["data-lazy-src", "src"], ["data-original", "src"]]) {
+          const m = new RegExp(`\\s${lazy}\\s*=\\s*("[^"]*"|'[^']*')`, "i").exec(tag);
+          if (!m) continue;
+          tag = tag.replace(new RegExp(`\\s${real}\\s*=\\s*("[^"]*"|'[^']*')`, "i"), "").replace(m[0], ` ${real}=${m[1]}`);
+        }
+        return tag.replace(/\sloading\s*=\s*["']?lazy["']?/i, "");
+      });
       for (const link of (html.match(/<link\b[^>]*rel="stylesheet"[^>]*>/gi) ?? []).slice(0, 12)) {
         const href = /href="([^"]+)"/.exec(link)?.[1];
         if (!href) continue;
@@ -279,6 +290,7 @@ export class Relay {
   pageHtml(origin) {
     const add = `<style>.vector-header-container,.vector-column-start,.vector-column-end,.vector-page-toolbar,.vector-sticky-header-container,
       .vector-body-before-content,#siteNotice,.mw-footer-container,.mw-editsection,.mw-jump-link,.vector-settings{display:none!important}
+      .lazyload,.lazyloading,.lazy{opacity:1!important;visibility:visible!important}
       .mw-page-container{max-width:none!important;padding:0 1.4em!important} .mw-content-container{max-width:none!important} html{font-size:108%}</style>
       <div style="font:12px/1.4 sans-serif;color:#54595d;padding:1.2em;border-top:1px solid #c8ccd1">${this.pageCredit}. ${this.pageSource}; the movements are added by Arrival Times.</div>
       <script type="module" src="${origin}/choreo.js"></script>`;

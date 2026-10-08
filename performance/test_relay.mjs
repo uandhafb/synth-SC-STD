@@ -84,7 +84,7 @@ r = make();
 await r.load(); await r.serve(8096);
 const get = (p) => fetch(`http://127.0.0.1:8096${p}`);
 const stage = await (await get("/")).text(), wiki = await (await get("/wiki")).text();
-check("serves the stage page", stage.includes("ARRIVAL TIMES"));
+check("serves the stage page", stage.includes("CODESHAKE"));
 check("serves the fetched page with the choreography added", wiki.includes("Indonesia and Alaska") && wiki.includes("http://127.0.0.1:8096/choreo.js"));
 check("the page's own scripts are removed and its styles copied in", !wiki.includes("alert(1)") && wiki.includes("body{color:#111}") && !wiki.includes("load.php"));
 check("credit for the page's text is shown", wiki.includes("Wikipedia contributors") && wiki.includes("CC BY-SA"));
