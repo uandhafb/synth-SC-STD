@@ -3,8 +3,12 @@
 // and what bends them. The camera is in s0: the presenter is drawn BY the traces (the brightness
 // of the camera image pushes each line up and down), not laid over them.
 //   h    Hydra's functions (osc, noise, src, s0, o0 …)
-//   L    live values, read every frame:  L.ground (0..1, the ground under Montréal),
-//        L.pulse (jumps up on an earthquake or a change of block, then fades), L.cam (camera on)
+//   L    live values from a real seismometer, read every frame (see main.js):
+//          L.wave   the seismograph line itself (-1..1): the whole picture rides on it
+//          L.swell  how busy the ground is compared with a moment ago (0.5 = as usual)
+//          L.ground how strongly it moves (0..1)
+//        and  L.pulse (jumps up on a change of block or a movement played in the piece, then
+//        fades),  L.cam (camera on)
 // Colours: acid lime and hot pink on black.
 
 const lime = [0.83, 1.0, 0.23], pink = [1.0, 0.31, 0.85], paper = [0.96, 0.96, 0.94];
@@ -17,9 +21,13 @@ const lines = (h, n, thin = 0.965) => h.osc(n * TAU, 0, 0).rotate(Math.PI / 2).t
 // and bend in long curves, like contour lines or a calm sea. `grain` is how tight the curves are
 // (small = long and wide), `speed` how fast they drift. (n is kept so each scene reads the same.)
 const tremor = (h, n, grain = 22, speed = 0.5) => h.noise(Math.max(1.2, grain / 9), speed * 0.25);
-// How far the lines are pushed: always enough to draw long curves (that is the look), a little
-// more with the real ground, and wider for a moment on an earthquake or a change of block.
-const shake = (L, rest, ground = 0.05, hit = 0.12) => () => Math.max(0.05, rest * 6) + 0.5 * ground * L.ground + 0.35 * hit * L.pulse;
+// How far the lines are pushed. The ground decides: when it is as busy as usual the lines draw
+// their long curves; when it has just become busier they swing wide (up to three times as far),
+// when it goes quiet they almost straighten. A change of block adds a short swell.
+const shake = (L, rest, ground = 0.05, hit = 0.12) => () => 0.012 + 0.11 * L.swell * L.swell * 1.6 + 0.35 * hit * L.pulse;
+// The whole picture rides on the seismograph line: up when the line goes up, down when it goes
+// down, at the same instant as the trace in the corner.
+const ride = (L) => () => L.wave * 0.02;
 // The camera as a mirror, in grey.
 const cam = (h) => h.src(h.s0).scale(1, -1, 1).saturate(0).contrast(1.5);
 // What bends the lines into the presenter's figure: the camera, SOFTENED. A sharp camera image
@@ -36,7 +44,7 @@ const soft = (h) => h.src(h.o1);
 // Bend the traces with the camera, add a faint ghost of the image so the figure is easy to find,
 // and dim everything so the text on top stays readable.
 const finish = (h, L, chain, { figure = 0.05, ghost = 0.16, tint = pink, dim = 0.7 } = {}) =>
-  chain.modulateScrollY(soft(h), () => (L.cam ? figure * 1.6 : 0))
+  chain.scrollY(ride(L)).modulateScrollY(soft(h), () => (L.cam ? figure * 1.6 : 0))
     .add(cam(h).thresh(0.5, 0.3).color(...tint), () => (L.cam ? ghost : 0))
     .mult(h.solid(dim, dim, dim));
 
@@ -49,7 +57,7 @@ export const SCENES = {
   // pushed sideways by the (softened) camera, so the figure stands in them; pink ghost behind.
   figure: (h, L) =>
     h.osc(30 * TAU, 0, 0).thresh(0.955, 0.012).color(...paper)
-      .modulateScrollX(tremor(h, 30, 14, 0.4), shake(L, 0.004, 0.03, 0.05))
+      .modulateScrollX(tremor(h, 30, 14, 0.4), shake(L, 0.004, 0.03, 0.05)).scrollX(ride(L))
       .modulateScrollX(soft(h), () => (L.cam ? 0.07 : 0))
       .add(cam(h).thresh(0.5, 0.3).color(...pink), () => (L.cam ? 0.3 : 0))
       .mult(h.solid(0.72, 0.72, 0.72)),
@@ -106,7 +114,7 @@ export const SCENES = {
   ripples: (h, L) =>
     h.osc(110, -0.02, 0).kaleid(180).thresh(0.9, 0.03).color(...paper)
       .add(h.osc(55, -0.012, 0.5).kaleid(180).thresh(0.93, 0.02).color(...pink))
-      .modulate(h.noise(1.6, 0.06), shake(L, 0.004, 0.03, 0.06))
+      .modulate(h.noise(1.6, 0.06), shake(L, 0.004, 0.03, 0.06)).scale(() => 1 + L.wave * 0.03)
       .modulate(soft(h), () => (L.cam ? 0.04 : 0))
       .add(cam(h).thresh(0.5, 0.3).color(...lime), () => (L.cam ? 0.18 : 0))
       .mult(h.solid(0.62, 0.62, 0.62)),

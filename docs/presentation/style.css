@@ -94,6 +94,13 @@ b, strong { color: var(--accent); font-weight: 700; }
 #ring text { fill: var(--ink); font: 700 14px var(--font); }
 #camTxt { font-size: 11px; padding: 4px 6px; color: var(--muted); background: rgba(0, 0, 0, 0.7); min-height: 1.9em; }
 
+/* ---- the seismograph: above the camera corner, the same width ---- */
+#seismo { position: fixed; right: 1.5vw; top: 1.5vw; width: 14vw; border: 1px solid var(--line); background: rgba(0, 0, 0, 0.72); }
+#seismo[hidden] { display: none; }
+#trace { display: block; width: 100%; height: auto; }
+#seismoTxt { font-size: clamp(9px, 0.8vw, 18px); line-height: 1.3; padding: 4px 6px; color: var(--muted); border-top: 1px solid var(--line); }
+#seismoTxt b { color: var(--accent); font-weight: 700; }
+
 /* ---- where we are ---- */
 #dots { position: fixed; left: 4vw; bottom: 0.9vw; display: flex; gap: 8px; }
 #dots i { width: 22px; height: 4px; background: rgba(255, 255, 255, 0.25); }

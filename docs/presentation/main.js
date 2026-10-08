@@ -62,7 +62,7 @@ $("dots").innerHTML = BLOCKS.map(() => "<i></i>").join("");
 
 // ---- Hydra ----------------------------------------------------------------------------------------
 
-const L = { ground: 0, pulse: 0, cam: false };          // live values the scenes read (see scenes.js)
+const L = { ground: 0, swell: 0.5, wave: 0, pulse: 0, cam: false };   // live values the scenes read (see scenes.js)
 let h = null;
 try {
   const canvas = $("hydra"), scale = Math.min(devicePixelRatio || 1, 1.5);
@@ -165,15 +165,46 @@ $("startNoCam").addEventListener("click", () => start(false));
 //     (localhost), otherwise from the room's channel (MQTT), like a phone.
 
 const STATION = "IU.RCBR";
-const feel = (v) => { L.ground += (clamp(v * 1.6) - L.ground) * 0.15; };          // smoothed: a tremor, not a flicker
+// From the seismometer, three live values for the visuals:
+//   L.wave    the line itself, right now (-1..1): everything on screen rides up and down on it
+//   L.ground  how strongly the ground is moving (0..1)
+//   L.swell   the same, compared with its own last half minute (0.5 = as usual, towards 1 = the
+//             ground has just become busier, towards 0 = quieter). A seismometer never rests, so
+//             "more than a moment ago" is what the eye can follow, not the absolute level.
+let usual = null;
+const feel = (v) => {
+  L.ground += (clamp(v * 1.6) - L.ground) * 0.15;
+  usual = usual === null ? v : usual + (v - usual) * 0.003;                       // about 15 s to settle (20 values a second)
+  L.swell += (clamp(0.5 + (v - usual) / (1.2 * usual + 0.03)) - L.swell) * 0.2;
+};
 const hit = (q) => { L.pulse = Math.max(L.pulse, 0.4 + 0.6 * (q?.mag01 ?? 0.5)); };
 let source = "none";
+
+// The seismograph in the corner: the real line, as it arrives (about 50 points a second).
+const trace = new Float32Array(560); let traceAt = 0, lastData = 0, station = null, groundDelay = null, waveTo = 0;
+function drawTrace(now) {
+  requestAnimationFrame(drawTrace);
+  L.wave += (waveTo - L.wave) * 0.25;
+  const cv = $("trace"), c = cv.getContext("2d"), W = cv.width, H = cv.height;
+  c.clearRect(0, 0, W, H);
+  c.strokeStyle = "rgba(255,255,255,0.12)"; c.lineWidth = 1; c.beginPath(); c.moveTo(0, H / 2); c.lineTo(W, H / 2); c.stroke();
+  c.strokeStyle = "#d4ff3a"; c.lineWidth = 2; c.beginPath();
+  for (let i = 0; i < trace.length; i++) { const y = H / 2 - trace[(traceAt + i) % trace.length] * H * 0.46; if (i) c.lineTo(i, y); else c.moveTo(i, y); }
+  c.stroke();
+  const live = now - lastData < 45000 && lastData > 0;
+  $("seismoTxt").innerHTML = station ? (live ? `the ground under <b>${station.name}, ${station.region}</b><br>live · ${Math.round(groundDelay ?? 0)} s ago` : `${station.name}, ${station.region}<br>waiting for the signal…`) : "waiting for the ground…";
+}
 
 (async () => {
   try {
     const [{ Ground }, { STATIONS }] = await Promise.all([import("../quakes/lib/ground.js"), import("../quakes/lib/geo.js")]);
-    const st = STATIONS.find((x) => x.code === STATION) ?? STATIONS[0];
-    new Ground({ match: st.match, name: st.name, delay: 9, log: () => {}, onValue: (v) => { if (v > 0) source = st.name; feel(v); } }).start();
+    station = STATIONS.find((x) => x.code === STATION) ?? STATIONS[0];
+    const g = new Ground({ match: station.match, name: station.name, delay: 9, log: () => {},
+      onValue: (v) => { if (v > 0) source = station.name; feel(v); },
+      onTrace: (pts) => { lastData = performance.now(); groundDelay = g.delay ?? g.o.delay;
+        for (const p of pts) { const y = Math.max(-1, Math.min(1, p * 2.2)); trace[traceAt] = y; traceAt = (traceAt + 1) % trace.length; waveTo = y; } } });
+    g.start();
+    $("seismo").hidden = false; requestAnimationFrame(drawTrace);
   } catch (err) { console.warn("no live ground:", err); }
 })();
 
